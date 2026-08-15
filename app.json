@@ -1,3 +1,23 @@
 {
-  "plugins": ["expo-router", "expo-status-bar", "expo-sqlite"]
+  "expo": {
+    "name": "Emergency Fund",
+    "slug": "emergency-fund-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "emergencyfund",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.emergencyfundtracker.app",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.emergencyfundtracker.app",
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": ["expo-router", "expo-status-bar", "expo-sqlite"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
 }

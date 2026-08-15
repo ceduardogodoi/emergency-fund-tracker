@@ -38,9 +38,9 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [X] T007 Add the ESLint rule in `eslint.config.mjs` banning color, hex, and raw numeric spacing literals outside `src/ui/tokens/`
 - [X] T008 Configure Jest in `jest.config.mjs` with the `jest-expo` preset, separate unit/integration/component projects, and coverage thresholds of 80% global and 95% for `src/domain/money`, `src/domain/dates`, `src/domain/statistics`, and `src/domain/forecast`
 - [X] T009 [P] Install `better-sqlite3` as a dev dependency and configure the integration test project to run in a Node environment
-- [ ] T010 [P] Install Maestro and create `e2e/smoke.yaml` verifying the app launches
+- [X] T010 [P] Install Maestro and create `e2e/smoke.yaml` verifying the app launches
 - [X] T011 Add npm scripts to `package.json` for `typecheck`, `lint`, `test`, `test:unit`, `test:integration`, `test:component`, `test:a11y`, `test:coverage`, `e2e`, `ios`, `android`, and `start`
-- [ ] T012 Configure a pre-commit hook in `lefthook.yml` running format, lint, typecheck, and tests, using the same commands CI runs
+- [X] T012 Configure a pre-commit hook in `lefthook.yml` running format, lint, typecheck, and tests, using the same commands CI runs
 - [X] T013 [P] Add the CI workflow in `.github/workflows/ci.yml` running `asdf install`, `npm ci`, and the identical quality gate
 - [X] T014 Create the source directory skeleton under `app/`, `src/`, and `tests/` per the structure in plan.md
 - [X] T015 Resolve R-001 — record the exact Expo SDK, React Native, and React versions and the resulting iOS and Android minimums in the Technical Context of `specs/001-emergency-fund-tracker/plan.md`
