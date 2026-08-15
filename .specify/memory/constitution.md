@@ -1,6 +1,12 @@
 <!--
 Sync Impact Report
-Version change: (template, unversioned) → 1.0.0
+
+--- 1.0.0 → 1.0.1 (2026-08-15) ---
+Bump rationale: PATCH. Records the technology stack binding selected by the first `/speckit-plan`, as the 1.0.0 TODO required. No principle added, removed, or redefined.
+Changed: Quality Standards — the deferred tech-stack-binding placeholder replaced with the concrete stack.
+Deferred items: none remaining.
+
+--- (template, unversioned) → 1.0.0 ---
 Bump rationale: Initial ratification. All placeholder tokens replaced with concrete, enforceable governance; six core principles defined.
 
 Modified principles:
@@ -17,8 +23,7 @@ Added sections:
 
 Removed sections: none
 
-Deferred items / TODOs:
-- TODO(TECH_STACK_BINDING): Language, framework, linter, formatter, test runner, and design-token source are not yet chosen. Record them in this file (PATCH bump) once the first `/speckit-plan` selects them.
+Deferred items / TODOs: none.
 -->
 
 # Emergency Fund Tracker Constitution
@@ -110,7 +115,18 @@ These constraints apply to all code in the repository:
 - **Observability**: Failures are logged through the single logging interface with enough structured context to diagnose them, and never with sensitive values.
 - **Simplicity (YAGNI)**: The simplest solution that satisfies the current spec wins. Abstraction layers, configurability, and generality that no current requirement demands MUST be rejected.
 
-TODO(TECH_STACK_BINDING): The concrete language, framework, linter, formatter, type checker, test runner, and design-token source are not yet selected. The first `/speckit-plan` that chooses them MUST record them here as a PATCH amendment.
+### Technology stack binding
+
+Selected by the first implementation plan (`specs/001-emergency-fund-tracker/plan.md`) and recorded here as required. Changing any of these is an amendment, not a preference.
+
+- **Language**: TypeScript in `strict` mode. Strictness MUST NOT be relaxed globally.
+- **Runtime and version management**: Node.js pinned in a committed `.tool-versions` and installed with asdf. Developer machines and CI MUST resolve the same versions from that file.
+- **Application framework**: React Native via Expo, one codebase for iOS and Android, with Expo Router for navigation.
+- **Persistence**: SQLite through `expo-sqlite`, reached only through repository modules that implement domain-owned ports, with forward-only migrations versioned by the `user_version` pragma.
+- **Formatter**: Prettier. **Linter**: ESLint with `typescript-eslint`, an accessibility plugin, a layer-boundary rule protecting the domain, and a rule banning style literals outside the token module.
+- **Type checker**: `tsc --noEmit`.
+- **Test runners**: Jest with `jest-expo` for unit and component tests, Testing Library for component behavior, `better-sqlite3` for repository and migration tests, and Maestro for end-to-end flows.
+- **Design-token source**: `src/ui/tokens/` — the single place any spacing, color, typography, radius, or elevation value may exist.
 
 ## Development Workflow & Quality Gates
 
@@ -133,10 +149,10 @@ This constitution supersedes all other development practices, conventions, and p
 
 - **MAJOR**: A principle is removed or redefined in a backward-incompatible way, or governance itself changes.
 - **MINOR**: A principle or section is added, or existing guidance is materially expanded.
-- **PATCH**: Clarifications, wording, typo fixes, and non-semantic refinements — including recording the technology stack binding.
+- **PATCH**: Clarifications, wording, typo fixes, and non-semantic refinements — including recording or updating the technology stack binding.
 
 **Compliance review**: Compliance is verified at every pull request via the review checklist in Development Workflow & Quality Gates, and at every `/speckit-plan` via the Constitution Check gate. Any principle that is repeatedly deviated from MUST be brought to amendment rather than quietly ignored — a rule nobody follows is worse than no rule.
 
 **Runtime guidance**: Agent- and contributor-facing operational guidance (commands, stack specifics, repository layout) belongs in the project guidance file (`CLAUDE.md`), not in this constitution. That file MUST NOT contradict this document.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-09 | **Last Amended**: 2026-08-09
+**Version**: 1.0.1 | **Ratified**: 2026-08-15 | **Last Amended**: 2026-08-15

@@ -4,7 +4,7 @@
 
 **Feature Directory**: `specs/001-emergency-fund-tracker`
 
-**Created**: 2026-08-09
+**Created**: 2026-08-15
 
 **Status**: Draft
 
@@ -12,7 +12,7 @@
 
 ## Clarifications
 
-### Session 2026-08-09
+### Session 2026-08-15
 
 - Q: Is manual entry the only way contributions are captured in this release, or must the app also import transactions from a linked bank account? → A: Manual entry only. Bank account linking and transaction import are out of scope.
 - Q: Does "assess predictability" mean forecasting a completion date, rating the consistency of the user's saving behavior, or letting the user run what-if scenarios? → A: Forecast only — a projected completion date at the current saving pace, plus a required-monthly-contribution calculator. No consistency rating and no what-if scenarios.
@@ -89,7 +89,7 @@ The user wants to know when they will actually get there. The app looks at how m
 
 1. **Given** six months of contributions averaging 500 per month and a remaining amount of 5,000, **When** the user views the forecast, **Then** the app projects completion in approximately 10 months and states that the projection assumes the current pace of 500 per month continues.
 2. **Given** a projection is displayed, **When** the user adds, edits, or deletes a contribution or withdrawal, **Then** the projected date and the stated pace recalculate to reflect the change.
-3. **Given** a user with fewer than three calendar months of contribution history, **When** they open the forecast, **Then** the app shows an explicit "not enough history yet" state stating how much more history is needed, rather than an unreliable projection.
+3. **Given** a user with fewer than three complete calendar months of contribution history, **When** they open the forecast, **Then** the app shows an explicit "not enough history yet" state stating how much more history is needed, rather than an unreliable projection.
 4. **Given** a user who has recorded no net saving over the trailing window, **When** they open the forecast, **Then** the app explains that a date cannot be projected at a pace of zero and prompts them to record a contribution, rather than showing an infinite or blank date.
 5. **Given** a user sets a desired completion date, **When** the date is saved, **Then** the app shows the monthly contribution required to meet it and indicates whether that exceeds their recent average pace.
 6. **Given** a user whose target increases because their monthly expenses rose, **When** they view the forecast, **Then** the projected date moves later and reflects the new remaining amount.
@@ -186,10 +186,10 @@ The user chooses to be reminded to contribute — for example monthly on payday 
 
 ### Functional Requirements — Forecasting
 
-- **FR-026**: System MUST calculate a saving pace as the average monthly net amount saved — contributions minus withdrawals — over a trailing window of the most recent 6 calendar months.
+- **FR-026**: System MUST calculate a saving pace as the average monthly net amount saved — contributions minus withdrawals — over a trailing window of the most recent 6 complete calendar months. The current, in-progress month MUST be excluded from the pace, because a month that has not finished would understate it; entries dated within the current month still count toward the balance and the amount remaining.
 - **FR-027**: System MUST project the calendar date on which the target will be reached, by dividing the amount remaining by the saving pace, and MUST present the result both as a date and as a number of months away.
 - **FR-028**: System MUST display the saving pace the projection is based on, alongside the projection, and MUST state that the projection assumes that pace continues.
-- **FR-029**: System MUST require at least 3 calendar months of contribution history before showing any projection, and MUST otherwise display an explicit insufficient-history state stating how much more history is required.
+- **FR-029**: System MUST require at least 3 complete calendar months of contribution history before showing any projection, and MUST otherwise display an explicit insufficient-history state stating how much more history is required.
 - **FR-030**: System MUST NOT project a date when the saving pace is zero or negative, and MUST instead explain why no date can be shown and prompt the user to record a contribution.
 - **FR-031**: Users MUST be able to set a desired completion date, and the system MUST calculate the monthly contribution required to meet it and indicate whether that exceeds their current saving pace.
 - **FR-032**: System MUST recalculate the pace, the projection, and any required-contribution figure whenever a contribution or withdrawal is added, edited, or deleted, or the target changes.
@@ -260,7 +260,7 @@ The user chooses to be reminded to contribute — for example monthly on payday 
 - All data lives on the device with no account. The user is the only party who can see it, and the app has no way to recover it for them if the device is lost and they never exported. Export and import are the entire backup story for this release.
 - The export format is stable enough to be read back by the app on either platform, and is the same format users are told to keep as their own record.
 - Anyone who can unlock the device can see the user's fund. The app relies entirely on the device lock screen for that protection, on the assumption that a tracker holding no money and moving no money does not warrant a second lock. In-app access control arrives with the planned accounts and authentication release.
-- The forecast is a straight-line projection of the trailing 6-month pace onto the remaining amount. It is not a statistical confidence model and makes no claim about how likely the user is to maintain that pace.
+- The forecast is a straight-line projection of the trailing pace, measured over complete calendar months, onto the remaining amount. It is not a statistical confidence model and makes no claim about how likely the user is to maintain that pace.
 - The conservativeness levels of 3, 6, 9, and 12 months reflect widely published personal-finance guidance; they are defaults, and the custom option exists for users whose circumstances differ.
 - The fund is held in an account whose growth comes from the user's deposits; interest and investment returns are not modeled and are not part of projections.
 - One currency per user, fixed at setup and changeable only by resetting the fund; multi-currency funds and conversion are out of scope.
