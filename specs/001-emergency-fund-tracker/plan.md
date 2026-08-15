@@ -14,9 +14,9 @@ All six user stories are in scope. They remain independently shippable in priori
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x in `strict` mode, with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` enabled
+**Language/Version**: TypeScript **5.9.3** in `strict` mode, with `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `noUnusedLocals`, and `noUnusedParameters` enabled. Pinned to 5.x deliberately: TypeScript 7 is released, but `typescript-eslint` requires `<6.1.0`, so adopting it would mean dropping the lint gate that Principle I requires.
 
-**Primary Dependencies**: Expo SDK (version pinned at init — see R-001), React Native, Expo Router, `expo-sqlite`, TanStack Query, `zod`, `date-fns`, `react-native-gifted-charts`, `expo-notifications`, `expo-file-system`, `expo-sharing`, `expo-document-picker`
+**Primary Dependencies** *(installed — R-001 resolved 2026-08-15)*: Expo SDK **57.0.13**, React Native **0.86.2**, React **19.2.3**, Expo Router 57.0.13, `expo-sqlite` 57.0.1, TanStack Query 5.101.4, `zod` 4.4.3, `uuid` 14.0.1. Deferred to the phases that introduce them: a charting library (Phase 5), `expo-notifications` (Phase 8), `expo-file-system`/`expo-sharing`/`expo-document-picker` (Phase 9). `date-fns` was planned but proved unnecessary and was removed — see the D-004 amendment in research.md.
 
 **Storage**: `expo-sqlite` on device, accessed only through repository modules implementing domain-owned ports; schema versioned by the `user_version` pragma with forward-only migrations
 

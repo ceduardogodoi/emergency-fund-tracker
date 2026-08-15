@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Node version comes from .tool-versions — the same file developer
+      # machines resolve, so a local/CI version mismatch is not possible.
+      - uses: asdf-vm/actions/install@v3
+
+      - run: npm ci
+
+      # Identical to the pre-commit hook. Warnings are errors.
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:coverage

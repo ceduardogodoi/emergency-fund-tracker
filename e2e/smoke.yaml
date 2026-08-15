@@ -1,0 +1,8 @@
+# Maestro smoke flow. Proves the app launches and renders before any journey flow runs.
+# Install Maestro: curl -Ls "https://get.maestro.mobile.dev" | bash
+appId: com.emergencyfundtracker.app
+---
+- launchApp:
+    clearState: true
+- assertVisible:
+    id: 'app-root'

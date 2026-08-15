@@ -1,0 +1,99 @@
+// Flat ESLint config. Warnings are errors — the `lint` script passes --max-warnings=0.
+// Explicit `.js`: the package ships both a `flat/` directory and `flat.js`, and ESM
+// resolution will not pick between them the way CommonJS did.
+import expoConfig from 'eslint-config-expo/flat.js'
+// Named imports rather than the default namespace: reaching through the default export
+// for `configs` trips import/no-named-as-default-member.
+import { config as defineConfig, configs as tsConfigs } from 'typescript-eslint'
+
+/**
+ * Layers this project forbids `src/domain` from importing. Constitution Principle III
+ * requires domain logic to depend on abstractions it owns, never on framework, vendor,
+ * or adapter types. This rule is what makes that structural rather than aspirational.
+ */
+const FORBIDDEN_IN_DOMAIN = [
+  { group: ['react', 'react/*'], message: 'src/domain must not depend on React.' },
+  {
+    group: ['react-native', 'react-native-*'],
+    message: 'src/domain must not depend on React Native.',
+  },
+  { group: ['expo', 'expo-*', '@expo/*'], message: 'src/domain must not depend on Expo.' },
+  { group: ['@tanstack/*'], message: 'src/domain must not depend on the query layer.' },
+  { group: ['better-sqlite3'], message: 'src/domain must not depend on a database driver.' },
+  {
+    group: ['@/data/*', '@/platform/*', '@/ui/*', '@/features/*', '@/app/*'],
+    message: 'Dependencies point inward. src/domain may not import an outer layer.',
+  },
+  {
+    group: ['../data/*', '../platform/*', '../ui/*', '../features/*', '../app/*'],
+    message: 'Dependencies point inward. src/domain may not import an outer layer.',
+  },
+]
+
+export default defineConfig(
+  {
+    ignores: [
+      'node_modules/',
+      'dist/',
+      'build/',
+      'coverage/',
+      '.expo/',
+      'specs/',
+      '.specify/',
+      '.claude/',
+    ],
+  },
+
+  expoConfig,
+  ...tsConfigs.recommended,
+
+  {
+    rules: {
+      // Constitution Principle II: clean code ceilings.
+      complexity: ['error', 10],
+      'max-depth': ['error', 3],
+      'max-lines-per-function': ['error', { max: 40, skipBlankLines: true, skipComments: true }],
+      eqeqeq: ['error', 'always'],
+      'no-console': 'error', // logging goes through the Logger port
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/consistent-type-imports': 'error',
+    },
+  },
+
+  // Constitution Principle III: the domain boundary.
+  {
+    files: ['src/domain/**/*.ts'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: FORBIDDEN_IN_DOMAIN }],
+    },
+  },
+
+  // Constitution Principle VI: design values live in exactly one place.
+  {
+    files: ['src/**/*.ts', 'src/**/*.tsx', 'app/**/*.tsx'],
+    ignores: ['src/ui/tokens/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Literal[value=/^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/]',
+          message: 'Hard-coded color. Import it from src/ui/tokens instead.',
+        },
+        {
+          selector: 'Literal[value=/^(rgb|rgba|hsl|hsla)\\(/]',
+          message: 'Hard-coded color. Import it from src/ui/tokens instead.',
+        },
+      ],
+    },
+  },
+
+  // Tests and scripts may be long and may reach for console.
+  {
+    files: ['tests/**/*.ts', 'tests/**/*.tsx', 'scripts/**/*.ts'],
+    rules: {
+      'max-lines-per-function': 'off',
+      'no-console': 'off',
+    },
+  },
+)

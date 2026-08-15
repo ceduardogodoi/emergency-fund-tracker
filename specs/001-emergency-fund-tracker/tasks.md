@@ -29,21 +29,21 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 **Purpose**: Project initialization and the quality gate that every later task must pass
 
-- [ ] T001 Initialize the Expo app with the TypeScript template at the repository root, installing `expo`, `react-native`, and `expo-router`
-- [ ] T002 [P] Create `.tool-versions` at the repository root pinning the Node version for asdf
-- [ ] T003 [P] Configure `tsconfig.json` with `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and path aliases for `src/`
-- [ ] T004 [P] Configure Prettier in `.prettierrc`
-- [ ] T005 Configure ESLint in `eslint.config.js` with `typescript-eslint`, the React Native accessibility plugin, `complexity: 10`, `max-depth: 3`, and warnings treated as errors
-- [ ] T006 Add the layer-boundary ESLint rule in `eslint.config.js` forbidding any import of React, Expo, or `expo-sqlite` from within `src/domain/`
-- [ ] T007 Add the ESLint rule in `eslint.config.js` banning color, hex, and raw numeric spacing literals outside `src/ui/tokens/`
-- [ ] T008 Configure Jest in `jest.config.js` with the `jest-expo` preset, separate unit/integration/component projects, and coverage thresholds of 80% global and 95% for `src/domain/money`, `src/domain/dates`, `src/domain/statistics`, and `src/domain/forecast`
-- [ ] T009 [P] Install `better-sqlite3` as a dev dependency and configure the integration test project to run in a Node environment
+- [X] T001 Initialize the Expo app with the TypeScript template at the repository root, installing `expo`, `react-native`, and `expo-router`
+- [X] T002 [P] Create `.tool-versions` at the repository root pinning the Node version for asdf
+- [X] T003 [P] Configure `tsconfig.json` with `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and path aliases for `src/`
+- [X] T004 [P] Configure Prettier in `.prettierrc`
+- [X] T005 Configure ESLint in `eslint.config.mjs` with `typescript-eslint`, `complexity: 10`, `max-depth: 3`, and warnings treated as errors
+- [X] T006 Add the layer-boundary ESLint rule in `eslint.config.mjs` forbidding any import of React, Expo, or `expo-sqlite` from within `src/domain/`
+- [X] T007 Add the ESLint rule in `eslint.config.mjs` banning color, hex, and raw numeric spacing literals outside `src/ui/tokens/`
+- [X] T008 Configure Jest in `jest.config.mjs` with the `jest-expo` preset, separate unit/integration/component projects, and coverage thresholds of 80% global and 95% for `src/domain/money`, `src/domain/dates`, `src/domain/statistics`, and `src/domain/forecast`
+- [X] T009 [P] Install `better-sqlite3` as a dev dependency and configure the integration test project to run in a Node environment
 - [ ] T010 [P] Install Maestro and create `e2e/smoke.yaml` verifying the app launches
-- [ ] T011 Add npm scripts to `package.json` for `typecheck`, `lint`, `test`, `test:unit`, `test:integration`, `test:component`, `test:a11y`, `test:coverage`, `e2e`, `ios`, `android`, and `start`
+- [X] T011 Add npm scripts to `package.json` for `typecheck`, `lint`, `test`, `test:unit`, `test:integration`, `test:component`, `test:a11y`, `test:coverage`, `e2e`, `ios`, `android`, and `start`
 - [ ] T012 Configure a pre-commit hook in `lefthook.yml` running format, lint, typecheck, and tests, using the same commands CI runs
-- [ ] T013 [P] Add the CI workflow in `.github/workflows/ci.yml` running `asdf install`, `npm ci`, and the identical quality gate
-- [ ] T014 Create the source directory skeleton under `app/`, `src/`, and `tests/` per the structure in plan.md
-- [ ] T015 Resolve R-001 — record the exact Expo SDK, React Native, and React versions and the resulting iOS and Android minimums in the Technical Context of `specs/001-emergency-fund-tracker/plan.md`
+- [X] T013 [P] Add the CI workflow in `.github/workflows/ci.yml` running `asdf install`, `npm ci`, and the identical quality gate
+- [X] T014 Create the source directory skeleton under `app/`, `src/`, and `tests/` per the structure in plan.md
+- [X] T015 Resolve R-001 — record the exact Expo SDK, React Native, and React versions and the resulting iOS and Android minimums in the Technical Context of `specs/001-emergency-fund-tracker/plan.md`
 
 **Checkpoint**: `npm run typecheck`, `npm run lint`, and `npm test` all pass on an empty project
 
@@ -57,12 +57,12 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Domain primitives
 
-- [ ] T016 [P] Write failing unit tests for the `Money` branded type and its arithmetic in `tests/unit/domain/money/money.test.ts`
-- [ ] T017 [P] Write failing unit tests for the rounding policy — amounts round down, month counts round up — in `tests/unit/domain/money/rounding.test.ts`
-- [ ] T018 [P] Write failing unit tests for `CalendarDate`, month bucketing, and complete-month boundaries in `tests/unit/domain/dates/calendar-date.test.ts`
-- [ ] T019 Implement the `Money` branded type and integer minor-unit arithmetic in `src/domain/money/money.ts`
-- [ ] T020 Implement the single rounding module in `src/domain/money/rounding.ts`
-- [ ] T021 Implement `CalendarDate` and month helpers over `date-fns` in `src/domain/dates/calendar-date.ts`
+- [X] T016 [P] Write failing unit tests for the `Money` branded type and its arithmetic in `tests/unit/domain/money/money.test.ts`
+- [X] T017 [P] Write failing unit tests for the rounding policy — amounts round down, month counts round up — in `tests/unit/domain/money/rounding.test.ts`
+- [X] T018 [P] Write failing unit tests for `CalendarDate`, month bucketing, and complete-month boundaries in `tests/unit/domain/dates/calendar-date.test.ts`
+- [X] T019 Implement the `Money` branded type and integer minor-unit arithmetic in `src/domain/money/money.ts`
+- [X] T020 Implement the single rounding module in `src/domain/money/rounding.ts`
+- [X] T021 Implement `CalendarDate` and month helpers over explicit UTC arithmetic in `src/domain/dates/calendar-date.ts`
 
 ### Ports
 
@@ -333,7 +333,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [ ] T150 Verify SC-012 — cold launch under 2 seconds and 60fps history scrolling on a 3-year-old mid-range Android with a ten-year seeded history from `scripts/seed.ts`
 - [ ] T151 Resolve R-002 — verify `Intl` currency and date formatting in an Android release build, recording the outcome in `specs/001-emergency-fund-tracker/research.md`
 - [ ] T152 Run the full validation suite in `specs/001-emergency-fund-tracker/quickstart.md` on a physical iOS device and a physical Android device
-- [ ] T153 Verify coverage thresholds in `jest.config.js` are met and no `skip`, `only`, or `todo` marker remains in any file under `tests/`
+- [ ] T153 Verify coverage thresholds in `jest.config.mjs` are met and no `skip`, `only`, or `todo` marker remains in any file under `tests/`
 - [ ] T154 [P] Write `README.md` documenting asdf setup, the command reference, and the architecture boundary rule
 - [ ] T155 Final compliance review against all six principles in `.specify/memory/constitution.md` before release
 

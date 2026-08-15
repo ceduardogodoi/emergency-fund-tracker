@@ -22,7 +22,7 @@ This document resolves every unknown in the plan's Technical Context. Each decis
 
 **Alternatives considered**: Naming specific version numbers now (rejected — they would be guesses, and a wrong minimum in a spec becomes a wrong test matrix); supporting older OS versions than the SDK targets (rejected — no requirement justifies the cost).
 
-**Verification at init (R-001)**: Record SDK version, RN version, React version, and the resulting iOS and Android minimums in Technical Context. Any of these that turn out to conflict with a requirement gets raised before implementation starts.
+**Verification at init (R-001) — resolved 2026-08-15**: Expo SDK 57.0.13, React Native 0.86.2, React 19.2.3, TypeScript 5.9.3. Recorded in plan.md's Technical Context. Two findings worth carrying forward: TypeScript 7 is available but `typescript-eslint` still requires `<6.1.0`, so the project pins 5.x rather than lose the lint gate; and `expo-router` in this SDK peer-depends on `react-dom` through its Radix dependencies, so `react-dom` is installed even though there is no web target. Platform minimums inherit from the SDK and are confirmed when the first native build runs.
 
 ## D-003: Money representation
 
@@ -40,7 +40,9 @@ This document resolves every unknown in the plan's Technical Context. Each decis
 
 **Rationale**: The spec's timezone edge case requires that an entry stay on the calendar date the user picked, regardless of device timezone changes — which a timestamp cannot guarantee and a date string can. Principle IV forbids tests that depend on wall-clock time or timezone, and an injected clock is what makes streaks, pace windows, and projections deterministically testable.
 
-**Alternatives considered**: Unix timestamps (rejected — reintroduces the timezone drift the edge case forbids); `Temporal` (attractive and the right long-term answer, but availability across the Hermes engine cannot be assumed at this SDK version — revisit later); Luxon or Day.js (rejected — `date-fns` is tree-shakeable and function-per-import, which keeps the bundle smaller for the handful of operations needed).
+**Alternatives considered**: Unix timestamps (rejected — reintroduces the timezone drift the edge case forbids); `Temporal` (attractive and the right long-term answer, but availability across the Hermes engine cannot be assumed at this SDK version — revisit later); Luxon or Day.js (rejected — heavier than the handful of operations needed).
+
+**Amendment (2026-08-15, during implementation)**: `date-fns` was installed and then removed without being used. Implementing `src/domain/dates/calendar-date.ts` showed that every operation needed — month keys, month arithmetic with day clamping, complete-month windows — is a few lines over explicit UTC `Date.UTC` calls, and that doing it directly is *safer* than adapting a library whose functions operate in local time, given the spec's timezone edge case. Keeping an unused dependency would violate the constitution's rule that each dependency be justified by a present need. The decision above stands in substance — calendar dates as `YYYY-MM-DD`, arithmetic through one module, all "now" values from the injected `Clock` — only the library is gone.
 
 **Verification at init (R-002)**: Confirm `Intl.NumberFormat` and `Intl.DateTimeFormat` with non-default locales work on Hermes for Android release builds, since FR-039 depends on locale-aware currency formatting. Expo builds normally include the necessary ICU data; if a release build turns out to lack it, the fallback is to enable full ICU rather than to hand-roll formatting.
 
