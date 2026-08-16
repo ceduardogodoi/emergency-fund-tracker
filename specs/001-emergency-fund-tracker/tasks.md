@@ -66,19 +66,19 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Ports
 
-- [ ] T022 [P] Define the `Clock` port in `src/domain/ports/clock.ts`
-- [ ] T023 [P] Define the `IdGenerator` port in `src/domain/ports/id-generator.ts`
-- [ ] T024 [P] Define `Result` and the `AppError` discriminated union in `src/domain/errors/index.ts`
-- [ ] T025 [P] Define the `Logger` port and the `SafeContext` type that cannot accept `Money` or `CalendarDate` in `src/domain/ports/logger.ts`
-- [ ] T026 Define all repository ports in `src/domain/ports/repositories.ts` per contracts/domain-ports.md
-- [ ] T027 Define the `UnitOfWork` port in `src/domain/ports/unit-of-work.ts`
-- [ ] T028 [P] Define the `FileGateway` and `Notifier` ports in `src/domain/ports/`
+- [X] T022 [P] Define the `Clock` port in `src/domain/ports/clock.ts`
+- [X] T023 [P] Define the `IdGenerator` port in `src/domain/ports/id-generator.ts`
+- [X] T024 [P] Define `Result` and the `AppError` discriminated union in `src/domain/errors/index.ts`
+- [X] T025 [P] Define the `Logger` port and the `SafeContext` type that cannot accept `Money` or `CalendarDate` in `src/domain/ports/logger.ts`
+- [X] T026 Define all repository ports in `src/domain/ports/repositories.ts` per contracts/domain-ports.md
+- [X] T027 Define the `UnitOfWork` port in `src/domain/ports/unit-of-work.ts`
+- [X] T028 [P] Define the `FileGateway` and `Notifier` ports in `src/domain/ports/`
 
 ### Platform adapters
 
-- [ ] T029 [P] Implement the system `Clock` in `src/platform/clock/system-clock.ts`
-- [ ] T030 [P] Implement the UUID `IdGenerator` in `src/platform/id/uuid-generator.ts`
-- [ ] T031 [P] Implement the `Logger` — console in development, no-op in release — in `src/platform/logging/logger.ts`
+- [X] T029 [P] Implement the system `Clock` in `src/platform/clock/system-clock.ts`
+- [X] T030 [P] Implement the UUID `IdGenerator` in `src/platform/id/uuid-generator.ts`
+- [X] T031 [P] Implement the `Logger` — console in development, no-op in release — in `src/platform/logging/logger.ts`
 
 ### Persistence foundation
 
