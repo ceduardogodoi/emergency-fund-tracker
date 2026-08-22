@@ -82,16 +82,16 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Persistence foundation
 
-- [ ] T032 Write a failing integration test for the `user_version` migration runner in `tests/integration/data/migration-runner.test.ts`
-- [ ] T033 Implement the forward-only migration runner in `src/data/sqlite/migrations/runner.ts`
-- [ ] T034 Write a failing integration test asserting migration 001 creates every table, constraint, and index in `tests/integration/data/migration-001.test.ts`
-- [ ] T035 Implement migration 001 creating `profile`, `goal`, `goal_change`, `ledger_entry`, `reminder_setting`, and `milestone_ack` with all constraints from data-model.md in `src/data/sqlite/migrations/001-initial.ts`
-- [ ] T036 Implement database bootstrap and the `UnitOfWork` transaction wrapper in `src/data/sqlite/database.ts`
+- [X] T032 Write a failing integration test for the `user_version` migration runner in `tests/integration/data/migration-runner.test.ts`
+- [X] T033 Implement the forward-only migration runner in `src/data/sqlite/migrations/runner.ts`
+- [X] T034 Write a failing integration test asserting migration 001 creates every table, constraint, and index in `tests/integration/data/migration-001.test.ts`
+- [X] T035 Implement migration 001 creating `profile`, `goal`, `goal_change`, `ledger_entry`, `reminder_setting`, and `milestone_ack` with all constraints from data-model.md in `src/data/sqlite/migrations/001-initial.ts`
+- [X] T036 Implement database bootstrap and the `UnitOfWork` transaction wrapper in `src/data/sqlite/database.ts`
 
 ### Test infrastructure
 
-- [ ] T037 [P] Create the in-memory test doubles — `FakeClock`, counting `IdGenerator`, array-backed repositories — in `tests/support/doubles/`
-- [ ] T038 [P] Create the `better-sqlite3` test harness that applies migrations to a fresh in-memory database in `tests/support/sqlite-harness.ts`
+- [X] T037 [P] Create the in-memory test doubles — `FakeClock`, counting `IdGenerator`, array-backed repositories — in `tests/support/doubles/`
+- [X] T038 [P] Create the `better-sqlite3` test harness that applies migrations to a fresh in-memory database in `tests/support/sqlite-harness.ts`
 
 ### Design system
 

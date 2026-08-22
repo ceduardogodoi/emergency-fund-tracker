@@ -58,6 +58,10 @@ export default defineConfig(
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': 'error',
+      // A member's visibility is part of its declaration, not something to infer from
+      // naming or call sites. TypeScript's implicit `public` hides where the contract
+      // ends and the internals begin.
+      '@typescript-eslint/explicit-member-accessibility': ['error', { accessibility: 'explicit' }],
     },
   },
 

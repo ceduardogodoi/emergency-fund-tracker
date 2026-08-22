@@ -17,7 +17,7 @@ export class SystemClock implements Clock {
    * @param nowSource Where the current moment comes from. Defaults to the real clock;
    *   inject a fixed source in tests.
    */
-  constructor(private readonly nowSource: NowSource = () => new Date()) {}
+  public constructor(private readonly nowSource: NowSource = () => new Date()) {}
 
   /**
    * Today in the device's local zone.
@@ -25,7 +25,7 @@ export class SystemClock implements Clock {
    * Uses local-time getters deliberately: the user's "today" is the date on the wall
    * behind them, not the UTC date, and near midnight those differ.
    */
-  today(): CalendarDate {
+  public today(): CalendarDate {
     const now = this.nowSource()
     const year = String(now.getFullYear()).padStart(4, '0')
     const month = String(now.getMonth() + 1).padStart(2, '0')
@@ -34,12 +34,12 @@ export class SystemClock implements Clock {
   }
 
   /** The current instant in UTC, for audit fields. */
-  now(): Instant {
+  public now(): Instant {
     return instant(this.nowSource().toISOString())
   }
 
   /** The device's IANA zone id, used only to resolve which calendar day it is. */
-  timeZone(): string {
+  public timeZone(): string {
     return Intl.DateTimeFormat().resolvedOptions().timeZone
   }
 }
