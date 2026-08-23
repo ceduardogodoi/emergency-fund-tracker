@@ -205,7 +205,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Implementation for User Story 3
 
-- [ ] T096 [P] [US3] Implement the statistics summary aggregates in `src/domain/statistics/summary.ts`
+- [ ] T096 [P] [US3] Implement the statistics summary aggregates in `src/domain/statistics/summary.ts` — also re-enable the commented-out 95% coverage threshold for `./src/domain/statistics/` in `jest.config.mjs`
 - [ ] T097 [P] [US3] Implement current and longest streak calculation in `src/domain/statistics/streaks.ts`
 - [ ] T098 [US3] Implement the per-month breakdown in `src/domain/statistics/breakdown.ts`
 - [ ] T099 [P] [US3] Implement `crossedMilestones` in `src/domain/ledger/milestones.ts`
@@ -236,7 +236,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Implementation for User Story 4
 
-- [ ] T111 [US4] Implement `calculatePace` in `src/domain/forecast/pace.ts`
+- [ ] T111 [US4] Implement `calculatePace` in `src/domain/forecast/pace.ts` — also re-enable the commented-out 95% coverage threshold for `./src/domain/forecast/` in `jest.config.mjs`
 - [ ] T112 [US4] Implement `project` and the `ForecastState` union in `src/domain/forecast/project.ts`
 - [ ] T113 [US4] Implement `requiredMonthly` in `src/domain/forecast/required.ts`
 - [ ] T114 [US4] Implement forecast hooks invalidating on any ledger or goal change in `src/features/forecast/hooks.ts`

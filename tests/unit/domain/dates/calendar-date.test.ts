@@ -3,10 +3,14 @@ import {
   calendarDate,
   compareDates,
   completeMonthKeysBefore,
+  firstDayOfMonth,
   isAfter,
+  isBefore,
   lastDayOfMonth,
   monthKey,
   monthKeysBetween,
+  nextMonth,
+  previousMonth,
 } from '@/domain/dates/calendar-date'
 
 /**
@@ -54,6 +58,14 @@ describe('calendarDate', () => {
       expect(isAfter(calendarDate('2026-08-16'), calendarDate('2026-08-15'))).toBe(true)
       expect(isAfter(calendarDate('2026-08-15'), calendarDate('2026-08-15'))).toBe(false)
     })
+
+    it('detects a past date, treating an equal date as neither before nor after', () => {
+      expect([
+        isBefore(calendarDate('2026-08-14'), calendarDate('2026-08-15')),
+        isBefore(calendarDate('2026-08-15'), calendarDate('2026-08-15')),
+        isBefore(calendarDate('2026-08-16'), calendarDate('2026-08-15')),
+      ]).toEqual([true, false, false])
+    })
   })
 
   describe('month arithmetic', () => {
@@ -73,6 +85,14 @@ describe('calendarDate', () => {
       expect(lastDayOfMonth('2026-02')).toBe('2026-02-28')
       expect(lastDayOfMonth('2024-02')).toBe('2024-02-29')
       expect(lastDayOfMonth('2026-08')).toBe('2026-08-31')
+    })
+
+    it('steps back a month, rolling into December of the previous year', () => {
+      expect([previousMonth('2026-03'), previousMonth('2026-01')]).toEqual(['2026-02', '2025-12'])
+    })
+
+    it('steps forward a month, rolling into January of the next year', () => {
+      expect([nextMonth('2026-03'), nextMonth('2026-12')]).toEqual(['2026-04', '2027-01'])
     })
   })
 
@@ -107,6 +127,20 @@ describe('calendarDate', () => {
 
     it('treats the last day of a month as still in progress', () => {
       expect(completeMonthKeysBefore(calendarDate('2026-08-31'), 1)).toEqual(['2026-07'])
+    })
+
+    it.each([0, -1])('returns nothing when %i months are asked for', (count) => {
+      expect(completeMonthKeysBefore(calendarDate('2026-08-15'), count)).toEqual([])
+    })
+  })
+
+  describe('month boundaries', () => {
+    it('finds the first day of a month, which anchors a period range', () => {
+      expect(firstDayOfMonth('2026-03')).toBe('2026-03-01')
+    })
+
+    it('rejects a malformed month key rather than deriving a date from nonsense', () => {
+      expect(() => lastDayOfMonth('2026-3')).toThrow(RangeError)
     })
   })
 })

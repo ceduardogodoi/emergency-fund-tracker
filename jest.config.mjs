@@ -70,7 +70,12 @@ export default {
     global: { statements: 80, branches: 80, functions: 80, lines: 80 },
     './src/domain/money/': { statements: 95, branches: 95, functions: 95, lines: 95 },
     './src/domain/dates/': { statements: 95, branches: 95, functions: 95, lines: 95 },
-    './src/domain/statistics/': { statements: 95, branches: 95, functions: 95, lines: 95 },
-    './src/domain/forecast/': { statements: 95, branches: 95, functions: 95, lines: 95 },
+    // The constitution names four modules for the 95% floor. The remaining two do not
+    // exist yet, and Jest treats a threshold whose path matches no file as a hard
+    // failure rather than a no-op — which would leave CI red for every commit until
+    // Phase 5. Re-enable each alongside the task that creates it: statistics at T096,
+    // forecast at T111. Both tasks carry a reminder.
+    // './src/domain/statistics/': { statements: 95, branches: 95, functions: 95, lines: 95 },
+    // './src/domain/forecast/': { statements: 95, branches: 95, functions: 95, lines: 95 },
   },
 }

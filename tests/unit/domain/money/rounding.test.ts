@@ -29,6 +29,10 @@ describe('rounding policy', () => {
     it('rejects division by zero', () => {
       expect(() => divideToAmount(money(100), 0)).toThrow()
     })
+
+    it('rejects a fractional divisor, which no count of months or entries can be', () => {
+      expect(() => divideToAmount(money(100), 2.5)).toThrow(RangeError)
+    })
   })
 
   describe('divideToWholeMonths — rounds up', () => {

@@ -2,7 +2,10 @@ import {
   add,
   compare,
   isNegative,
+  isPositive,
   isZero,
+  maxOf,
+  minOf,
   money,
   multiply,
   subtract,
@@ -81,6 +84,37 @@ describe('money', () => {
       expect(compare(money(100), money(200))).toBeLessThan(0)
       expect(compare(money(200), money(100))).toBeGreaterThan(0)
       expect(compare(money(100), money(100))).toBe(0)
+    })
+
+    it('identifies a positive amount, which a pace must be to project a date', () => {
+      expect([isPositive(money(1)), isPositive(zero), isPositive(money(-1))]).toEqual([
+        true,
+        false,
+        false,
+      ])
+    })
+  })
+
+  describe('selection', () => {
+    it('takes the larger amount, which is how remaining is floored at zero', () => {
+      expect([maxOf(money(100), money(200)), maxOf(money(200), money(100))]).toEqual([
+        money(200),
+        money(200),
+      ])
+    })
+
+    it('takes the smaller amount', () => {
+      expect([minOf(money(100), money(200)), minOf(money(200), money(100))]).toEqual([
+        money(100),
+        money(100),
+      ])
+    })
+
+    it('returns the shared value when both amounts are equal', () => {
+      expect([maxOf(money(100), money(100)), minOf(money(100), money(100))]).toEqual([
+        money(100),
+        money(100),
+      ])
     })
   })
 })
