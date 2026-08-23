@@ -96,8 +96,8 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 ### Design system
 
 - [ ] T039 [P] Write failing unit tests for the money and date formatters in `tests/unit/ui/format.test.ts`
-- [ ] T040 Implement the single money and date formatters over `Intl` in `src/ui/format/index.ts`
-- [ ] T041 [P] Create the semantic design tokens — spacing, color, typography, radii, elevation — in `src/ui/tokens/index.ts`
+- [X] T040 Implement the single money and date formatters over `Intl` in `src/ui/format/index.ts`
+- [X] T041 [P] Create the semantic design tokens — spacing, color, typography, radii, elevation — in `src/ui/tokens/index.ts`
 - [ ] T042 Write the failing test asserting every token color pair meets 4.5:1 contrast in `tests/unit/ui/tokens-contrast.test.ts`
 - [ ] T043 [P] Implement the `Screen`, `Text`, `Button`, and `Card` primitives in `src/ui/primitives/`
 - [ ] T044 [P] Implement the `Field` and `MoneyInput` primitives, with `MoneyInput` emitting `Money` in minor units, in `src/ui/primitives/`

@@ -30,6 +30,14 @@ const nodeTransform = {
   '^.+\\.[jt]sx?$': ['babel-jest', { presets: ['babel-preset-expo'] }],
 }
 
+/**
+ * Runs before every project, pinning the timezone so a UTC assumption fails in CI rather
+ * than on a user's device. See the file itself for why it is not UTC.
+ *
+ * @type {NonNullable<import('jest').Config['setupFiles']>}
+ */
+const setupFiles = ['<rootDir>/tests/support/set-timezone.cjs']
+
 /** @type {import('jest').Config} */
 export default {
   projects: [
@@ -37,6 +45,7 @@ export default {
       displayName: 'unit',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
+      setupFiles,
       transform: nodeTransform,
       moduleNameMapper,
     },
@@ -44,6 +53,7 @@ export default {
       displayName: 'integration',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
+      setupFiles,
       transform: nodeTransform,
       moduleNameMapper,
     },
@@ -51,6 +61,7 @@ export default {
       displayName: 'component',
       preset: 'jest-expo',
       testMatch: ['<rootDir>/tests/component/**/*.test.tsx'],
+      setupFiles,
       moduleNameMapper,
     },
   ],
