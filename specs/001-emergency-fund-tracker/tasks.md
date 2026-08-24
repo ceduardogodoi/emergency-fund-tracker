@@ -107,7 +107,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Application shell
 
-- [ ] T048 Implement the composition root wiring every port to its adapter in `src/app/composition-root.tsx`
+- [ ] T048 Implement the composition root wiring every port to its adapter in `src/app/composition-root.tsx` — the formatters take BRL per research decision D-019; there is no currency picker in this release
 - [ ] T049 Configure the TanStack Query client, the query-key registry, and the `ViewState` mapping in `src/app/query.ts`
 - [ ] T050 Implement the Expo Router root layout with providers in `app/_layout.tsx`
 
@@ -139,7 +139,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [ ] T059 [P] [US1] Implement `ProfileRepository` in `src/data/sqlite/repositories/profile-repository.ts`
 - [ ] T060 [US1] Implement `GoalRepository` including `recordChange` and `listChanges` in `src/data/sqlite/repositories/goal-repository.ts`
 - [ ] T061 [US1] Implement the goal query and mutation hooks with invalidation in `src/features/goal/hooks.ts`
-- [ ] T062 [P] [US1] Build the onboarding expenses screen with inline validation in `app/onboarding/expenses.tsx`
+- [ ] T062 [P] [US1] Build the onboarding expenses screen with inline validation in `app/onboarding/expenses.tsx` — writes the profile with BRL per research decision D-019, which asks the user nothing
 - [ ] T063 [P] [US1] Build the onboarding level screen showing who each level suits in `app/onboarding/level.tsx`
 - [ ] T064 [US1] Build the target preview showing the derivation, with manual override, in `src/features/goal/target-preview.tsx`
 - [ ] T065 [US1] Build the Home screen showing the target in `app/index.tsx`

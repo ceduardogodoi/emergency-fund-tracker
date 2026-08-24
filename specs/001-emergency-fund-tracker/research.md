@@ -162,6 +162,26 @@ This document resolves every unknown in the plan's Technical Context. Each decis
 
 **Spec reconciliation**: FR-026 says "the most recent 6 calendar months". This decision refines that to complete months and should be reflected back into the spec text so the acceptance tests and the implementation agree.
 
+## D-018: One theme
+
+**Decision**: The app ships one light palette. No dark theme, no theme provider switching between palettes, no `useColorScheme`. Tokens are named for the role a colour plays rather than the colour it is, so the palette can gain a second set of values later without any component changing.
+
+**Rationale**: A dark theme appears nowhere in spec.md — no functional requirement, no success criterion, no user story mentions it. Building the indirection for a second palette before one is asked for is exactly the speculative generality the simplicity principle rejects, and it doubles the surface the contrast audit has to cover. Semantic naming is the cheap half of the preparation and is already done; the expensive half can wait until there is a requirement.
+
+**Alternatives considered**: Light and dark from the start (rejected — no requirement, and it doubles every contrast pair to audit); a theme provider with a single theme registered (rejected — the indirection without the benefit, and every component pays the lookup cost to support a case that does not exist).
+
+## D-019: A single currency for this release
+
+**Decision**: Every amount is BRL. The currency is not chosen during onboarding and cannot be changed in settings. The `profile` row still carries a currency column and `Money` still carries a currency code, so the value is stored rather than assumed, but exactly one value is ever written in this release.
+
+**Rationale**: Currency selection is a feature in its own right, not a field — it needs a picker, a migration path for existing amounts, and a decision about what happens to history when the currency changes. None of that is specified, and the app is device-only and single-user, so a fixed currency is not a limitation anyone hits by accident. Keeping the column and the branded code means adding selection later is a screen plus a migration, not a data-model change.
+
+**Reconciliation with D-016**: D-016 says currency formatting is locale-aware from the device locale. That still holds for *presentation* — grouping separators and symbol placement follow the device — but the currency *code* is fixed at BRL rather than derived from the locale. A device set to another locale renders BRL amounts in that locale's conventions, which is the correct behaviour for an app whose amounts are genuinely in BRL.
+
+**Alternatives considered**: Deriving the currency from the device locale (rejected — a user travelling or with an English-locale device would silently reinterpret their balance in another currency); asking during onboarding (rejected — adds a step to the critical path for a choice with one answer in this release); dropping the currency column entirely (rejected — removes the record of what the stored integers mean, and makes adding selection a data migration rather than a screen).
+
+**Resolves**: analyze finding C1.
+
 ## Open items carried into implementation
 
 | ID | Item | Resolved by |
