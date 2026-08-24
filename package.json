@@ -16,8 +16,9 @@
     "test:unit": "jest --selectProjects unit",
     "test:integration": "jest --selectProjects integration",
     "test:component": "jest --selectProjects component",
-    "test:a11y": "jest --selectProjects component --testPathPatterns \"a11y|contrast|text-scale|chart-frame\"",
+    "test:a11y": "jest --selectProjects component --testPathPattern \"a11y|contrast|text-scale|chart-frame\"",
     "test:coverage": "jest --coverage",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage",
     "e2e": "maestro test e2e",
     "seed": "node --experimental-strip-types scripts/seed.ts"
   },

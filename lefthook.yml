@@ -1,12 +1,9 @@
-# Constitution Principle I: the gate runs identically here and in CI, and CI is the authority.
+# Constitution Principle I: the gate runs identically here and in CI, and CI is the
+# authority. Both sides run `npm run verify` rather than listing the steps twice —
+# the two lists drifted once already (this hook ran `test`, CI ran `test:coverage`,
+# and a coverage regression reached main because of it).
 pre-commit:
   parallel: false
   commands:
-    format:
-      run: npm run format:check
-    lint:
-      run: npm run lint
-    typecheck:
-      run: npm run typecheck
-    test:
-      run: npm test
+    verify:
+      run: npm run verify

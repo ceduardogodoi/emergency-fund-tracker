@@ -23,8 +23,6 @@ jobs:
 
       - run: npm ci
 
-      # Identical to the pre-commit hook. Warnings are errors.
-      - run: npm run format:check
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run test:coverage
+      # The same command the pre-commit hook runs, so the gate is defined in one
+      # place and cannot drift. Warnings are errors.
+      - run: npm run verify
