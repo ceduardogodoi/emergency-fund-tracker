@@ -107,9 +107,9 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Application shell
 
-- [ ] T048 Implement the composition root wiring every port to its adapter in `src/app/composition-root.tsx` — the formatters take BRL per research decision D-019; there is no currency picker in this release
-- [ ] T049 Configure the TanStack Query client, the query-key registry, and the `ViewState` mapping in `src/app/query.ts`
-- [ ] T050 Implement the Expo Router root layout with providers in `app/_layout.tsx`
+- [X] T048 Implement the composition root wiring every port to its adapter in `src/app/composition-root.ts` — the formatters take BRL per research decision D-019; there is no currency picker in this release. Split by dependency direction into `src/app/services.ts` (the port bundle), `src/app/services-context.tsx` (provider and hook), and `src/app/composition-root.ts` (the wiring, and the only module under `src/` importing a native Expo module); `.ts` rather than `.tsx` because the wiring holds no JSX. `unitOfWork` is deferred to T059 — see the note there
+- [X] T049 Configure the TanStack Query client, the query-key registry, and the `ViewState` mapping in `src/app/query.ts`
+- [X] T050 Implement the Expo Router root layout with providers in `app/_layout.tsx`
 
 **Checkpoint**: Foundation ready — user story implementation can now begin
 
@@ -136,7 +136,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 - [ ] T057 [P] [US1] Implement the four conservativeness levels with their explanations in `src/domain/goal/levels.ts`
 - [ ] T058 [US1] Implement `calculateTarget` and the calculated-target invariant in `src/domain/goal/target.ts`
-- [ ] T059 [P] [US1] Implement `ProfileRepository` in `src/data/sqlite/repositories/profile-repository.ts`
+- [ ] T059 [P] [US1] Implement `ProfileRepository` in `src/data/sqlite/repositories/profile-repository.ts` — also closes two gaps T048 left open, because this is the first task that needs a real database on device: implement the `expo-sqlite` adapter for the `SqliteDatabase` port in `src/data/sqlite/driver.ts` (no task covered it; only the interface and the `better-sqlite3` test harness exist), and add `unitOfWork` to `Services` in `src/app/services.ts`, wiring it through `createUnitOfWork` in the composition root
 - [ ] T060 [US1] Implement `GoalRepository` including `recordChange` and `listChanges` in `src/data/sqlite/repositories/goal-repository.ts`
 - [ ] T061 [US1] Implement the goal query and mutation hooks with invalidation in `src/features/goal/hooks.ts`
 - [ ] T062 [P] [US1] Build the onboarding expenses screen with inline validation in `app/onboarding/expenses.tsx` — writes the profile with BRL per research decision D-019, which asks the user nothing
