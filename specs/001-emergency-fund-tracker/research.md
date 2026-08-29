@@ -176,11 +176,21 @@ This document resolves every unknown in the plan's Technical Context. Each decis
 
 **Rationale**: Currency selection is a feature in its own right, not a field — it needs a picker, a migration path for existing amounts, and a decision about what happens to history when the currency changes. None of that is specified, and the app is device-only and single-user, so a fixed currency is not a limitation anyone hits by accident. Keeping the column and the branded code means adding selection later is a screen plus a migration, not a data-model change.
 
-**Reconciliation with D-016**: D-016 says currency formatting is locale-aware from the device locale. That still holds for *presentation* — grouping separators and symbol placement follow the device — but the currency *code* is fixed at BRL rather than derived from the locale. A device set to another locale renders BRL amounts in that locale's conventions, which is the correct behaviour for an app whose amounts are genuinely in BRL.
+**Reconciliation with D-016 and D-020**: the currency *code* is fixed at BRL rather than derived from the device locale. D-020 then pins the formatting *locale* to pt-BR as well, so both halves of an amount — which currency it is, and how it is written — are constants in this release rather than device reads.
 
 **Alternatives considered**: Deriving the currency from the device locale (rejected — a user travelling or with an English-locale device would silently reinterpret their balance in another currency); asking during onboarding (rejected — adds a step to the critical path for a choice with one answer in this release); dropping the currency column entirely (rejected — removes the record of what the stored integers mean, and makes adding selection a data migration rather than a screen).
 
 **Resolves**: analyze finding C1.
+
+## D-020: pt-BR as the only language, and the formatting locale pinned to match
+
+**Decision**: The interface ships in pt-BR only. `Intl` formatting is pinned to the `pt-BR` locale rather than read from the device, so amounts and dates render in Brazilian conventions on every device regardless of its system language. Identifiers, comments, and documentation stay in English.
+
+**Rationale**: The release targets Brazil and BRL (D-019), so a single language matches the audience. Pinning the formatting locale is what keeps the screen internally consistent: with Portuguese text and device-derived formatting, a phone set to en-US would render `R$1,234.56` beside Portuguese labels — the decimal comma and the thousands point would disagree with every number the user writes by hand. Formatting and language are one decision, not two.
+
+**Reconciliation with D-016**: D-016 said number, currency, and date formatting are locale-aware from the device locale. That is superseded here. The mechanism is unchanged — `Intl` still does the work, and `createFormatters` still takes a locale — but the locale is now a constant rather than a device read. Adding language selection later means passing a different value to a function that already accepts one.
+
+**Alternatives considered**: Device locale for formatting with pt-BR text (rejected — internally inconsistent, as above); English text with BRL amounts (rejected — the audience implied by a BRL-only release reads Portuguese); shipping both languages (rejected — D-016's reasoning stands, no second language is requested).
 
 ## Open items carried into implementation
 

@@ -30,11 +30,11 @@ Every screen reads its data through a TanStack Query hook that maps directly ont
 
 ## Design tokens
 
-`src/ui/tokens/` is the only place a style value exists. Spacing, color, typography, radii, and elevation are defined there and consumed through the theme provider.
+`src/ui/tokens/` is the only place a style value exists. Spacing, color, typography, radii, and elevation are defined there and imported directly. There is no theme provider: research decision D-018 ships one light theme, so a provider would be indirection with a single value flowing through it. Semantic naming is what keeps a second theme a change to the token module rather than to every component.
 
 An ESLint rule fails the build on any color literal, hex value, or raw numeric spacing outside that directory. This is the mechanical form of Principle VI's ban on hard-coded style values; without the rule, the tokens become a suggestion within a month.
 
-Tokens are semantic, not literal — `color.surface.raised`, `color.text.secondary`, `color.state.negative`. A token named after what it looks like rather than what it means is how a design system loses its ability to change.
+Tokens are semantic, not literal — `color.background.card`, `color.text.secondary`, `color.filled.negative`. A token named after what it looks like rather than what it means is how a design system loses its ability to change.
 
 ## Primitives
 
@@ -58,7 +58,7 @@ FR-049 requires WCAG 2.1 AA and FR-050 requires usability at the largest support
 
 - Text contrast ≥ 4.5:1, and ≥ 3:1 for large text and meaningful non-text elements. Token pairs are contrast-checked in a unit test, so a palette edit that breaks contrast fails CI rather than shipping.
 - Every interactive element has an accessible label and role. Icon-only buttons always carry an explicit label.
-- Minimum touch target 44×44pt, owned by `Button` and `Field` rather than re-specified per screen.
+- Minimum touch target 48dp, owned by `Button` and `Field` rather than re-specified per screen. WCAG 2.1 sets no target-size requirement at AA — SC 2.5.5 is AAA — so the binding numbers are the platforms': iOS asks for 44pt and Material for 48dp. One app ships to both, and the stricter of the two satisfies both, so the token is 48.
 - Color is never the only signal. Contributions and withdrawals differ by icon, sign, and label — not only by green and red (FR-014).
 - Layouts reflow at the largest dynamic text size with nothing clipped and no control unreachable. Every screen has a component test at the maximum text scale.
 - Focus order follows visual order; modals trap focus and return it on dismiss.

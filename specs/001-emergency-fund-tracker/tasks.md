@@ -99,11 +99,11 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [X] T040 Implement the single money and date formatters over `Intl` in `src/ui/format/index.ts`
 - [X] T041 [P] Create the semantic design tokens — spacing, color, typography, radii, elevation — in `src/ui/tokens/index.ts`
 - [X] T042 Write the failing test asserting every token color pair meets 4.5:1 contrast in `tests/unit/ui/tokens-contrast.test.ts`
-- [ ] T043 [P] Implement the `Screen`, `Text`, `Button`, and `Card` primitives in `src/ui/primitives/`
-- [ ] T044 [P] Implement the `Field` and `MoneyInput` primitives, with `MoneyInput` emitting `Money` in minor units, in `src/ui/primitives/`
-- [ ] T045 Implement the `StateView` primitive with a required `empty` renderer and no default, in `src/ui/primitives/state-view.tsx`
-- [ ] T046 [P] Implement the `ConfirmSheet` primitive in `src/ui/primitives/confirm-sheet.tsx`
-- [ ] T047 [P] Create the centralized user-facing strings module in `src/ui/strings/index.ts`
+- [X] T043 [P] Implement the `Screen`, `Text`, `Button`, and `Card` primitives in `src/ui/primitives/`
+- [X] T044 [P] Implement the `Field` and `MoneyInput` primitives, with `MoneyInput` emitting `Money` in minor units, in `src/ui/primitives/`
+- [X] T045 Implement the `StateView` primitive with a required `empty` renderer and no default, in `src/ui/primitives/state-view.tsx`
+- [X] T046 [P] Implement the `ConfirmSheet` primitive in `src/ui/primitives/confirm-sheet.tsx`
+- [X] T047 [P] Create the centralized user-facing strings module in `src/ui/strings/index.ts`
 
 ### Application shell
 

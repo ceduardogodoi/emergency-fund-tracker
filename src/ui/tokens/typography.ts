@@ -1,3 +1,5 @@
+import type { TextStyle } from 'react-native'
+
 /**
  * Type styles, named for the job each does rather than its size.
  *
@@ -31,4 +33,4 @@ export const typography = {
  * point and becomes materially harder to scan — which matters more here than in most apps,
  * because comparing amounts down a history list is the primary reading task.
  */
-export const tabularNumbers = { fontVariant: ['tabular-nums'] } as const
+export const tabularNumbers: TextStyle = { fontVariant: ['tabular-nums'] }

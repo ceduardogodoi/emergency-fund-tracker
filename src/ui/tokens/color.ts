@@ -66,4 +66,15 @@ export const color = {
    * operated may use it.
    */
   divider: '#D8DEE4',
+
+  /**
+   * The dim drawn over the page behind a modal sheet.
+   *
+   * Eight-digit hex: the alpha is the whole point, since the scrim has to read as the same
+   * screen pushed back rather than as a new one. Outside the audited groups because it is
+   * never a foreground — nothing is drawn on it, and the sheet above it brings its own
+   * background, whose pairs are audited. Its own contrast obligation is the opposite of
+   * text's: it must be dark enough that the sheet is clearly in front.
+   */
+  scrim: '#00000099',
 } as const
