@@ -125,8 +125,8 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 > Write these FIRST and confirm they fail for the intended reason before implementing
 
-- [ ] T051 [P] [US1] Unit tests for `calculateTarget` and level-to-months mapping in `tests/unit/domain/goal/target.test.ts`
-- [ ] T052 [P] [US1] Unit tests for goal validation — zero, negative, and non-numeric expenses, custom months outside 1–24, zero target — in `tests/unit/domain/goal/validation.test.ts`
+- [X] T051 [P] [US1] Unit tests for `calculateTarget` and level-to-months mapping in `tests/unit/domain/goal/target.test.ts`
+- [X] T052 [P] [US1] Unit tests for goal validation — zero, negative, and non-numeric expenses, custom months outside 1–24, zero target — in `tests/unit/domain/goal/validation.test.ts`
 - [ ] T053 [P] [US1] Integration tests for `ProfileRepository` including the single-row constraint in `tests/integration/data/profile-repository.test.ts`
 - [ ] T054 [P] [US1] Integration tests for `GoalRepository` including the `goal_change` audit row on every revision in `tests/integration/data/goal-repository.test.ts`
 - [ ] T055 [P] [US1] Component tests for the onboarding expenses and level screens in `tests/component/onboarding.test.tsx`
@@ -134,8 +134,8 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Implementation for User Story 1
 
-- [ ] T057 [P] [US1] Implement the four conservativeness levels with their explanations in `src/domain/goal/levels.ts`
-- [ ] T058 [US1] Implement `calculateTarget` and the calculated-target invariant in `src/domain/goal/target.ts`
+- [X] T057 [P] [US1] Implement the four conservativeness levels with their explanations in `src/domain/goal/levels.ts` — the durations live there; the names and FR-003 explanations are user-facing text and live in `src/ui/strings/strings.ts`, which the domain may not import. `tests/unit/ui/strings.test.ts` asserts the two stay in step
+- [X] T058 [US1] Implement `calculateTarget` and the calculated-target invariant in `src/domain/goal/target.ts` — also adds `src/domain/goal/validation.ts`, which T052 tests but no task named
 - [ ] T059 [P] [US1] Implement `ProfileRepository` in `src/data/sqlite/repositories/profile-repository.ts` — also closes two gaps T048 left open, because this is the first task that needs a real database on device: implement the `expo-sqlite` adapter for the `SqliteDatabase` port in `src/data/sqlite/driver.ts` (no task covered it; only the interface and the `better-sqlite3` test harness exist), and add `unitOfWork` to `Services` in `src/app/services.ts`, wiring it through `createUnitOfWork` in the composition root
 - [ ] T060 [US1] Implement `GoalRepository` including `recordChange` and `listChanges` in `src/data/sqlite/repositories/goal-repository.ts`
 - [ ] T061 [US1] Implement the goal query and mutation hooks with invalidation in `src/features/goal/hooks.ts`

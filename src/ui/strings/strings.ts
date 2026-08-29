@@ -24,6 +24,59 @@ export const strings = {
     retry: 'Tentar novamente',
   },
 
+  /**
+   * The conservativeness levels, named and explained (FR-002, FR-003).
+   *
+   * Keyed by `LevelKey` so the level screen renders whatever the domain offers, rather
+   * than holding its own list that could fall out of step with `COVERAGE_MONTHS`. The
+   * durations are not repeated here — they come from the domain, formatted at the screen.
+   *
+   * FR-003 asks each explanation to say *who* the level suits rather than what it is. A
+   * user picking between 3 and 12 months already knows the difference is duration; what
+   * they cannot tell is which one describes them.
+   */
+  levels: {
+    lean: {
+      name: 'Enxuta',
+      explanation: 'Para quem tem renda estável, poucos dependentes e outras reservas à mão.',
+    },
+    balanced: {
+      name: 'Equilibrada',
+      explanation:
+        'O ponto de partida mais comum: cobre a maioria das situações sem exigir anos guardando.',
+    },
+    cautious: {
+      name: 'Cautelosa',
+      explanation:
+        'Para renda variável, trabalho autônomo, ou quando outras pessoas dependem de você.',
+    },
+    maximum: {
+      name: 'Máxima',
+      explanation:
+        'Para renda instável, trabalho por projeto, ou para quem prefere a maior folga possível.',
+    },
+    custom: {
+      name: 'Personalizada',
+      explanation: 'Escolha a duração que faz sentido para a sua situação.',
+    },
+  },
+
+  /**
+   * The help text under the custom duration input.
+   *
+   * A template taking the bounds rather than prose naming them, so the sentence cannot
+   * contradict `MINIMUM_COVERAGE_MONTHS` and `MAXIMUM_COVERAGE_MONTHS`. It sits outside
+   * `levels` because it belongs to the control that enforces the range, not to the level
+   * that offers it — and because every entry in `levels` has the same shape, which is what
+   * lets the level screen render them by iterating.
+   *
+   * @param minimum The shortest permitted duration.
+   * @param maximum The longest permitted duration.
+   * @returns The help text for the duration input.
+   */
+  coverageRangeHelp: (minimum: number, maximum: number): string =>
+    `Entre ${minimum} e ${maximum} meses.`,
+
   /** The states any data-backed view can be in, before its own content has anything to say. */
   state: {
     loading: 'Carregando',
