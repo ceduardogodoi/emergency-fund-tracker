@@ -127,8 +127,8 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 - [X] T051 [P] [US1] Unit tests for `calculateTarget` and level-to-months mapping in `tests/unit/domain/goal/target.test.ts`
 - [X] T052 [P] [US1] Unit tests for goal validation — zero, negative, and non-numeric expenses, custom months outside 1–24, zero target — in `tests/unit/domain/goal/validation.test.ts`
-- [ ] T053 [P] [US1] Integration tests for `ProfileRepository` including the single-row constraint in `tests/integration/data/profile-repository.test.ts`
-- [ ] T054 [P] [US1] Integration tests for `GoalRepository` including the `goal_change` audit row on every revision in `tests/integration/data/goal-repository.test.ts`
+- [X] T053 [P] [US1] Integration tests for `ProfileRepository` including the single-row constraint in `tests/integration/data/profile-repository.test.ts`
+- [X] T054 [P] [US1] Integration tests for `GoalRepository` including the `goal_change` audit row on every revision in `tests/integration/data/goal-repository.test.ts`
 - [ ] T055 [P] [US1] Component tests for the onboarding expenses and level screens in `tests/component/onboarding.test.tsx`
 - [ ] T056 [P] [US1] Maestro flow covering the Story 1 journey in `e2e/us1-set-target.yaml`
 
@@ -136,8 +136,8 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 - [X] T057 [P] [US1] Implement the four conservativeness levels with their explanations in `src/domain/goal/levels.ts` — the durations live there; the names and FR-003 explanations are user-facing text and live in `src/ui/strings/strings.ts`, which the domain may not import. `tests/unit/ui/strings.test.ts` asserts the two stay in step
 - [X] T058 [US1] Implement `calculateTarget` and the calculated-target invariant in `src/domain/goal/target.ts` — also adds `src/domain/goal/validation.ts`, which T052 tests but no task named
-- [ ] T059 [P] [US1] Implement `ProfileRepository` in `src/data/sqlite/repositories/profile-repository.ts` — also closes two gaps T048 left open, because this is the first task that needs a real database on device: implement the `expo-sqlite` adapter for the `SqliteDatabase` port in `src/data/sqlite/driver.ts` (no task covered it; only the interface and the `better-sqlite3` test harness exist), and add `unitOfWork` to `Services` in `src/app/services.ts`, wiring it through `createUnitOfWork` in the composition root
-- [ ] T060 [US1] Implement `GoalRepository` including `recordChange` and `listChanges` in `src/data/sqlite/repositories/goal-repository.ts`
+- [X] T059 [P] [US1] Implement `ProfileRepository` in `src/data/sqlite/repositories/profile-repository.ts` — also closed the two gaps T048 left open: the `expo-sqlite` adapter for the `SqliteDatabase` port now lives in `src/data/sqlite/expo-driver.ts` (no task had covered it), and `Services` carries `unitOfWork`, wired through `createUnitOfWork` and `createRepositoriesFactory`. `createServices` now takes an open database and `openServices` opens one, so the root layout boots through `useBootstrap` and renders the four-state contract over its own startup
+- [X] T060 [US1] Implement `GoalRepository` including `recordChange` and `listChanges` in `src/data/sqlite/repositories/goal-repository.ts`
 - [ ] T061 [US1] Implement the goal query and mutation hooks with invalidation in `src/features/goal/hooks.ts`
 - [ ] T062 [P] [US1] Build the onboarding expenses screen with inline validation in `app/onboarding/expenses.tsx` — writes the profile with BRL per research decision D-019, which asks the user nothing
 - [ ] T063 [P] [US1] Build the onboarding level screen showing who each level suits in `app/onboarding/level.tsx`
@@ -171,7 +171,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [ ] T075 [P] [US2] Implement the `LedgerEntry` model and its validation rules in `src/domain/ledger/entry.ts`
 - [ ] T076 [US2] Implement `calculateBalance`, excluding future-dated entries, in `src/domain/ledger/balance.ts`
 - [ ] T077 [US2] Implement `summarizeProgress` in `src/domain/ledger/progress.ts`
-- [ ] T078 [US2] Implement `LedgerRepository` in `src/data/sqlite/repositories/ledger-repository.ts`
+- [ ] T078 [US2] Implement `LedgerRepository` in `src/data/sqlite/repositories/ledger-repository.ts` — and delete its placeholder from `src/data/sqlite/repositories/pending.ts`, which fails every call so an unimplemented repository can never be mistaken for an empty fund
 - [ ] T079 [US2] Implement the ledger query hooks and mutation invalidation in `src/features/entries/hooks.ts`
 - [ ] T080 [P] [US2] Build the opening balance onboarding screen, skippable, in `app/onboarding/opening-balance.tsx`
 - [ ] T081 [P] [US2] Build the add contribution screen in `app/entries/contribute.tsx`
@@ -209,7 +209,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [ ] T097 [P] [US3] Implement current and longest streak calculation in `src/domain/statistics/streaks.ts`
 - [ ] T098 [US3] Implement the per-month breakdown in `src/domain/statistics/breakdown.ts`
 - [ ] T099 [P] [US3] Implement `crossedMilestones` in `src/domain/ledger/milestones.ts`
-- [ ] T100 [US3] Implement `MilestoneRepository` in `src/data/sqlite/repositories/milestone-repository.ts`
+- [ ] T100 [US3] Implement `MilestoneRepository` in `src/data/sqlite/repositories/milestone-repository.ts` — and delete its placeholder from `src/data/sqlite/repositories/pending.ts`, which fails every call so an unimplemented repository can never be mistaken for an empty fund
 - [ ] T101 [US3] Implement `ChartFrame` rendering the chart, a text summary, and a screen-reader data table from the same data in `src/ui/components/chart-frame.tsx`
 - [ ] T102 [P] [US3] Build the balance-over-time chart in `src/features/statistics/balance-chart.tsx`
 - [ ] T103 [P] [US3] Build the month-by-month bar chart in `src/features/statistics/month-chart.tsx`
@@ -288,7 +288,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 ### Implementation for User Story 6
 
 - [ ] T130 [US6] Implement the reminder schedule model in `src/domain/reminders/schedule.ts`
-- [ ] T131 [US6] Implement `ReminderRepository` in `src/data/sqlite/repositories/reminder-repository.ts`
+- [ ] T131 [US6] Implement `ReminderRepository` in `src/data/sqlite/repositories/reminder-repository.ts` — and delete its placeholder from `src/data/sqlite/repositories/pending.ts`, which fails every call so an unimplemented repository can never be mistaken for an empty fund
 - [ ] T132 [US6] Implement the `Notifier` adapter over `expo-notifications`, scheduling local notifications only, in `src/platform/notifications/notifier.ts`
 - [ ] T133 [US6] Build the reminders settings screen with the permission request and denial explanation in `app/settings/reminders.tsx`
 - [ ] T134 [US6] Resolve R-003 — verify scheduling behavior after device restart and force-quit and confirm Android exact-alarm requirements, recording findings in `specs/001-emergency-fund-tracker/research.md`

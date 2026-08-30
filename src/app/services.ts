@@ -1,6 +1,7 @@
 import type { Clock } from '@/domain/ports/clock'
 import type { IdGenerator } from '@/domain/ports/id-generator'
 import type { Logger } from '@/domain/ports/logger'
+import type { UnitOfWork } from '@/domain/ports/unit-of-work'
 import type { Formatters } from '@/ui/format'
 
 /**
@@ -23,11 +24,13 @@ export interface Services {
   readonly logger: Logger
   /** The single way stored values become text (the ui-contract's copy rule). */
   readonly format: Formatters
+  /**
+   * The only door to storage. Every read and write runs inside one of its transactions.
+   *
+   * The repository set is reached through here rather than exposed alongside it, so no
+   * caller can hold a repository outside a transaction — which is what would let two
+   * writes half-succeed. Not every repository behind it is implemented yet; the ones that
+   * are not fail loudly rather than answering. See `src/data/sqlite/repositories/pending.ts`.
+   */
+  readonly unitOfWork: UnitOfWork
 }
-
-/*
- * Not yet here: `unitOfWork`, and with it the repository set. Nothing implements the
- * repository ports until T059, and a factory that threw when called would be worse than
- * the omission — it would compile, wire cleanly, and fail at the first read. The field is
- * additive when the first repository lands; T059 carries the reminder.
- */

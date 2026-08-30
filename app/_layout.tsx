@@ -4,36 +4,64 @@ import { StatusBar } from 'expo-status-bar'
 import { useState, type ReactNode } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
-import { createServices } from '@/app/composition-root'
 import { createQueryClient } from '@/app/query'
 import { ServicesProvider } from '@/app/services-context'
+import { useBootstrap } from '@/app/use-bootstrap'
+import { ErrorState, LoadingState, Screen, StateView } from '@/ui/primitives'
 import { color, typography } from '@/ui/tokens'
 
 /**
- * The root of every screen in the app, and the only module that builds the services.
+ * The root of every screen in the app.
  *
- * @returns The provider stack wrapping the router
+ * Nothing below this renders until the database is open and migrated, because every screen
+ * reads through the services and a provider holding none would be a lie the type system
+ * cannot catch. The wait is the four-state contract applied to the app itself — the same
+ * `StateView` every other view uses, with the same loading and error treatments.
+ *
+ * @returns The provider stack wrapping the router, or the boot state until it is ready
  */
 export default function RootLayout(): ReactNode {
   // The initializer is passed, not called: React runs it once on mount rather than on
-  // every render. The setters are deliberately unused — `useState` is here for its
+  // every render. The setter is deliberately unused — `useState` is here for its
   // create-once guarantee, not for state. `useMemo` would not do: React documents it as a
   // performance hint that may discard its cached value, and a discarded query client is
-  // every screen's data silently evicted. Building either inline would hand every render a
-  // new clock and an empty cache.
-  const [services] = useState(createServices)
+  // every screen's data silently evicted.
   const [queryClient] = useState(createQueryClient)
+  const boot = useBootstrap()
 
   return (
     <SafeAreaProvider>
-      <ServicesProvider services={services}>
-        <QueryClientProvider client={queryClient}>
-          {/* Dark glyphs: research decision D-018 ships one light theme, so the status bar
-              is never on a dark ground and `auto` would have nothing to switch between. */}
-          <StatusBar style="dark" />
-          <Stack screenOptions={SCREEN_OPTIONS} />
-        </QueryClientProvider>
-      </ServicesProvider>
+      {/* Dark glyphs: research decision D-018 ships one light theme, so the status bar is
+          never on a dark ground and `auto` would have nothing to switch between. */}
+      <StatusBar style="dark" />
+      <StateView
+        state={boot}
+        loading={() => (
+          <Screen>
+            <LoadingState />
+          </Screen>
+        )}
+        // Unreachable: `useBootstrap` produces only loading, error, and ready. The renderer
+        // is required by the type rather than defaulted, so this is what saying "there is
+        // no empty case here" looks like.
+        empty={() => (
+          <Screen>
+            <ErrorState />
+          </Screen>
+        )}
+        error={(_error, retry) => (
+          <Screen>
+            <ErrorState retry={retry} />
+          </Screen>
+        )}
+        ready={(services) => (
+          <ServicesProvider services={services}>
+            <QueryClientProvider client={queryClient}>
+              <Stack screenOptions={SCREEN_OPTIONS} />
+            </QueryClientProvider>
+          </ServicesProvider>
+        )}
+      />
     </SafeAreaProvider>
   )
 }
