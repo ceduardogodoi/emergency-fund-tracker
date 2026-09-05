@@ -1,3 +1,4 @@
+import type { CurrencyCode } from '@/domain/money/currency'
 import type { Clock } from '@/domain/ports/clock'
 import type { IdGenerator } from '@/domain/ports/id-generator'
 import type { Logger } from '@/domain/ports/logger'
@@ -24,6 +25,14 @@ export interface Services {
   readonly logger: Logger
   /** The single way stored values become text (the ui-contract's copy rule). */
   readonly format: Formatters
+  /**
+   * The currency every amount is stored and shown in, fixed at setup (FR-039).
+   *
+   * Carried here as well as inside `format` because the domain needs it to write a profile,
+   * and reading it back out of a formatter would mean the value the app stores and the
+   * value it renders came from different places.
+   */
+  readonly currency: CurrencyCode
   /**
    * The only door to storage. Every read and write runs inside one of its transactions.
    *

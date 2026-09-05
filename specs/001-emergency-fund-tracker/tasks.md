@@ -138,7 +138,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [X] T058 [US1] Implement `calculateTarget` and the calculated-target invariant in `src/domain/goal/target.ts` — also adds `src/domain/goal/validation.ts`, which T052 tests but no task named
 - [X] T059 [P] [US1] Implement `ProfileRepository` in `src/data/sqlite/repositories/profile-repository.ts` — also closed the two gaps T048 left open: the `expo-sqlite` adapter for the `SqliteDatabase` port now lives in `src/data/sqlite/expo-driver.ts` (no task had covered it), and `Services` carries `unitOfWork`, wired through `createUnitOfWork` and `createRepositoriesFactory`. `createServices` now takes an open database and `openServices` opens one, so the root layout boots through `useBootstrap` and renders the four-state contract over its own startup
 - [X] T060 [US1] Implement `GoalRepository` including `recordChange` and `listChanges` in `src/data/sqlite/repositories/goal-repository.ts`
-- [ ] T061 [US1] Implement the goal query and mutation hooks with invalidation in `src/features/goal/hooks.ts`
+- [X] T061 [US1] Implement the goal query and mutation hooks with invalidation in `src/features/goal/hooks.ts`
 - [ ] T062 [P] [US1] Build the onboarding expenses screen with inline validation in `app/onboarding/expenses.tsx` — writes the profile with BRL per research decision D-019, which asks the user nothing
 - [ ] T063 [P] [US1] Build the onboarding level screen showing who each level suits in `app/onboarding/level.tsx`
 - [ ] T064 [US1] Build the target preview showing the derivation, with manual override, in `src/features/goal/target-preview.tsx`
