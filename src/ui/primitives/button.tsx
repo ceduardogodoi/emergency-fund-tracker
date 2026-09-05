@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Pressable, StyleSheet, type ViewStyle } from 'react-native'
 
 import { Text, type TextTone } from '@/ui/primitives/text'
-import { color, minimumTouchTarget, radius, spacing } from '@/ui/tokens'
+import { borderWidth, color, minimumTouchTarget, opacity, radius, spacing } from '@/ui/tokens'
 
 /** The roles a button can play, which decide its fill and its foreground together. */
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive'
@@ -98,10 +98,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
-    borderWidth: 1,
+    borderWidth: borderWidth.control,
     alignItems: 'center',
     justifyContent: 'center',
   } satisfies ViewStyle,
-  pressed: { opacity: 0.85 },
-  disabled: { opacity: 0.45 },
+  pressed: { opacity: opacity.pressed },
+  disabled: { opacity: opacity.disabled },
 })

@@ -1,6 +1,6 @@
 /**
- * Corner radii and elevation — the two things that say how a surface sits relative to the
- * page.
+ * Corner radii, border widths, and elevation — how a surface is bounded, and how it sits
+ * relative to the page.
  */
 
 /** Corner radii. */
@@ -18,6 +18,22 @@ export const radius = {
    * element's height produces a semicircle, so one constant serves every height.
    */
   pill: 999,
+} as const
+
+/**
+ * Border widths.
+ *
+ * Two values, because a border in this app is doing one of two jobs: marking where a
+ * control ends, or saying that this one is the chosen one. A scale of five would invite a
+ * third job nobody can name.
+ */
+export const borderWidth = {
+  /** No border. Named so a deliberate zero reads as a choice. */
+  none: 0,
+  /** The edge of an input, or of a button with no fill of its own. */
+  control: 1,
+  /** A boundary carrying meaning — the selected option in a group of them. */
+  emphasis: 2,
 } as const
 
 /**

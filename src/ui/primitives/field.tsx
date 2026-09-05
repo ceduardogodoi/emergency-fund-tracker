@@ -10,7 +10,7 @@ import {
 
 import { Text } from '@/ui/primitives/text'
 import { strings } from '@/ui/strings'
-import { color, minimumTouchTarget, radius, spacing, typography } from '@/ui/tokens'
+import { borderWidth, color, minimumTouchTarget, radius, spacing, typography } from '@/ui/tokens'
 
 /** Props for {@link Field}. */
 export interface FieldProps {
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   input: {
     minHeight: minimumTouchTarget,
     paddingHorizontal: spacing.sm,
-    borderWidth: 1,
+    borderWidth: borderWidth.control,
     borderColor: color.boundary.control,
     borderRadius: radius.sm,
     backgroundColor: color.background.page,

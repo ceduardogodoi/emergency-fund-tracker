@@ -30,9 +30,9 @@ Every screen reads its data through a TanStack Query hook that maps directly ont
 
 ## Design tokens
 
-`src/ui/tokens/` is the only place a style value exists. Spacing, color, typography, radii, and elevation are defined there and imported directly. There is no theme provider: research decision D-018 ships one light theme, so a provider would be indirection with a single value flowing through it. Semantic naming is what keeps a second theme a change to the token module rather than to every component.
+`src/ui/tokens/` is the only place a style value exists. Spacing, color, typography, radii, border widths, elevation, and interaction-state opacity are defined there and imported directly. There is no theme provider: research decision D-018 ships one light theme, so a provider would be indirection with a single value flowing through it. Semantic naming is what keeps a second theme a change to the token module rather than to every component.
 
-An ESLint rule fails the build on any color literal, hex value, or raw numeric spacing outside that directory. This is the mechanical form of Principle VI's ban on hard-coded style values; without the rule, the tokens become a suggestion within a month.
+An ESLint rule fails the build on any color literal, hex value, or raw numeric spacing, radius, type size, border width, or opacity outside that directory. This is the mechanical form of Principle VI's ban on hard-coded style values; without the rule, the tokens become a suggestion within a month.
 
 Tokens are semantic, not literal — `color.background.card`, `color.text.secondary`, `color.filled.negative`. A token named after what it looks like rather than what it means is how a design system loses its ability to change.
 
@@ -47,6 +47,7 @@ Screens compose these. A pattern appearing twice becomes one of them (Principle 
 | `Button` | Primary, secondary, and destructive variants; carries its own minimum touch target |
 | `Field` | Label, input, help text, error text, and the accessible wiring between them |
 | `MoneyInput` | Currency-aware entry that emits `Money` in minor units — never a float, never a raw string |
+| `Choice` | One option in a group where exactly one is chosen; announced as a radio, carrying its own name, explanation, and selected state |
 | `Card` | The single elevated-surface treatment |
 | `StateView` | The four-state contract above |
 | `ChartFrame` | Wraps every chart with its accessible equivalent — see below |

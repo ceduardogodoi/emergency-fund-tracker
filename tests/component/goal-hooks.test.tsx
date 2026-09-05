@@ -1,62 +1,29 @@
-import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
-import { cleanup, render, screen, userEvent } from '@testing-library/react-native'
+import { screen, userEvent } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 
-import { createQueryClient } from '@/app/query'
-import type { Services } from '@/app/services'
-import { ServicesProvider } from '@/app/services-context'
-import { currencyCode } from '@/domain/money/currency'
 import { money } from '@/domain/money/money'
-import type { Repositories } from '@/domain/ports/repositories'
-import type { UnitOfWork } from '@/domain/ports/unit-of-work'
 import { useGoal, useProfile, useSubmitGoal } from '@/features/goal/hooks'
-import { createFormatters } from '@/ui/format'
 import { Button, Text } from '@/ui/primitives'
-import { CountingIdGenerator, FakeClock, createInMemoryRepositories } from '@tests/support/doubles'
+import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
 
 /**
  * What these cover is the seam between a screen and storage: that a write lands, and that
  * every read depending on it refreshes afterwards.
  *
- * Deliberately over the in-memory repositories rather than a real database. SQL is the
- * integration tests' subject, and `better-sqlite3` is a native module — loading it inside
- * the React Native test environment leaves handles that keep the process alive after the
- * assertions have all passed, so the suite succeeds and then never exits.
+ * The components below are the smallest thing that can exercise a hook — a reader that
+ * reports whichever state it is in, and a button that submits. The real screens are tested
+ * in `onboarding.test.tsx`; the subject here is the hook, so anything a screen would add
+ * around it is noise.
  */
-let repositories: Repositories
-let queryClient: QueryClient
+let harness: AppHarness
 
-/**
- * A unit of work with no transaction.
- *
- * Rolling back is a property of the engine, so there is nothing here a double could imitate
- * honestly — `tests/integration/data/database.test.ts` is where that is tested. This exists
- * so the hooks reach repositories through the same door they use in production.
- */
-function directUnitOfWork(repos: Repositories): UnitOfWork {
-  return { run: (work) => work(repos) }
-}
+beforeEach(() => {
+  harness = createAppHarness()
+})
 
-/** The services a screen would be given. */
-function testServices(): Services {
-  return {
-    clock: new FakeClock('2026-08-22'),
-    ids: new CountingIdGenerator(),
-    logger: { debug: jest.fn(), warn: jest.fn(), error: jest.fn() },
-    format: createFormatters({ currency: currencyCode('BRL'), locale: 'pt-BR' }),
-    currency: currencyCode('BRL'),
-    unitOfWork: directUnitOfWork(repositories),
-  }
-}
-
-/** Wraps a screen in the providers `app/_layout.tsx` supplies in production. */
-function renderWithServices(ui: ReactNode): Promise<unknown> {
-  return render(
-    <ServicesProvider services={testServices()}>
-      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-    </ServicesProvider>,
-  )
-}
+afterEach(async () => {
+  await harness.teardown()
+})
 
 /** Reads the goal and reports whichever state it is in. */
 function GoalReader(): ReactNode {
@@ -101,50 +68,18 @@ function Submitter({ target }: { readonly target: number }): ReactNode {
 }
 
 describe('the goal hooks', () => {
-  beforeEach(() => {
-    repositories = createInMemoryRepositories(
-      new FakeClock('2026-08-22'),
-      new CountingIdGenerator(),
-    )
-    queryClient = createQueryClient()
-  })
-
-  /*
-   * Everything the client leaves running, in the order it has to be shut down.
-   *
-   * `cleanup` first, and explicitly: unmounting is what makes a query or a mutation
-   * schedule its collection, so anything torn down before it just gets rescheduled
-   * afterwards. The library registers the same call as its own `afterEach` when it is
-   * imported — which is before this block runs, so Jest runs it last, too late to help.
-   *
-   * Then the mutations, by hand. `clear()` destroys every query, but for mutations it only
-   * drops them from the cache and leaves their timers armed — so a five-minute `gcTime`
-   * keeps the worker alive long after the assertions have passed. Left alone, the suite
-   * reports success in a second and the process sits idle for five minutes.
-   *
-   * `unmount()` last, for the client's own focus and connectivity listeners.
-   */
-  afterEach(async () => {
-    await cleanup()
-    for (const mutation of queryClient.getMutationCache().getAll()) {
-      mutation.destroy()
-    }
-    queryClient.clear()
-    queryClient.unmount()
-  })
-
   it('reports no goal on a fresh install, which is what sends the user to onboarding', async () => {
-    await renderWithServices(<GoalReader />)
+    await harness.render(<GoalReader />)
     expect(await screen.findByText('no-goal')).toBeTruthy()
   })
 
   it('reports no profile on a fresh install', async () => {
-    await renderWithServices(<ProfileReader />)
+    await harness.render(<ProfileReader />)
     expect(await screen.findByText('no-profile')).toBeTruthy()
   })
 
   it('reads back a goal that was submitted', async () => {
-    await renderWithServices(
+    await harness.render(
       <>
         <Submitter target={1_200_000} />
         <GoalReader />
@@ -159,7 +94,7 @@ describe('the goal hooks', () => {
   // the write succeeds, the cache keeps the old answer, and the screen shows the previous
   // figures until something unrelated happens to refetch.
   it('refreshes the profile as well as the goal, since one submission writes both', async () => {
-    await renderWithServices(
+    await harness.render(
       <>
         <Submitter target={1_200_000} />
         <ProfileReader />
@@ -174,7 +109,7 @@ describe('the goal hooks', () => {
   // that does not match its inputs, and the screen must not end up showing a goal that was
   // never stored.
   it('stores nothing when the submission is refused', async () => {
-    await renderWithServices(
+    await harness.render(
       <>
         <Submitter target={1} />
         <GoalReader />

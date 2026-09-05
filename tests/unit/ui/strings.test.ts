@@ -39,4 +39,17 @@ describe('level copy', () => {
       'Entre 1 e 24 meses.',
     )
   })
+
+  it('states the range as a correction as well, in different words', () => {
+    expect(strings.coverageRangeError(MINIMUM_COVERAGE_MONTHS, MAXIMUM_COVERAGE_MONTHS)).not.toBe(
+      strings.coverageRangeHelp(MINIMUM_COVERAGE_MONTHS, MAXIMUM_COVERAGE_MONTHS),
+    )
+  })
+
+  // The shortest permitted duration is one month, so the singular is a value the app can
+  // actually show — and "1 meses" is the kind of slip that makes an app feel machine-made.
+  it('agrees in number, at both ends of the permitted range', () => {
+    expect(strings.coverageDuration(MINIMUM_COVERAGE_MONTHS)).toBe('1 mês')
+    expect(strings.coverageDuration(MAXIMUM_COVERAGE_MONTHS)).toBe('24 meses')
+  })
 })

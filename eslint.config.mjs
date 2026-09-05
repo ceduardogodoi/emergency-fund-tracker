@@ -23,6 +23,15 @@ const SPACING_PROPERTIES =
 /** Style properties whose value must come from the radius scale. */
 const RADIUS_PROPERTIES = '/^border(Top|Bottom)?(Left|Right|Start|End)?Radius$/'
 
+/** Border widths, which say where a control ends and which option is chosen. */
+const BORDER_WIDTH_PROPERTIES = '/^border(Top|Bottom|Left|Right|Start|End)?Width$/'
+
+/**
+ * Interaction opacity. Anchored on both ends so `shadowOpacity`, which belongs to the
+ * elevation tokens rather than to a control's state, is not caught by it.
+ */
+const OPACITY_PROPERTIES = '/^opacity$/'
+
 /**
  * Type sizes, which come from `typography` rather than a bare number so that every screen
  * scales together with the reader's text-size setting.
@@ -122,6 +131,14 @@ export default defineConfig(
         {
           selector: `Property[key.name=${TYPE_SIZE_PROPERTIES}] Literal[raw=/^[0-9]/]`,
           message: 'Hard-coded type size. Import `typography` from src/ui/tokens instead.',
+        },
+        {
+          selector: `Property[key.name=${BORDER_WIDTH_PROPERTIES}] Literal[raw=/^[0-9]/]`,
+          message: 'Hard-coded border width. Import `borderWidth` from src/ui/tokens instead.',
+        },
+        {
+          selector: `Property[key.name=${OPACITY_PROPERTIES}] Literal[raw=/^[0-9]/]`,
+          message: 'Hard-coded opacity. Import `opacity` from src/ui/tokens instead.',
         },
       ],
     },

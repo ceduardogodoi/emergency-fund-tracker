@@ -10,6 +10,7 @@
  */
 export { Button, type ButtonProps, type ButtonVariant } from './button'
 export { Card, type CardProps } from './card'
+export { Choice, type ChoiceProps } from './choice'
 export { ConfirmSheet, type ConfirmSheetProps } from './confirm-sheet'
 export { ErrorState, type ErrorStateProps } from './error-state'
 export { Field, type FieldProps } from './field'

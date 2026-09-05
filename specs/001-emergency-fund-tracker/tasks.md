@@ -129,7 +129,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [X] T052 [P] [US1] Unit tests for goal validation — zero, negative, and non-numeric expenses, custom months outside 1–24, zero target — in `tests/unit/domain/goal/validation.test.ts`
 - [X] T053 [P] [US1] Integration tests for `ProfileRepository` including the single-row constraint in `tests/integration/data/profile-repository.test.ts`
 - [X] T054 [P] [US1] Integration tests for `GoalRepository` including the `goal_change` audit row on every revision in `tests/integration/data/goal-repository.test.ts`
-- [ ] T055 [P] [US1] Component tests for the onboarding expenses and level screens in `tests/component/onboarding.test.tsx`
+- [X] T055 [P] [US1] Component tests for the onboarding expenses and level screens in `tests/component/onboarding.test.tsx` — also adds `tests/component/home.test.tsx` for the Home screen T065 builds, and `tests/support/app-harness.tsx`, which stands up the providers and shuts the query client down in the order teardown requires
 - [ ] T056 [P] [US1] Maestro flow covering the Story 1 journey in `e2e/us1-set-target.yaml`
 
 ### Implementation for User Story 1
@@ -139,12 +139,12 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [X] T059 [P] [US1] Implement `ProfileRepository` in `src/data/sqlite/repositories/profile-repository.ts` — also closed the two gaps T048 left open: the `expo-sqlite` adapter for the `SqliteDatabase` port now lives in `src/data/sqlite/expo-driver.ts` (no task had covered it), and `Services` carries `unitOfWork`, wired through `createUnitOfWork` and `createRepositoriesFactory`. `createServices` now takes an open database and `openServices` opens one, so the root layout boots through `useBootstrap` and renders the four-state contract over its own startup
 - [X] T060 [US1] Implement `GoalRepository` including `recordChange` and `listChanges` in `src/data/sqlite/repositories/goal-repository.ts`
 - [X] T061 [US1] Implement the goal query and mutation hooks with invalidation in `src/features/goal/hooks.ts`
-- [ ] T062 [P] [US1] Build the onboarding expenses screen with inline validation in `app/onboarding/expenses.tsx` — writes the profile with BRL per research decision D-019, which asks the user nothing
-- [ ] T063 [P] [US1] Build the onboarding level screen showing who each level suits in `app/onboarding/level.tsx`
-- [ ] T064 [US1] Build the target preview showing the derivation, with manual override, in `src/features/goal/target-preview.tsx`
-- [ ] T065 [US1] Build the Home screen showing the target in `app/index.tsx`
+- [X] T062 [P] [US1] Build the onboarding expenses screen with inline validation in `app/onboarding/expenses.tsx` — the currency is BRL per research decision D-019 and the screen asks nothing about it. It does **not** write the profile: `submitGoal` (T061) writes the profile and the goal in one transaction at the end of the flow, so the figure travels to the level step in the route instead. A profile stored at step one would describe expenses no target derives from if the user stopped there
+- [X] T063 [P] [US1] Build the onboarding level screen showing who each level suits in `app/onboarding/level.tsx` — the draft's state machine lives in `src/features/goal/use-goal-draft.ts`, because the goal revision screen (T066) makes the same three decisions and has to reach the same target from them. Adds the `Choice` primitive (announced as a radio, carrying its own name, explanation, and selected state) and the `borderWidth`/`opacity` tokens it needs, both recorded in `contracts/ui-contract.md`
+- [X] T064 [US1] Build the target preview showing the derivation, with manual override, in `src/features/goal/target-preview.tsx`
+- [X] T065 [US1] Build the Home screen showing the target in `app/index.tsx`
 - [ ] T066 [US1] Build the goal revision screen with its impact-on-progress preview in `app/settings/goal.tsx`
-- [ ] T067 [US1] Wire first-launch routing — onboarding when no goal exists, Home when one does — in `app/_layout.tsx`
+- [X] T067 [US1] Wire first-launch routing — onboarding when no goal exists, Home when one does — landed in `app/index.tsx` rather than `app/_layout.tsx`: `/` is the route that owns the question, and the redirect is its empty state per the screen inventory. A guard in the layout would run on every screen including the onboarding screens it redirects to, and would have to know which of them to leave alone
 
 **Checkpoint**: Story 1 is fully functional and independently testable. This is the MVP.
 

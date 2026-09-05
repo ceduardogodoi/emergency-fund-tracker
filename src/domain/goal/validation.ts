@@ -1,4 +1,4 @@
-import { validationError } from '../errors/app-error'
+import { validationError, type ValidationError } from '../errors/app-error'
 import { money, type Money } from '../money/money'
 import { err, ok, type Result } from '../result'
 import { MAXIMUM_COVERAGE_MONTHS, MINIMUM_COVERAGE_MONTHS } from './levels'
@@ -15,6 +15,12 @@ import { MAXIMUM_COVERAGE_MONTHS, MINIMUM_COVERAGE_MONTHS } from './levels'
  * Two entry paths reach these: a screen, where `MoneyInput` has already stripped anything
  * that is not a digit, and an imported file (FR-046), where nothing has. Both must be
  * rejected the same way, which is why "not a number" is a case rather than an assumption.
+ *
+ * Each returns `Result<_, ValidationError>` rather than the default `AppError`. The narrow
+ * type is what lets a screen hand the failure straight to the message lookup: with the
+ * wide one it would have to re-narrow a union whose other members these functions cannot
+ * produce, and the branch for a storage failure that never arrives is a branch nothing can
+ * test.
  */
 
 /**
@@ -23,7 +29,7 @@ import { MAXIMUM_COVERAGE_MONTHS, MINIMUM_COVERAGE_MONTHS } from './levels'
  * @param minorUnits The entered amount, in minor units.
  * @returns The amount as `Money`, or a validation failure naming the field.
  */
-export function validateMonthlyExpenses(minorUnits: number): Result<Money> {
+export function validateMonthlyExpenses(minorUnits: number): Result<Money, ValidationError> {
   if (!isWholeUnits(minorUnits)) {
     return err(validationError('monthlyExpenses', 'goal.expenses-not-a-number'))
   }
@@ -43,7 +49,7 @@ export function validateMonthlyExpenses(minorUnits: number): Result<Money> {
  * @param months The chosen or entered number of months.
  * @returns The duration, or a validation failure naming the field.
  */
-export function validateCoverageMonths(months: number): Result<number> {
+export function validateCoverageMonths(months: number): Result<number, ValidationError> {
   if (!Number.isInteger(months)) {
     return err(validationError('coverageMonths', 'goal.coverage-not-a-whole-number'))
   }
@@ -63,7 +69,7 @@ export function validateCoverageMonths(months: number): Result<number> {
  * @param minorUnits The entered target, in minor units.
  * @returns The target as `Money`, or a validation failure naming the field.
  */
-export function validateTarget(minorUnits: number): Result<Money> {
+export function validateTarget(minorUnits: number): Result<Money, ValidationError> {
   if (!isWholeUnits(minorUnits)) {
     return err(validationError('target', 'goal.target-not-a-number'))
   }
