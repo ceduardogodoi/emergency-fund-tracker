@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { openServices } from '@/app/composition-root'
-import type { Services } from '@/app/services'
+import { openServices } from '@/runtime/composition-root'
+import type { Services } from '@/runtime/services'
 import type { AppError } from '@/domain/errors'
 import { isErr, type Result } from '@/domain/result'
 import type { ViewState } from '@/ui/primitives/state-view'

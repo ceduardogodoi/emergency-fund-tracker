@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { useServices } from '@/app/services-context'
+import { useServices } from '@/runtime/services-context'
 import type { Money } from '@/domain/money/money'
 import { Button, Card, MoneyInput, Text } from '@/ui/primitives'
 import { strings } from '@/ui/strings'

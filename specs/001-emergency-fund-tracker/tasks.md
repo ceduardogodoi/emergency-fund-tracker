@@ -107,8 +107,8 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Application shell
 
-- [X] T048 Implement the composition root wiring every port to its adapter in `src/app/composition-root.ts` — the formatters take BRL per research decision D-019; there is no currency picker in this release. Split by dependency direction into `src/app/services.ts` (the port bundle), `src/app/services-context.tsx` (provider and hook), and `src/app/composition-root.ts` (the wiring, and the only module under `src/` importing a native Expo module); `.ts` rather than `.tsx` because the wiring holds no JSX. `unitOfWork` is deferred to T059 — see the note there
-- [X] T049 Configure the TanStack Query client, the query-key registry, and the `ViewState` mapping in `src/app/query.ts`
+- [X] T048 Implement the composition root wiring every port to its adapter in `src/runtime/composition-root.ts` — the formatters take BRL per research decision D-019; there is no currency picker in this release. Split by dependency direction into `src/runtime/services.ts` (the port bundle), `src/runtime/services-context.tsx` (provider and hook), and `src/runtime/composition-root.ts` (the wiring, and the only module under `src/` importing a native Expo module); `.ts` rather than `.tsx` because the wiring holds no JSX. `unitOfWork` is deferred to T059 — see the note there
+- [X] T049 Configure the TanStack Query client, the query-key registry, and the `ViewState` mapping in `src/runtime/query.ts`
 - [X] T050 Implement the Expo Router root layout with providers in `app/_layout.tsx`
 
 **Checkpoint**: Foundation ready — user story implementation can now begin
@@ -144,7 +144,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [X] T064 [US1] Build the target preview showing the derivation, with manual override, in `src/features/goal/target-preview.tsx`
 - [X] T065 [US1] Build the Home screen showing the target in `app/index.tsx`
 - [ ] T066 [US1] Build the goal revision screen with its impact-on-progress preview in `app/settings/goal.tsx`
-- [X] T067 [US1] Wire first-launch routing — onboarding when no goal exists, Home when one does — landed in `app/index.tsx` rather than `app/_layout.tsx`: `/` is the route that owns the question, and the redirect is its empty state per the screen inventory. A guard in the layout would run on every screen including the onboarding screens it redirects to, and would have to know which of them to leave alone
+- [X] T067 [US1] Wire first-launch routing — onboarding when no goal exists, Home when one does — landed in `app/index.tsx` rather than `app/_layout.tsx`: `/` is the route that owns the question, and the redirect is its empty state per the screen inventory. A guard in the layout would run on every screen including the onboarding screens it redirects to, and would have to know which of them to leave alone. Getting there took fixing where the router looks: it prefers `src/app` over `app/` whenever that directory exists, and the composition root lived at `src/app/`, so Expo Router had been treating those five modules as the app's routes — no `index`, no default exports, "Unmatched Route" on iOS and "Element type is invalid" on Android. That directory is `src/runtime/` now (T048, T049 renamed with it) and `app.json` names the root explicitly. `tests/unit/app/router-root.test.ts` and `tests/component/routes.test.tsx` guard both halves, since component tests import screens directly and pass whatever the router is pointed at
 
 **Checkpoint**: Story 1 is fully functional and independently testable. This is the MVP.
 

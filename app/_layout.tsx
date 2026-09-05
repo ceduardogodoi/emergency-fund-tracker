@@ -4,9 +4,9 @@ import { StatusBar } from 'expo-status-bar'
 import { useState, type ReactNode } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
-import { createQueryClient } from '@/app/query'
-import { ServicesProvider } from '@/app/services-context'
-import { useBootstrap } from '@/app/use-bootstrap'
+import { createQueryClient } from '@/runtime/query'
+import { ServicesProvider } from '@/runtime/services-context'
+import { useBootstrap } from '@/runtime/use-bootstrap'
 import { ErrorState, LoadingState, Screen, StateView } from '@/ui/primitives'
 import { color, typography } from '@/ui/tokens'
 
@@ -71,8 +71,15 @@ export default function RootLayout(): ReactNode {
  *
  * Set once here rather than per screen: the header is the one surface every screen shares,
  * and a per-screen override is how a design system starts to drift (Principle VI).
+ *
+ * Hidden by default because `Screen` renders each page's own title, as a heading a screen
+ * reader can navigate by. Left visible, the navigator would draw a second title above it —
+ * and the one it draws is the route's file name. A route that needs a header opts in with
+ * `headerShown: true` and inherits the styling below, which is why that styling stays here
+ * rather than leaving with the header.
  */
 const SCREEN_OPTIONS = {
+  headerShown: false,
   headerStyle: { backgroundColor: color.background.page },
   headerTintColor: color.text.primary,
   headerTitleStyle: {

@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 
-import type { Services } from '@/app/services'
-import { useBootstrap, type ServicesSource } from '@/app/use-bootstrap'
+import type { Services } from '@/runtime/services'
+import { useBootstrap, type ServicesSource } from '@/runtime/use-bootstrap'
 import { storageError } from '@/domain/errors'
 import { err, ok } from '@/domain/result'
 import { Text } from '@/ui/primitives'

@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query'
 
-import { queryKeys } from '@/app/query'
-import { useServices } from '@/app/services-context'
+import { queryKeys } from '@/runtime/query'
+import { useServices } from '@/runtime/services-context'
 import type { AppError } from '@/domain/errors'
 import { submitGoal } from '@/domain/goal/submit-goal'
 import type { Goal, GoalInput } from '@/domain/goal/types'

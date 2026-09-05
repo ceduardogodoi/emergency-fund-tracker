@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router'
 import type { ReactNode } from 'react'
 
-import { toViewState } from '@/app/query'
-import { useServices } from '@/app/services-context'
+import { toViewState } from '@/runtime/query'
+import { useServices } from '@/runtime/services-context'
 import type { Goal } from '@/domain/goal/types'
 import { useGoal } from '@/features/goal/hooks'
 import { Card, ErrorState, LoadingState, Screen, StateView, Text } from '@/ui/primitives'

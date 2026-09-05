@@ -146,7 +146,9 @@ src/
 │   ├── tokens/                  # The only place style values exist
 │   ├── primitives/              # Screen, Text, Button, Card, Field, StateView
 │   └── components/              # Shared composites, incl. accessible chart wrapper
-└── app/                         # Composition root: providers, DI wiring, query client
+└── runtime/                     # Composition root: providers, DI wiring, query client.
+                                 # Not `app/`: Expo Router claims `src/app` as its routes
+                                 # directory whenever it exists, and these are not routes
 
 tests/
 ├── unit/                        # Mirrors src/domain — no I/O

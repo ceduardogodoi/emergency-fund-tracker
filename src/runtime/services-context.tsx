@@ -1,6 +1,6 @@
 import { createContext, use, type ReactNode } from 'react'
 
-import type { Services } from '@/app/services'
+import type { Services } from '@/runtime/services'
 
 /**
  * Undefined until a provider supplies a value, which is what lets {@link useServices} tell

@@ -1,6 +1,6 @@
 import { randomUUID } from 'expo-crypto'
 
-import type { Services } from '@/app/services'
+import type { Services } from '@/runtime/services'
 import { bootstrapDatabase, createUnitOfWork } from '@/data/sqlite/database'
 import type { SqliteDatabase } from '@/data/sqlite/driver'
 import { openDeviceDatabase } from '@/data/sqlite/expo-driver'

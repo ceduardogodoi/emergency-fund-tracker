@@ -2,7 +2,7 @@
 
 **Feature**: `specs/001-emergency-fund-tracker` | **Date**: 2026-08-15
 
-These are the interfaces the domain owns and the outside world implements. Principle III requires that domain logic depend on abstractions defined by the domain and never on concrete I/O, framework, or vendor types — this file is where that boundary is written down. Everything here lives in `src/domain/ports/`; every implementation lives in `src/data/` or `src/platform/` and is wired in the single composition root at `src/app/`.
+These are the interfaces the domain owns and the outside world implements. Principle III requires that domain logic depend on abstractions defined by the domain and never on concrete I/O, framework, or vendor types — this file is where that boundary is written down. Everything here lives in `src/domain/ports/`; every implementation lives in `src/data/` or `src/platform/` and is wired in the single composition root at `src/runtime/`.
 
 Nothing in `src/domain/` may import from React, Expo, `expo-sqlite`, or any adapter module. An ESLint boundary rule enforces this; it is not a convention.
 

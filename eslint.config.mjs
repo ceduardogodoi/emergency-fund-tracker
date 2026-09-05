@@ -53,11 +53,11 @@ const FORBIDDEN_IN_DOMAIN = [
   { group: ['@tanstack/*'], message: 'src/domain must not depend on the query layer.' },
   { group: ['better-sqlite3'], message: 'src/domain must not depend on a database driver.' },
   {
-    group: ['@/data/*', '@/platform/*', '@/ui/*', '@/features/*', '@/app/*'],
+    group: ['@/data/*', '@/platform/*', '@/ui/*', '@/features/*', '@/runtime/*'],
     message: 'Dependencies point inward. src/domain may not import an outer layer.',
   },
   {
-    group: ['../data/*', '../platform/*', '../ui/*', '../features/*', '../app/*'],
+    group: ['../data/*', '../platform/*', '../ui/*', '../features/*', '../runtime/*'],
     message: 'Dependencies point inward. src/domain may not import an outer layer.',
   },
 ]

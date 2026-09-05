@@ -1,4 +1,4 @@
-import { createQueryClient, queryKeys, toViewState, type QueryLike } from '@/app/query'
+import { createQueryClient, queryKeys, toViewState, type QueryLike } from '@/runtime/query'
 import { calendarDate } from '@/domain/dates/calendar-date'
 import { storageError } from '@/domain/errors'
 import type { ViewState } from '@/ui/primitives/state-view'
