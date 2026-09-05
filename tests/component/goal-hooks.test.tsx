@@ -1,5 +1,5 @@
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
-import { render, screen, userEvent } from '@testing-library/react-native'
+import { cleanup, render, screen, userEvent } from '@testing-library/react-native'
 import type { ReactNode } from 'react'
 
 import { createQueryClient } from '@/app/query'
@@ -109,10 +109,26 @@ describe('the goal hooks', () => {
     queryClient = createQueryClient()
   })
 
-  // A cached query holds a garbage-collection timer, and a mounted client holds listeners
-  // for focus and connectivity. Both outlive the assertions, and left running they keep the
-  // worker alive after the suite has finished.
-  afterEach(() => {
+  /*
+   * Everything the client leaves running, in the order it has to be shut down.
+   *
+   * `cleanup` first, and explicitly: unmounting is what makes a query or a mutation
+   * schedule its collection, so anything torn down before it just gets rescheduled
+   * afterwards. The library registers the same call as its own `afterEach` when it is
+   * imported — which is before this block runs, so Jest runs it last, too late to help.
+   *
+   * Then the mutations, by hand. `clear()` destroys every query, but for mutations it only
+   * drops them from the cache and leaves their timers armed — so a five-minute `gcTime`
+   * keeps the worker alive long after the assertions have passed. Left alone, the suite
+   * reports success in a second and the process sits idle for five minutes.
+   *
+   * `unmount()` last, for the client's own focus and connectivity listeners.
+   */
+  afterEach(async () => {
+    await cleanup()
+    for (const mutation of queryClient.getMutationCache().getAll()) {
+      mutation.destroy()
+    }
     queryClient.clear()
     queryClient.unmount()
   })
