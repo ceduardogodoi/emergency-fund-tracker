@@ -40,9 +40,11 @@ Tokens are semantic, not literal — `color.background.card`, `color.text.second
 
 Screens compose these. A pattern appearing twice becomes one of them (Principle VI).
 
+`Screen` scrolls by default. Whether a screen's content fits is not a property the screen can know — it depends on the device, the reader's text size, and how much has been entered — and when it does not fit, nothing is clipped or flagged: the last control is simply unreachable, for some people and not others. A screen opts out with `scrolls={false}` only when its content brings its own scrolling container, which is a virtualised list; nested inside a scroll view, such a list is given unbounded height and stops virtualising.
+
 | Primitive | Responsibility |
 |-----------|----------------|
-| `Screen` | Safe-area container, scroll behavior, consistent page padding |
+| `Screen` | Safe-area container, scrolling, consistent page padding |
 | `Text` | Every typographic style; no ad-hoc font sizes anywhere |
 | `Button` | Primary, secondary, and destructive variants; carries its own minimum touch target |
 | `Field` | Label, input, help text, error text, and the accessible wiring between them |

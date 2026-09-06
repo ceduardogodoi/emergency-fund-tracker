@@ -1,7 +1,7 @@
-import { render, screen, userEvent } from '@testing-library/react-native'
+import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { View } from 'react-native'
 
-import { Button, Card, Screen, Text } from '@/ui/primitives'
+import { SCREEN_SCROLL_TEST_ID, Button, Card, Screen, Text } from '@/ui/primitives'
 import { color, minimumTouchTarget, typography } from '@/ui/tokens'
 
 /**
@@ -120,5 +120,47 @@ describe('Screen', () => {
       </Screen>,
     )
     expect(screen.getByRole('header', { name: 'Início' })).toBeTruthy()
+  })
+
+  // Whether a screen fits is not something the screen can know: it depends on the device,
+  // the reader's text size (FR-050), and how much they have entered. When it does not fit,
+  // nothing is clipped or flagged — the last control is simply unreachable, and only for
+  // some people. So every screen scrolls, and the default is what makes that true.
+  it('puts its content inside a scrolling container', async () => {
+    await render(
+      <Screen title="Início">
+        <View testID="content" />
+      </Screen>,
+    )
+    const scroll = screen.getByTestId(SCREEN_SCROLL_TEST_ID)
+    expect(within(scroll).getByTestId('content')).toBeTruthy()
+    expect(within(scroll).getByRole('header', { name: 'Início' })).toBeTruthy()
+  })
+
+  // Asserted as a prop because there is no other way to reach it: the behaviour only
+  // appears with a real keyboard on screen. Without it, the first tap on a control while
+  // the keyboard is open only dismisses the keyboard — so saving takes two presses and
+  // looks like the first was ignored.
+  it('keeps a tap working while the keyboard is open', async () => {
+    await render(
+      <Screen>
+        <View />
+      </Screen>,
+    )
+    expect(screen.getByTestId(SCREEN_SCROLL_TEST_ID).props.keyboardShouldPersistTaps).toBe(
+      'handled',
+    )
+  })
+
+  // A virtualised list has to own its scrolling. Nested inside a scroll view it is given
+  // unbounded height, renders every row, and stops virtualising at all.
+  it('yields scrolling to content that brings its own', async () => {
+    await render(
+      <Screen scrolls={false}>
+        <View testID="content" />
+      </Screen>,
+    )
+    expect(screen.queryByTestId(SCREEN_SCROLL_TEST_ID)).toBeNull()
+    expect(screen.getByTestId('content')).toBeTruthy()
   })
 })
