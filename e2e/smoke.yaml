@@ -1,8 +1,10 @@
 # Maestro smoke flow. Proves the app launches and renders before any journey flow runs.
+#
 # Install Maestro: curl -Ls "https://get.maestro.mobile.dev" | bash
-appId: com.emergencyfundtracker.app
+# Requires `npx expo start`: the app runs inside Expo Go, so the flow opens the dev
+# server's link rather than launching a package of our own.
+appId: ${APP_ID}
+name: smoke — the app launches
 ---
-- launchApp:
-    clearState: true
-- assertVisible:
-    id: 'app-root'
+- clearState
+- runFlow: open-app.yaml

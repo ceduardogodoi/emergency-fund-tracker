@@ -66,7 +66,7 @@ function GoalCard({ goal }: GoalCardProps): ReactNode {
       <Text variant="label" tone="secondary">
         {strings.goal.targetLabel}
       </Text>
-      <Text variant="display" numeric>
+      <Text variant="display" numeric testID="goal-amount">
         {format.money(goal.target)}
       </Text>
       <Text variant="caption" tone="secondary">

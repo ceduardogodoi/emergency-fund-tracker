@@ -116,6 +116,7 @@ function LevelOptions({
           onSelect={() => {
             onSelect(level.key)
           }}
+          testID={`level-${level.key}`}
         />
       ))}
       <Choice
@@ -125,6 +126,7 @@ function LevelOptions({
         onSelect={() => {
           onSelect('custom')
         }}
+        testID="level-custom"
       />
       {selected === 'custom' ? (
         <CustomDuration value={customMonths} onChange={onCustomMonthsChange} error={error} />

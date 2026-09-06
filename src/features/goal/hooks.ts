@@ -89,9 +89,16 @@ export function useSubmitGoal(): UseMutationResult<Goal, AppError, GoalDraft> {
       //
       // `goal` is a prefix of `goal.changes`, so invalidating it covers the revision
       // history too — which is why the registry gives them a shared prefix.
+      //
+      // `refetchType: 'all'` rather than the default 'active', and awaited: a screen acts
+      // on success by navigating, and the screen it navigates to reads the cache on its
+      // first render. The readers that matter are precisely the ones with no observer —
+      // Home is unmounted while the user is in onboarding, and the null it left behind is
+      // what invalidation alone would leave it to find. It would then redirect the user
+      // back to step one, their saved goal invisible until the next cold start.
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.goal() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.profile() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.goal(), refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.profile(), refetchType: 'all' }),
       ])
     },
   })

@@ -60,7 +60,7 @@ export default function ExpensesScreen(): ReactNode {
         required
         testID="expenses-input"
       />
-      <Button label={strings.action.continue} onPress={handleContinue} />
+      <Button label={strings.action.continue} onPress={handleContinue} testID="continue" />
     </Screen>
   )
 }

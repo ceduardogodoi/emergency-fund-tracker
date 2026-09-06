@@ -53,7 +53,7 @@ export function TargetPreview({
       <Text variant="label" tone="secondary">
         {strings.goal.targetLabel}
       </Text>
-      <Text variant="display" numeric>
+      <Text variant="display" numeric testID="target-amount">
         {format.money(target)}
       </Text>
       {override === null ? (
@@ -107,6 +107,7 @@ function DerivedTarget({
         onPress={() => {
           onOverride(target)
         }}
+        testID="override-target"
       />
     </>
   )
@@ -139,6 +140,7 @@ function TypedTarget({ value, onChange, error }: TypedTargetProps): ReactNode {
         onPress={() => {
           onChange(null)
         }}
+        testID="use-calculated"
       />
     </>
   )

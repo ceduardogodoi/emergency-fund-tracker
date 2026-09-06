@@ -1,0 +1,146 @@
+# User Story 1 — size the fund, and see the target survive a restart.
+#
+# The journey from the spec's Independent Test, on a real device: enter an expense figure,
+# cycle through every level confirming the target recalculates, override it manually, then
+# relaunch and confirm it survived (FR-001 through FR-007).
+#
+# Runs inside Expo Go, which is why it opens a link rather than launching by our own id:
+# the app has no package of its own until there is a development build, and Maestro cannot
+# launch what is not installed. `env` below carries the defaults; override them for the
+# other platform or for a standalone build:
+#
+#   npm run e2e        # Android emulator, Expo Go
+#   npm run e2e:ios    # iOS simulator, Expo Go
+#
+# `APP_ID` and `DEV_URL` come from those scripts rather than from an `env:` block here: a
+# flow-level default silently wins over `-e`, so a default would make the second script a
+# no-op. Requires `npx expo start` to be running — the link is the dev server's.
+#
+# Selectors are testIDs, not the Portuguese copy. The strings module is the single home for
+# text (D-020); a flow matching on it would be a second copy, and every wording change
+# would break a test that has nothing to do with wording. Amounts are the exception — they
+# are what the app computed, so they have to be read as the user reads them.
+appId: ${APP_ID}
+name: US1 — set a savings target
+---
+# Clearing Expo Go's state is what a fresh install means here: the fund's database lives in
+# its sandbox. No stored goal is the only definition of "first launch" the app has, so this
+# also asserts the redirect out of Home — the routing decision — rather than assuming it.
+- clearState
+- runFlow: open-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'expenses-input'
+    timeout: 30000
+
+# FR-001 — the figure everything else is derived from. Typed as minor units: 200000 is
+# R$ 2.000,00, and the separator is placed by the formatter rather than by the user.
+- tapOn:
+    id: 'expenses-input'
+- inputText: '200000'
+- tapOn:
+    id: 'continue'
+
+# FR-004 — the target is expenses × months, and the derivation is on screen beside it.
+# Amounts are matched by their digits alone: the app formats through the device locale
+# (FR-039), so a device set to en-US groups them as 12,000.00 where pt-BR gives 12.000,00.
+# Asserting one of those would be asserting the device's settings.
+- assertVisible:
+    id: 'target-preview'
+- assertVisible:
+    id: 'target-amount'
+    text: '.*12[.,]000[.,]00.*' # balanced, 6 months
+
+# FR-002, FR-006 — every level, recalculating immediately rather than on save.
+- tapOn:
+    id: 'level-lean'
+- assertVisible:
+    id: 'target-amount'
+    text: '.*6[.,]000[.,]00.*' # 3 months
+- tapOn:
+    id: 'level-cautious'
+- assertVisible:
+    id: 'target-amount'
+    text: '.*18[.,]000[.,]00.*' # 9 months
+- tapOn:
+    id: 'level-maximum'
+- assertVisible:
+    id: 'target-amount'
+    text: '.*24[.,]000[.,]00.*' # 12 months
+
+# FR-002 — a custom duration, inside the 1–24 month range the validator enforces.
+- tapOn:
+    id: 'level-custom'
+- tapOn:
+    id: 'coverage-input'
+- eraseText
+- inputText: '8'
+# A drag in the upper third puts the number pad away, through the scroll view's
+# `keyboardDismissMode`. It has to start above the keyboard: a gesture over the pad does
+# not scroll, and Maestro's own scroll gesture starts low enough to land on it — as does a
+# tap aimed at anything the keyboard covers, which arrived as stray digits in the field.
+- swipe:
+    start: 50%, 32%
+    end: 50%, 22%
+- scrollUntilVisible:
+    element:
+      id: 'target-amount'
+    direction: DOWN
+- assertVisible:
+    id: 'target-amount'
+    text: '.*16[.,]000[.,]00.*'
+
+# FR-005 — the user's own figure, replacing the calculated one. The field is seeded with
+# the calculated target, so it is cleared first: typing into it would append to it.
+- tapOn:
+    id: 'level-balanced'
+- tapOn:
+    id: 'override-target'
+- tapOn:
+    id: 'target-input'
+- eraseText
+- inputText: '5000000'
+- swipe:
+    start: 50%, 32%
+    end: 50%, 22%
+- scrollUntilVisible:
+    element:
+      id: 'target-amount'
+    direction: DOWN
+- assertVisible:
+    id: 'target-amount'
+    text: '.*50[.,]000[.,]00.*'
+
+# Scrolled to, not assumed visible. The save control sits below the fold once every level
+# is listed — which is exactly how it went missing before `Screen` scrolled. The drag also
+# puts the keyboard away, which is what `keyboardDismissMode` is for: on iOS it otherwise
+# covers the control, and a tap aimed at the button lands on the number pad instead.
+- scrollUntilVisible:
+    element:
+      id: 'save-goal'
+    direction: DOWN
+- tapOn:
+    id: 'save-goal'
+
+# FR-007 — Home shows the stored target, and it is the one the user typed rather than the
+# one the app calculated.
+- extendedWaitUntil:
+    visible:
+      id: 'goal-card'
+    timeout: 15000
+- assertVisible:
+    id: 'goal-amount'
+    text: '.*50[.,]000[.,]00.*'
+
+# The other half of FR-007, and the part no other test can reach: the fund is still there
+# after the process is gone. Stopped rather than merely relaunched, so the database is read
+# again instead of answered from memory — and no `clearState`, which is the whole point.
+- stopApp
+- runFlow: open-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'goal-card'
+    timeout: 60000
+- assertVisible:
+    id: 'goal-amount'
+    text: '.*50[.,]000[.,]00.*'

@@ -152,6 +152,18 @@ describe('Screen', () => {
     )
   })
 
+  // A number pad has no return key to dismiss it with, so on a screen taller than the
+  // viewport it would sit over the controls below the field until the user leaves. On iOS
+  // that is not merely untidy: nothing underneath can be reached at all.
+  it('puts the keyboard away when the content is dragged', async () => {
+    await render(
+      <Screen>
+        <View />
+      </Screen>,
+    )
+    expect(screen.getByTestId(SCREEN_SCROLL_TEST_ID).props.keyboardDismissMode).toBe('on-drag')
+  })
+
   // A virtualised list has to own its scrolling. Nested inside a scroll view it is given
   // unbounded height, renders every row, and stops virtualising at all.
   it('yields scrolling to content that brings its own', async () => {

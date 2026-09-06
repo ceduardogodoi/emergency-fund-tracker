@@ -1,0 +1,34 @@
+# Opens the app and hands back control with the first screen rendered.
+#
+# A subflow because every journey needs it and none of it is about the app: it is the cost
+# of running inside Expo Go, which has no package of its own to launch. `e2e/config.yaml`
+# keeps this out of the set `maestro test e2e` runs on its own.
+appId: ${APP_ID}
+---
+# Opening the link is inside the retry, not before it, because it does not always take:
+# issued immediately after `stopApp` it can leave the device on the launcher, with nothing
+# to wait for. Re-opening an app that is already open just reloads it, so the retry is
+# cheap and covers every way this lands short — launcher, Expo Go's own home screen, or
+# the app behind a sheet.
+#
+# Expo Go may put its developer sheet over the app: always after a `clearState`, usually
+# not on a later launch. Closing it dismisses the menu outright; its "Continue" button only
+# advances into the menu proper, which then has to be closed anyway. The two orders cannot
+# both be waited for — while the sheet is up it occludes the app, so `app-root` is not
+# visible, and when the sheet is absent, waiting for it would hang — so a conditional tap
+# handles the sheet that is already there, and the retry handles the one that arrives late.
+- retry:
+    maxRetries: 3
+    commands:
+      - openLink: ${DEV_URL}
+      - runFlow:
+          when:
+            visible: '^Close$'
+          commands:
+            - tapOn: '^Close$'
+      # Generous: this covers the bundle download as well as the app's own boot, and after
+      # a `clearState` there is nothing cached to start from.
+      - extendedWaitUntil:
+          visible:
+            id: 'app-root'
+          timeout: 45000

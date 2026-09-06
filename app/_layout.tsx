@@ -30,7 +30,10 @@ export default function RootLayout(): ReactNode {
   const boot = useBootstrap()
 
   return (
-    <SafeAreaProvider>
+    // `app-root` is what `e2e/smoke.yaml` asserts: the outermost element that exists on
+    // every screen and in every boot state, so the smoke flow proves the app mounted
+    // without depending on which screen it settled on.
+    <SafeAreaProvider testID="app-root">
       {/* Dark glyphs: research decision D-018 ships one light theme, so the status bar is
           never on a dark ground and `auto` would have nothing to switch between. */}
       <StatusBar style="dark" />

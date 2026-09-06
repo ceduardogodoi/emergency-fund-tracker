@@ -1,0 +1,5 @@
+# The journeys `maestro test e2e` runs. Named rather than globbed so that subflows —
+# `open-app.yaml` — are shared machinery rather than flows that run on their own.
+flows:
+  - smoke.yaml
+  - us*.yaml

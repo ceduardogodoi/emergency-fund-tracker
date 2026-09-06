@@ -71,6 +71,10 @@ export function Screen({ children, title, scrolls = true, testID }: ScreenProps)
           // dismisses the keyboard — so "save" takes two presses and appears to have
           // ignored the first.
           keyboardShouldPersistTaps="handled"
+          // Scrolling puts the keyboard away. A number pad has no return key to dismiss
+          // it with, so on a screen taller than the viewport it otherwise sits over the
+          // controls below the field for as long as the user is on that screen.
+          keyboardDismissMode="on-drag"
           // iOS insets the content by the keyboard's height, so the field being typed into
           // stays visible. Android resizes the window instead, which this scrolls within.
           automaticallyAdjustKeyboardInsets
