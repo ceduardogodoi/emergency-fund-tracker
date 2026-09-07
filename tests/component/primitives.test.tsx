@@ -1,7 +1,7 @@
 import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { View } from 'react-native'
 
-import { SCREEN_SCROLL_TEST_ID, Button, Card, Screen, Text } from '@/ui/primitives'
+import { SCREEN_SCROLL_TEST_ID, Button, Card, CoverageMeter, Screen, Text } from '@/ui/primitives'
 import { color, minimumTouchTarget, typography } from '@/ui/tokens'
 
 /**
@@ -176,3 +176,72 @@ describe('Screen', () => {
     expect(screen.getByTestId('content')).toBeTruthy()
   })
 })
+
+describe('CoverageMeter', () => {
+  /**
+   * The meter is hidden from assistive technology, and RNTL's queries follow that tree —
+   * so every query for it has to opt in. That is the point rather than an inconvenience:
+   * the first test below proves the hiding by querying without the flag.
+   */
+  const hidden = { includeHiddenElements: true } as const
+
+  /** Its children are the units, so counting them is asking "how many months". */
+  function unitsIn(testID: string): unknown[] {
+    return screen.getByTestId(testID, hidden).props.children
+  }
+
+  // The count is always stated in words beside it. Announcing the squares as well would
+  // read the same fact twice — once as a sentence, once as a run of empty views.
+  it('stays out of the accessibility tree, because the words beside it are the content', async () => {
+    await render(<CoverageMeter covered={6} total={6} testID="meter" />)
+
+    expect(screen.queryByTestId('meter')).toBeNull()
+
+    // Both props, not just the query above: the two platforms hide an element by different
+    // means, and RNTL treats either one as enough — so a meter announced on iOS and silent
+    // on Android would still satisfy the query. iOS reads `accessibilityElementsHidden`,
+    // Android `importantForAccessibility`.
+    const meter = screen.getByTestId('meter', hidden)
+    expect(meter.props.accessibilityElementsHidden).toBe(true)
+    expect(meter.props.importantForAccessibility).toBe('no-hide-descendants')
+  })
+
+  it('draws one unit per month, so two durations compare without reading either', async () => {
+    await render(
+      <>
+        <CoverageMeter covered={3} total={3} testID="lean" />
+        <CoverageMeter covered={12} total={12} testID="maximum" />
+      </>,
+    )
+
+    expect(unitsIn('lean')).toHaveLength(3)
+    expect(unitsIn('maximum')).toHaveLength(12)
+  })
+
+  it('fills only the months covered, leaving the rest to be counted', async () => {
+    await render(<CoverageMeter covered={2} total={6} testID="meter" />)
+
+    const filled = unitsIn('meter').filter(isFilled)
+    expect(filled).toHaveLength(2)
+  })
+
+  // A balance beyond the target is the goal-reached case, and a meter cannot draw a
+  // seventh square in a row of six. Every unit filled is the honest answer.
+  it('fills every unit when more is covered than the meter has room for', async () => {
+    await render(<CoverageMeter covered={9} total={6} testID="meter" />)
+
+    expect(unitsIn('meter').filter(isFilled)).toHaveLength(6)
+  })
+})
+
+/** Whether a rendered unit carries the accent fill, which is what "covered" looks like. */
+function isFilled(unit: unknown): boolean {
+  const style = (unit as { props: { style: unknown[] } }).props.style
+  return style.some(
+    (layer) =>
+      typeof layer === 'object' &&
+      layer !== null &&
+      'backgroundColor' in layer &&
+      layer.backgroundColor === color.filled.accent.background,
+  )
+}

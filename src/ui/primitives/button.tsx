@@ -70,9 +70,10 @@ export function Button({
 /**
  * A fill paired with the foreground that was audited against it.
  *
- * `secondary` sits on the page rather than on a fill of its own, so it takes the audited
- * page foreground and a visible boundary instead — an outline button with no border is
- * indistinguishable from a label.
+ * `secondary` is a slab with a boundary and ordinary ink, not a second blue thing. The
+ * palette has one accent, and an accent used by two controls at once stops saying which of
+ * them the screen is asking for; the border is what makes it a control, and the fill is
+ * what makes it a surface rather than a label.
  */
 const SCHEMES = {
   primary: {
@@ -81,9 +82,9 @@ const SCHEMES = {
     tone: 'onAccent',
   },
   secondary: {
-    background: color.background.page,
+    background: color.background.card,
     border: color.boundary.control,
-    tone: 'accent',
+    tone: 'primary',
   },
   destructive: {
     background: color.filled.negative.background,
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     minHeight: minimumTouchTarget,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.sm,
+    borderRadius: radius.none,
     borderWidth: borderWidth.control,
     alignItems: 'center',
     justifyContent: 'center',

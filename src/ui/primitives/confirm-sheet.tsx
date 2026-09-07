@@ -103,8 +103,8 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.md,
     backgroundColor: color.background.page,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
+    borderTopLeftRadius: radius.none,
+    borderTopRightRadius: radius.none,
   } satisfies ViewStyle,
   actions: { gap: spacing.sm } satisfies ViewStyle,
 })

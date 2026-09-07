@@ -138,11 +138,15 @@ export const strings = {
     /**
      * The level and duration behind a stored target.
      *
+     * A sentence rather than fragments joined by a separator. "Equilibrada · 6 meses" asks
+     * the reader to work out what the middle dot stands for, and a screen reader announces
+     * it as two unrelated phrases; saying it in words costs three characters.
+     *
      * @param level The level's name.
      * @param coverage The formatted duration.
      * @returns The summary line.
      */
-    levelSummary: (level: string, coverage: string): string => `${level} · ${coverage}`,
+    levelSummary: (level: string, coverage: string): string => `${level}, ${coverage} de cobertura`,
     /** Switching between the calculated target and one the user types (FR-005). */
     overrideAction: 'Definir a meta manualmente',
     overrideLabel: 'Meta definida por você',

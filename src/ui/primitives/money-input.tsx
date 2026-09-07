@@ -80,6 +80,7 @@ export function MoneyInput({
       help={help}
       error={error}
       required={required}
+      prominent
       testID={testID}
     />
   )

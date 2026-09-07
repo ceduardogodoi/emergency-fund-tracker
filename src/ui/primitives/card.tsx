@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { StyleSheet, View, type ViewStyle } from 'react-native'
 
-import { color, elevation, radius, spacing } from '@/ui/tokens'
+import { color, radius, spacing } from '@/ui/tokens'
 
 /** Props for {@link Card}. */
 export interface CardProps {
@@ -12,7 +12,12 @@ export interface CardProps {
 }
 
 /**
- * A raised surface grouping related content on the page.
+ * A slab grouping related content on the page.
+ *
+ * It reads as a separate surface by value alone — white cut out of the concrete ground —
+ * and casts no shadow. Nothing in this design language floats, so depth is not available
+ * as a way to say "these things belong together"; the surface change has to carry it, and
+ * a card that is not distinguishable from the page is a card that should not be there.
  *
  * The card fill is a distinct token rather than a tint of the page, because the contrast
  * audit checks every text colour against both surfaces — text that is legible on the page
@@ -32,9 +37,8 @@ export function Card({ children, testID }: CardProps): ReactNode {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: color.background.card,
-    borderRadius: radius.md,
+    borderRadius: radius.none,
     padding: spacing.md,
     gap: spacing.sm,
-    ...elevation.raised,
   } satisfies ViewStyle,
 })

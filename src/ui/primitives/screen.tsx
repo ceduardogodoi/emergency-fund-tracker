@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   // instead of scrolling past it.
   content: {
     padding: screenInset,
-    gap: spacing.md,
+    gap: spacing.lg,
     // Short content still fills the screen, so anything a screen stretches or pushes to
     // the bottom behaves the same whether or not the content happens to overflow.
     flexGrow: 1,

@@ -28,9 +28,24 @@ interface StateViewProps<T> {
 
 Every screen reads its data through a TanStack Query hook that maps directly onto `ViewState`, so the four states are produced once and rendered the same way everywhere.
 
+## Visual language
+
+The app is drawn in the vocabulary of Brazilian concretism: a cool concrete ground with white slabs cut out of it, square corners, and exactly one saturated colour. It is a deliberate rejection of the default fintech kit — rounded cards, soft shadows, a palette of tints — which reads as generic precisely because every product in the category uses it.
+
+Four rules carry it, and each has a mechanical consequence:
+
+- **One accent, twice a screen at most.** Ultramarine marks the action the screen is asking for and the months already covered. Nothing else is blue — a secondary action is a slab with a boundary and ordinary ink. An accent used by two controls at once stops saying which of them matters.
+- **Surfaces separate by value, not by depth.** There is no elevation token and no shadow anywhere. A card is white on concrete; if that is not enough to group its contents, the grouping is wrong.
+- **Corners are square.** `radius` holds three values — `none` for every surface, `input` for the single 2dp softening a text field needs so the caret does not sit in a knife corner, and `pill` for a dot or badge. A graded small/medium/large scale would imply roundness carries meaning proportional to size, and here it does not.
+- **The amount is the subject.** Every screen has one figure the user came to read, and it is set at `display` — roughly two and a half times body copy. `MoneyInput` always renders what is being typed at `title` size for the same reason: an amount typed at body size reads as a setting to configure rather than as the number being decided.
+
+The typeface is Archivo (Omnibus-Type), bundled with the app in four weights. It was chosen for its tabular lining figures, which is the property this app needs most — comparing amounts down a column is the primary reading task — and because the system face gives an app the typographic voice of every other app on the phone. Font files are bundled, never fetched, so the typeface is compatible with FR-041. A font that fails to load is survived rather than raised: React Native falls back to the system face, and the failure is logged through the `Logger` port instead of blocking the app from opening.
+
+Two copy patterns are banned outright because they read as machine-written: an all-caps label above content, and meta strings joined by middle dots (`Equilibrada · 6 meses`). Both say in punctuation what a sentence says in words, and a screen reader announces the second as two unrelated phrases.
+
 ## Design tokens
 
-`src/ui/tokens/` is the only place a style value exists. Spacing, color, typography, radii, border widths, elevation, and interaction-state opacity are defined there and imported directly. There is no theme provider: research decision D-018 ships one light theme, so a provider would be indirection with a single value flowing through it. Semantic naming is what keeps a second theme a change to the token module rather than to every component.
+`src/ui/tokens/` is the only place a style value exists. Spacing, color, typography, radii, border widths, and interaction-state opacity are defined there and imported directly. There is no theme provider: research decision D-018 ships one light theme, so a provider would be indirection with a single value flowing through it. Semantic naming is what keeps a second theme a change to the token module rather than to every component.
 
 An ESLint rule fails the build on any color literal, hex value, or raw numeric spacing, radius, type size, border width, or opacity outside that directory. This is the mechanical form of Principle VI's ban on hard-coded style values; without the rule, the tokens become a suggestion within a month.
 
@@ -49,8 +64,9 @@ Screens compose these. A pattern appearing twice becomes one of them (Principle 
 | `Button` | Primary, secondary, and destructive variants; carries its own minimum touch target |
 | `Field` | Label, input, help text, error text, and the accessible wiring between them |
 | `MoneyInput` | Currency-aware entry that emits `Money` in minor units — never a float, never a raw string |
-| `Choice` | One option in a group where exactly one is chosen; announced as a radio, carrying its own name, explanation, and selected state |
-| `Card` | The single elevated-surface treatment |
+| `Choice` | One option in a group where exactly one is chosen; announced as a radio, carrying its own name, explanation, and selected state. Takes an optional visual as children, decorative by contract |
+| `CoverageMeter` | Months of coverage as countable units. Decorative and hidden from assistive technology — the count it depicts is always stated in words beside it, the same division `ChartFrame` makes |
+| `Card` | The single grouped-surface treatment: a white slab, no shadow |
 | `StateView` | The four-state contract above |
 | `ChartFrame` | Wraps every chart with its accessible equivalent — see below |
 | `ConfirmSheet` | The one confirmation pattern for destructive actions |

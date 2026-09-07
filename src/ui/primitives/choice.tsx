@@ -18,6 +18,16 @@ export interface ChoiceProps {
   readonly description: string
   /** A figure summarising the option — the duration behind a level, for instance. */
   readonly detail?: string | undefined
+  /**
+   * An optional visual drawn beneath the description.
+   *
+   * A composition slot rather than a prop describing a picture, so the primitive never
+   * has to know what is being depicted. Whatever goes here is decorative by contract: the
+   * option's meaning has to survive in {@link ChoiceProps.label},
+   * {@link ChoiceProps.description}, and {@link ChoiceProps.detail} alone, because those
+   * three are what a screen reader announces.
+   */
+  readonly children?: ReactNode | undefined
   /** Whether this is the option currently chosen. */
   readonly selected: boolean
   /** Called when the user chooses this option. */
@@ -47,6 +57,7 @@ export function Choice({
   detail,
   selected,
   onSelect,
+  children,
   testID,
 }: ChoiceProps): ReactNode {
   return (
@@ -73,6 +84,7 @@ export function Choice({
       <Text variant="caption" tone="secondary">
         {description}
       </Text>
+      {children}
     </Pressable>
   )
 }
@@ -82,7 +94,7 @@ const styles = StyleSheet.create({
     minHeight: minimumTouchTarget,
     padding: spacing.md,
     gap: spacing.xs,
-    borderRadius: radius.md,
+    borderRadius: radius.none,
     borderWidth: borderWidth.emphasis,
   } satisfies ViewStyle,
   selected: {

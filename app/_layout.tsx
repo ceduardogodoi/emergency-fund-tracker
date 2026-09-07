@@ -1,12 +1,15 @@
-import { QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
+import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 import { createQueryClient } from '@/runtime/query'
 import { ServicesProvider } from '@/runtime/services-context'
 import { useBootstrap } from '@/runtime/use-bootstrap'
+import type { Services } from '@/runtime/services'
+import { FONTS } from '@/ui/fonts'
 import { ErrorState, LoadingState, Screen, StateView } from '@/ui/primitives'
 import { color, typography } from '@/ui/tokens'
 
@@ -28,6 +31,10 @@ export default function RootLayout(): ReactNode {
   // every screen's data silently evicted.
   const [queryClient] = useState(createQueryClient)
   const boot = useBootstrap()
+  // Every type style names an Archivo family, so text drawn before these resolve would be
+  // laid out in the system face and jump when they land. Waiting is the honest option:
+  // the database is opening behind the same spinner anyway.
+  const [fontsLoaded, fontError] = useFonts(FONTS)
 
   return (
     // `app-root` is what `e2e/smoke.yaml` asserts: the outermost element that exists on
@@ -58,14 +65,62 @@ export default function RootLayout(): ReactNode {
           </Screen>
         )}
         ready={(services) => (
-          <ServicesProvider services={services}>
-            <QueryClientProvider client={queryClient}>
-              <Stack screenOptions={SCREEN_OPTIONS} />
-            </QueryClientProvider>
-          </ServicesProvider>
+          <AppShell
+            services={services}
+            queryClient={queryClient}
+            fontsLoaded={fontsLoaded}
+            fontError={fontError}
+          />
         )}
       />
     </SafeAreaProvider>
+  )
+}
+
+/** Props for {@link AppShell}. */
+interface AppShellProps {
+  readonly services: Services
+  readonly queryClient: QueryClient
+  readonly fontsLoaded: boolean
+  readonly fontError: Error | null
+}
+
+/**
+ * The app itself, once the database is open: the providers, and the router inside them.
+ *
+ * It holds the second half of the wait. The typeface has to land before the first screen
+ * draws — every type style names an Archivo family, and text laid out in the system face
+ * would reflow when the real one arrives — but a font is not worth failing to open on. So
+ * a failure here is survived rather than raised: React Native falls back to the system
+ * face for a family it cannot resolve, and the app looks ordinary instead of being
+ * unopenable. Principle II forbids a swallowed failure, not one the app chooses to
+ * survive, which is why it is still recorded before the screen appears.
+ *
+ * @param props - See {@link AppShellProps}
+ * @returns The router inside its providers, or the loading state until the fonts settle
+ */
+function AppShell({ services, queryClient, fontsLoaded, fontError }: AppShellProps): ReactNode {
+  const message = fontError?.message
+  useEffect(() => {
+    if (message !== undefined) {
+      services.logger.warn('fonts.load-failed', { message })
+    }
+  }, [message, services])
+
+  if (!fontsLoaded && fontError === null) {
+    return (
+      <Screen>
+        <LoadingState />
+      </Screen>
+    )
+  }
+
+  return (
+    <ServicesProvider services={services}>
+      <QueryClientProvider client={queryClient}>
+        <Stack screenOptions={SCREEN_OPTIONS} />
+      </QueryClientProvider>
+    </ServicesProvider>
   )
 }
 
@@ -86,8 +141,8 @@ const SCREEN_OPTIONS = {
   headerStyle: { backgroundColor: color.background.page },
   headerTintColor: color.text.primary,
   headerTitleStyle: {
+    fontFamily: typography.heading.fontFamily,
     fontSize: typography.heading.fontSize,
-    fontWeight: typography.heading.fontWeight,
   },
   headerShadowVisible: false,
   contentStyle: { backgroundColor: color.background.page },

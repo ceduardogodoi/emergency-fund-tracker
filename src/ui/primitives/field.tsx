@@ -10,7 +10,15 @@ import {
 
 import { Text } from '@/ui/primitives/text'
 import { strings } from '@/ui/strings'
-import { borderWidth, color, minimumTouchTarget, radius, spacing, typography } from '@/ui/tokens'
+import {
+  borderWidth,
+  color,
+  minimumTouchTarget,
+  radius,
+  spacing,
+  tabularNumbers,
+  typography,
+} from '@/ui/tokens'
 
 /** Props for {@link Field}. */
 export interface FieldProps {
@@ -34,6 +42,15 @@ export interface FieldProps {
   readonly required?: boolean | undefined
   /** Which keyboard to raise. Defaults to the standard one. */
   readonly keyboardType?: KeyboardTypeOptions | undefined
+  /**
+   * Renders the entered value at title size, for a field whose value is what the screen is
+   * about rather than one detail among several.
+   *
+   * `MoneyInput` sets it always: every amount in this app is the subject of the screen it
+   * appears on, and an amount typed at body size reads as a setting to configure rather
+   * than as the number the user came to decide.
+   */
+  readonly prominent?: boolean | undefined
   /** Exposes the input to tests. */
   readonly testID?: string | undefined
 }
@@ -66,6 +83,7 @@ export function Field({
   error,
   required = false,
   keyboardType,
+  prominent = false,
   testID,
 }: FieldProps): ReactNode {
   const invalid = error !== undefined
@@ -79,7 +97,11 @@ export function Field({
         keyboardType={keyboardType}
         accessibilityLabel={required ? strings.accessibility.requiredFieldName(label) : label}
         accessibilityHint={message}
-        style={[styles.input, invalid ? styles.invalid : undefined]}
+        style={[
+          styles.input,
+          prominent ? styles.prominent : undefined,
+          invalid ? styles.invalid : undefined,
+        ]}
         placeholderTextColor={color.text.secondary}
         testID={testID}
       />
@@ -104,10 +126,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderWidth: borderWidth.control,
     borderColor: color.boundary.control,
-    borderRadius: radius.sm,
-    backgroundColor: color.background.page,
+    borderRadius: radius.input,
+    backgroundColor: color.background.card,
     color: color.text.primary,
+    fontFamily: typography.body.fontFamily,
     fontSize: typography.body.fontSize,
+  } satisfies TextStyle,
+  // Tabular figures, because the digits shift under the caret as they are typed: a money
+  // field re-renders its whole formatted value on every keystroke, and proportional digits
+  // make the amount jitter sideways while the user is reading it.
+  prominent: {
+    fontFamily: typography.title.fontFamily,
+    fontSize: typography.title.fontSize,
+    letterSpacing: typography.title.letterSpacing,
+    paddingVertical: spacing.sm,
+    ...tabularNumbers,
   } satisfies TextStyle,
   // Colour is never the only signal (FR-014's rule, applied here too) — the border is what
   // a sighted user notices first, and the message below says the same thing in words.

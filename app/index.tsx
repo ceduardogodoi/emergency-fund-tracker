@@ -5,7 +5,15 @@ import { toViewState } from '@/runtime/query'
 import { useServices } from '@/runtime/services-context'
 import type { Goal } from '@/domain/goal/types'
 import { useGoal } from '@/features/goal/hooks'
-import { Card, ErrorState, LoadingState, Screen, StateView, Text } from '@/ui/primitives'
+import {
+  Card,
+  CoverageMeter,
+  ErrorState,
+  LoadingState,
+  Screen,
+  StateView,
+  Text,
+} from '@/ui/primitives'
 import { strings } from '@/ui/strings'
 
 /** Where a user with no goal is sent. Setup is not optional — nothing works without a target. */
@@ -69,6 +77,11 @@ function GoalCard({ goal }: GoalCardProps): ReactNode {
       <Text variant="display" numeric testID="goal-amount">
         {format.money(goal.target)}
       </Text>
+      {/* The duration the target buys, as units to count. Every unit is filled because
+          this is the plan, not progress against it — once the ledger exists (US2) the
+          filled count becomes the months the balance actually covers, and the caption
+          below it gains the second number. */}
+      <CoverageMeter covered={goal.coverageMonths} total={goal.coverageMonths} />
       <Text variant="caption" tone="secondary">
         {strings.goal.levelSummary(
           strings.levels[goal.levelKey].name,

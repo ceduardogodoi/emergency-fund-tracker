@@ -29,6 +29,20 @@ export const spacing = {
 export const screenInset = spacing.md
 
 /**
+ * The side of one unit in a coverage meter, in density-independent pixels.
+ *
+ * A layout constant rather than a step on the scale: the meter's units are a fixed grid,
+ * and sizing them from a gap value would tie the size of a square to the space between
+ * two paragraphs. Small enough that twenty-four of them — the longest coverage FR-002
+ * permits — fit in two rows on the narrowest supported screen.
+ *
+ * It does not scale with the reader's text size, because it is not text: the count it
+ * depicts is always stated in words beside it, which is what a screen reader and a user
+ * at the largest text size both read.
+ */
+export const coverageUnit = 14
+
+/**
  * The minimum side of a tappable target, in density-independent pixels.
  *
  * The two platforms differ — iOS HIG asks for 44pt, Material for 48dp — and this takes
