@@ -46,6 +46,21 @@ export interface TextProps {
   /** Caps the rendered lines, truncating with an ellipsis beyond it. */
   readonly numberOfLines?: number
   /**
+   * Centres the text, and stretches its box to the width the parent offers.
+   *
+   * The two travel together, and the second is not cosmetic. Android measures a
+   * content-sized text box wrongly when the text carries a font the app loaded itself, and
+   * paints only as much of the string as fits the width it got — no ellipsis, no clipped
+   * glyph, just a sentence that stops. `Voltar à meta calculada` rendered as `Voltar à
+   * meta` inside a button that centres its children, on a 411dp screen and not on a 456dp
+   * one. Giving the box a definite width takes the measurement out of the equation.
+   *
+   * Which is why this is a prop rather than a style a caller passes: the workaround has to
+   * be attached to the thing that needs it, or the next centred label will be truncated in
+   * the same silent, device-dependent way.
+   */
+  readonly align?: 'center'
+  /**
    * Announces this text as a heading, letting a screen reader jump between the sections of
    * a screen instead of reading it top to bottom.
    *
@@ -76,12 +91,18 @@ export function Text({
   tone = 'primary',
   numeric = false,
   numberOfLines,
+  align,
   accessibilityRole,
   testID,
 }: TextProps): ReactNode {
   return (
     <RNText
-      style={[styles[variant], { color: TONES[tone] }, numeric && tabularNumbers]}
+      style={[
+        styles[variant],
+        { color: TONES[tone] },
+        numeric && tabularNumbers,
+        align === 'center' && CENTERED,
+      ]}
       // `undefined` rather than a default: React Native treats any number as a cap, so a
       // fallback here would silently truncate text the caller never asked to limit.
       numberOfLines={numberOfLines}
@@ -92,6 +113,19 @@ export function Text({
     </RNText>
   )
 }
+
+/**
+ * What {@link TextProps.align} applies. Kept out of `styles` below, which is the map of
+ * type styles and stays indexable by `TextVariant` alone: this is a modifier laid over a
+ * variant, the same way `tabularNumbers` is, not a variant of its own.
+ *
+ * It stays here rather than joining `tabularNumbers` in the token module, even though the
+ * two are applied identically. `tabularNumbers` is a typographic decision the design system
+ * makes for the whole app; this is half layout and half a workaround for how Android
+ * measures text, and a design system that carries workarounds in its vocabulary stops
+ * describing the design.
+ */
+const CENTERED: TextStyle = { textAlign: 'center', alignSelf: 'stretch' }
 
 /**
  * Built once at module load rather than per render. Spelling the variants out individually

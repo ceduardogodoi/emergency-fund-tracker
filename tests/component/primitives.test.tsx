@@ -1,7 +1,15 @@
 import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { View } from 'react-native'
 
-import { SCREEN_SCROLL_TEST_ID, Button, Card, CoverageMeter, Screen, Text } from '@/ui/primitives'
+import {
+  SCREEN_KEYBOARD_TEST_ID,
+  SCREEN_SCROLL_TEST_ID,
+  Button,
+  Card,
+  CoverageMeter,
+  Screen,
+  Text,
+} from '@/ui/primitives'
 import { color, minimumTouchTarget, typography } from '@/ui/tokens'
 
 /**
@@ -35,6 +43,20 @@ describe('Text', () => {
   it('lines up digits when asked, which is what makes a column of amounts scannable', async () => {
     await render(<Text numeric>1234</Text>)
     expect(screen.getByText('1234')).toHaveStyle({ fontVariant: ['tabular-nums'] })
+  })
+
+  // `alignSelf` is the half that matters, and the half that looks redundant beside
+  // `textAlign`. Android paints only part of a content-sized string set in a font the app
+  // loaded itself — "Voltar à meta calculada" arrived as "Voltar à meta", with no ellipsis,
+  // on a 411dp screen and not on a 456dp one. A definite width is what avoids the bad
+  // measurement, so removing it here would restore a bug nothing else can catch.
+  it('gives centred text a definite width, not only a centred alignment', async () => {
+    await render(<Text align="center">Voltar à meta calculada</Text>)
+
+    expect(screen.getByText('Voltar à meta calculada')).toHaveStyle({
+      textAlign: 'center',
+      alignSelf: 'stretch',
+    })
   })
 })
 
@@ -245,3 +267,29 @@ function isFilled(unit: unknown): boolean {
       layer.backgroundColor === color.filled.accent.background,
   )
 }
+
+describe('Screen and the keyboard', () => {
+  /**
+   * Neither platform is served by the other's mechanism, and applying both to one of them
+   * is its own bug: on iOS the scroll view already insets by the keyboard's height, so a
+   * behaviour on the container as well would leave a gap exactly that tall above it.
+   *
+   * Only the iOS half is asserted here, and not for want of trying: `babel-preset-expo`
+   * folds `Platform.OS` to a literal per bundle, so the Android branch does not exist in
+   * the bundle this suite runs. Its guard is `e2e/us1-set-target.yaml`, which types into
+   * the override field with the keyboard up — Maestro's view tree omits anything the
+   * keyboard covers, so the assertion fails on exactly the defect this fixed.
+   */
+  it('leaves the keyboard to the scroll view on iOS, which already insets for it', async () => {
+    await render(
+      <Screen>
+        <Text>Conteúdo</Text>
+      </Screen>,
+    )
+
+    expect(screen.getByTestId(SCREEN_KEYBOARD_TEST_ID).props.behavior).toBeUndefined()
+    expect(screen.getByTestId(SCREEN_SCROLL_TEST_ID).props.automaticallyAdjustKeyboardInsets).toBe(
+      true,
+    )
+  })
+})

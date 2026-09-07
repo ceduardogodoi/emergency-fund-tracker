@@ -55,11 +55,15 @@ Tokens are semantic, not literal — `color.background.card`, `color.text.second
 
 Screens compose these. A pattern appearing twice becomes one of them (Principle VI).
 
+`Screen` keeps the keyboard off the field being typed into, and the two platforms need opposite things. iOS is handled by the scroll view: `automaticallyAdjustKeyboardInsets` insets the content by the keyboard's height. Android needs the container padded instead, because `edgeToEdgeEnabled` stops the window resizing — the keyboard arrives as an inset the app is expected to consume, so without this the layout is unchanged and the keyboard simply covers whatever was at the bottom. Applying both to one platform double-insets it. The Android half cannot be asserted in the component suite, because `babel-preset-expo` folds `Platform.OS` to a literal per bundle; `e2e/us1-set-target.yaml` types into the override field with the keyboard up, and Maestro's view tree omits whatever the keyboard covers.
+
+Centred text is set through `Text`'s `align` prop, never by centring it from its container. Android measures a content-sized text box wrongly when the text carries a font the app loaded itself, and paints only as much of the string as it thinks fits — no ellipsis, no clipped glyph, just a sentence that stops early. `Voltar à meta calculada` shipped as `Voltar à meta` on a 411dp screen and was correct on a 456dp one. The prop stretches the box as well as centring the glyphs, and it is a prop rather than a caller's style so the workaround stays attached to the thing that needs it.
+
 `Screen` scrolls by default. Whether a screen's content fits is not a property the screen can know — it depends on the device, the reader's text size, and how much has been entered — and when it does not fit, nothing is clipped or flagged: the last control is simply unreachable, for some people and not others. A screen opts out with `scrolls={false}` only when its content brings its own scrolling container, which is a virtualised list; nested inside a scroll view, such a list is given unbounded height and stops virtualising.
 
 | Primitive | Responsibility |
 |-----------|----------------|
-| `Screen` | Safe-area container, scrolling, consistent page padding |
+| `Screen` | Safe-area container, scrolling, keyboard avoidance, consistent page padding |
 | `Text` | Every typographic style; no ad-hoc font sizes anywhere |
 | `Button` | Primary, secondary, and destructive variants; carries its own minimum touch target |
 | `Field` | Label, input, help text, error text, and the accessible wiring between them |

@@ -60,7 +60,10 @@ export function Button({
         disabled && styles.disabled,
       ]}
     >
-      <Text variant="label" tone={scheme.tone}>
+      {/* Centred through the label rather than by the container: see `align` on `Text`.
+          A button that centres a content-sized label loses the end of a long one on
+          Android, silently and only on some screen widths. */}
+      <Text variant="label" tone={scheme.tone} align="center">
         {label}
       </Text>
     </Pressable>

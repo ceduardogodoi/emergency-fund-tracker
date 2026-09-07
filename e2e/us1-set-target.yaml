@@ -98,6 +98,12 @@ name: US1 — set a savings target
     id: 'override-target'
 - tapOn:
     id: 'target-input'
+# With the keyboard up. Maestro's view tree omits whatever the keyboard covers, so this
+# fails if the field being typed into is behind it — which it was on Android, where the
+# window stops resizing under `edgeToEdgeEnabled` and nothing was insetting for the
+# keyboard. The user could not see what they were typing.
+- assertVisible:
+    id: 'target-input'
 - eraseText
 - inputText: '5000000'
 - swipe:
