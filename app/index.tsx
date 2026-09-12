@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router'
+import { Redirect, useRouter } from 'expo-router'
 import type { ReactNode } from 'react'
 
 import { toViewState } from '@/runtime/query'
@@ -6,6 +6,7 @@ import { useServices } from '@/runtime/services-context'
 import type { Goal } from '@/domain/goal/types'
 import { useGoal } from '@/features/goal/hooks'
 import {
+  Button,
   Card,
   CoverageMeter,
   ErrorState,
@@ -69,6 +70,7 @@ interface GoalCardProps {
  */
 function GoalCard({ goal }: GoalCardProps): ReactNode {
   const { format } = useServices()
+  const router = useRouter()
   return (
     <Card testID="goal-card">
       <Text variant="label" tone="secondary">
@@ -88,6 +90,14 @@ function GoalCard({ goal }: GoalCardProps): ReactNode {
           strings.coverageDuration(goal.coverageMonths),
         )}
       </Text>
+      <Button
+        label={strings.home.reviseAction}
+        variant="secondary"
+        onPress={() => {
+          router.push('/settings/goal')
+        }}
+        testID="revise-goal"
+      />
     </Card>
   )
 }

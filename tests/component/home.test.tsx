@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react-native'
+import { screen, userEvent } from '@testing-library/react-native'
 
 import { money } from '@/domain/money/money'
 import { strings } from '@/ui/strings'
@@ -13,11 +13,13 @@ const TARGET_MINOR_UNITS = 1_200_000
 const EXPENSES_MINOR_UNITS = 200_000
 
 const mockRedirect = jest.fn()
+const mockPush = jest.fn()
 
 // Only the redirect is doubled, and only to record where it pointed. Rendering nothing in
 // its place is what the real component does to this tree anyway — it navigates rather than
 // drawing — so the assertion is about the destination, which is the whole decision.
 jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPush }),
   Redirect: ({ href }: { href: string }) => {
     mockRedirect(href)
     return null
@@ -29,6 +31,7 @@ let harness: AppHarness
 beforeEach(() => {
   harness = createAppHarness()
   mockRedirect.mockClear()
+  mockPush.mockClear()
 })
 
 afterEach(async () => {
@@ -75,5 +78,18 @@ describe('Home', () => {
       ),
     ).toBeTruthy()
     expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
+  // FR-006 asks for the target to be changeable, and a screen with no way in is a feature
+  // that exists only in the route table. Home is where a returning user is, so this is
+  // where the way in belongs.
+  it('offers a way to change the target', async () => {
+    await storeGoal()
+    await harness.render(<HomeScreen />)
+    await screen.findByTestId('goal-card')
+
+    await userEvent.press(screen.getByRole('button', { name: strings.home.reviseAction }))
+
+    expect(mockPush).toHaveBeenCalledWith('/settings/goal')
   })
 })

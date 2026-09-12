@@ -1,0 +1,115 @@
+# User Story 1 — change a target that already exists, and see the change take effect.
+#
+# The second half of FR-006 on a real device: the target recalculates when the level
+# changes, the screen states what the change costs before it is made, and Home shows the new
+# figure the moment the user returns to it.
+#
+# The last part is the one only a device can check. Saving invalidates two queries and
+# navigates back to a screen that was already mounted, and a cache left stale there shows
+# the user the old target on the screen they land on — which is exactly the defect
+# `e2e/us1-set-target.yaml` caught the first time, in the other direction.
+#
+# Runs inside Expo Go; see `us1-set-target.yaml` for why, and for why `APP_ID` and `DEV_URL`
+# come from the npm scripts rather than an `env:` block here.
+appId: ${APP_ID}
+name: US1 — revise a savings target
+---
+- clearState
+- runFlow: open-app.yaml
+
+# Setup, as briefly as it can be done: this flow is about what happens afterwards, and the
+# journey through onboarding is `us1-set-target.yaml`'s subject.
+- extendedWaitUntil:
+    visible:
+      id: 'expenses-input'
+    timeout: 30000
+- tapOn:
+    id: 'expenses-input'
+- inputText: '200000'
+- tapOn:
+    id: 'continue'
+- extendedWaitUntil:
+    visible:
+      id: 'level-balanced'
+    timeout: 20000
+# Below the fold: the level list carries five options and the preview before the action.
+- scrollUntilVisible:
+    element:
+      id: 'save-goal'
+    direction: DOWN
+- tapOn:
+    id: 'save-goal'
+- extendedWaitUntil:
+    visible:
+      id: 'goal-card'
+    timeout: 20000
+- assertVisible:
+    id: 'goal-amount'
+    text: '.*12[.,]000[.,]00.*' # balanced, 6 months of R$ 2.000,00
+
+# FR-006 is unreachable without a way in, so the way in is part of the journey.
+- tapOn:
+    id: 'revise-goal'
+- extendedWaitUntil:
+    visible:
+      id: 'expenses-input'
+    timeout: 20000
+
+# The form opens on what is stored rather than on a fresh default. The preview sits below
+# the level options, so reaching it is a scroll rather than a wait.
+- scrollUntilVisible:
+    element:
+      id: 'target-preview'
+    direction: DOWN
+- assertVisible:
+    id: 'target-amount'
+    text: '.*12[.,]000[.,]00.*'
+- assertNotVisible:
+    id: 'goal-impact'
+
+# The change, and what it costs — stated before it is saved.
+- tapOn:
+    id: 'level-cautious'
+- assertVisible:
+    id: 'target-amount'
+    text: '.*18[.,]000[.,]00.*' # 9 months
+# To the difference rather than to the card: the card is taller than what remains of a
+# short viewport, so scrolling until the card is visible stops with its last line still
+# below the fold — which is where the difference is.
+- scrollUntilVisible:
+    element:
+      id: 'goal-difference'
+    direction: DOWN
+- assertVisible:
+    id: 'current-target'
+    text: '.*12[.,]000[.,]00.*'
+- assertVisible:
+    id: 'goal-difference'
+    text: '.*6[.,]000[.,]00.*'
+
+- scrollUntilVisible:
+    element:
+      id: 'save-goal'
+    direction: DOWN
+- tapOn:
+    id: 'save-goal'
+
+# Back on Home, and showing the revised figure rather than the one it was mounted with.
+- extendedWaitUntil:
+    visible:
+      id: 'goal-card'
+    timeout: 20000
+- assertVisible:
+    id: 'goal-amount'
+    text: '.*18[.,]000[.,]00.*'
+
+# FR-007: the revision survives a restart, not just a navigation.
+- stopApp
+- runFlow: open-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'goal-card'
+    timeout: 30000
+- assertVisible:
+    id: 'goal-amount'
+    text: '.*18[.,]000[.,]00.*'

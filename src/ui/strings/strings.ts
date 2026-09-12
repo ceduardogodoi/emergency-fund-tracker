@@ -153,9 +153,43 @@ export const strings = {
     calculatedAction: 'Voltar à meta calculada',
   },
 
+  /**
+   * Changing a goal that already exists (FR-006).
+   *
+   * Separate from `goal` because these are the words of a second visit: what is stored,
+   * what it would become, and what is preserved. The reassurance about contributions is
+   * part of the requirement rather than comfort — a user who believes revising the target
+   * discards their history will not revise it.
+   */
+  revision: {
+    title: 'Ajustar meta',
+    intro: 'Alterar seus gastos ou a duração recalcula a meta. Suas contribuições são mantidas.',
+    currentTarget: 'Meta atual',
+    /**
+     * How much larger the new target is.
+     *
+     * A sentence rather than a signed amount: the formatter renders a negative as a minus
+     * sign, which reads as a debt rather than as a smaller goal, and "+" before a currency
+     * amount is not how the difference between two goals is said in Portuguese.
+     *
+     * @param amount The formatted difference, unsigned.
+     * @returns The line shown under the two targets.
+     */
+    increase: (amount: string): string => `Aumento de ${amount}`,
+    /**
+     * How much smaller the new target is.
+     *
+     * @param amount The formatted difference, unsigned.
+     * @returns The line shown under the two targets.
+     */
+    decrease: (amount: string): string => `Redução de ${amount}`,
+  },
+
   /** The first screen after launch. */
   home: {
     title: 'Sua reserva',
+    /** The way to the revision screen (FR-006). */
+    reviseAction: 'Ajustar meta',
     /** No goal means setup never finished, which is the only first launch the app knows. */
     emptyTitle: 'Defina sua meta',
     emptyBody: 'Informe seus gastos mensais para descobrir de quanto a sua reserva precisa.',

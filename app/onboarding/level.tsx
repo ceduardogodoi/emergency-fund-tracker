@@ -1,17 +1,14 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import type { ReactNode } from 'react'
-import { StyleSheet, View, type ViewStyle } from 'react-native'
 
-import { LEVELS, MAXIMUM_COVERAGE_MONTHS, MINIMUM_COVERAGE_MONTHS } from '@/domain/goal/levels'
-import type { LevelKey } from '@/domain/goal/types'
-import { validateCoverageMonths, validateMonthlyExpenses } from '@/domain/goal/validation'
+import { validateMonthlyExpenses } from '@/domain/goal/validation'
 import type { Money } from '@/domain/money/money'
 import { isErr } from '@/domain/result'
+import { LevelOptions } from '@/features/goal/level-options'
 import { TargetPreview } from '@/features/goal/target-preview'
-import { useGoalDraft } from '@/features/goal/use-goal-draft'
-import { Button, Choice, CoverageMeter, Field, Screen, Text } from '@/ui/primitives'
+import { firstGoalDraft, useGoalDraft } from '@/features/goal/use-goal-draft'
+import { Button, Screen, Text } from '@/ui/primitives'
 import { strings } from '@/ui/strings'
-import { spacing } from '@/ui/tokens'
 
 /**
  * Step two of setup: how many months of expenses the fund should cover (FR-002).
@@ -44,7 +41,7 @@ interface LevelFormProps {
 /** The choice itself, once there is a figure to multiply. */
 function LevelForm({ monthlyExpenses }: LevelFormProps): ReactNode {
   const router = useRouter()
-  const draft = useGoalDraft(monthlyExpenses, () => {
+  const draft = useGoalDraft(firstGoalDraft(monthlyExpenses), () => {
     router.replace('/')
   })
 
@@ -78,96 +75,6 @@ function LevelForm({ monthlyExpenses }: LevelFormProps): ReactNode {
           the draft stays on screen, so nothing the user chose is lost. */}
       {draft.hasFailed ? <Text tone="negative">{strings.state.errorBody}</Text> : null}
     </Screen>
-  )
-}
-
-/** Props for {@link LevelOptions}. */
-interface LevelOptionsProps {
-  readonly selected: LevelKey
-  readonly onSelect: (key: LevelKey) => void
-  readonly customMonths: string
-  readonly onCustomMonthsChange: (value: string) => void
-  readonly error: string | undefined
-}
-
-/**
- * The levels, and the duration field the custom one reveals.
- *
- * Rendered from `LEVELS` rather than from a list of its own, so a level added to the
- * domain appears here without an edit — and so the durations shown are the ones the target
- * is actually calculated from.
- */
-function LevelOptions({
-  selected,
-  onSelect,
-  customMonths,
-  onCustomMonthsChange,
-  error,
-}: LevelOptionsProps): ReactNode {
-  return (
-    <View accessibilityRole="radiogroup" style={styles.options}>
-      {LEVELS.map((level) => (
-        <Choice
-          key={level.key}
-          label={strings.levels[level.key].name}
-          description={strings.levels[level.key].explanation}
-          detail={strings.coverageDuration(level.coverageMonths)}
-          selected={selected === level.key}
-          onSelect={() => {
-            onSelect(level.key)
-          }}
-          testID={`level-${level.key}`}
-        >
-          <CoverageMeter covered={level.coverageMonths} total={level.coverageMonths} />
-        </Choice>
-      ))}
-      <Choice
-        label={strings.levels.custom.name}
-        description={strings.levels.custom.explanation}
-        selected={selected === 'custom'}
-        onSelect={() => {
-          onSelect('custom')
-        }}
-        testID="level-custom"
-      />
-      {selected === 'custom' ? (
-        <CustomDuration value={customMonths} onChange={onCustomMonthsChange} error={error} />
-      ) : null}
-    </View>
-  )
-}
-
-/** Props for {@link CustomDuration}. */
-interface CustomDurationProps {
-  readonly value: string
-  readonly onChange: (value: string) => void
-  readonly error: string | undefined
-}
-
-/**
- * The duration field, shown only once the user has asked to name their own.
- *
- * The meter sits with the field rather than inside the option above it. On the option it
- * would have to appear when the option is chosen — and an option that changes height on
- * selection pushes everything below it out from under the finger already reaching for the
- * field, which is the same reason `Choice` keeps its border width constant.
- */
-function CustomDuration({ value, onChange, error }: CustomDurationProps): ReactNode {
-  const typedMonths = typedCoverage(value)
-  return (
-    <View style={styles.custom}>
-      <Field
-        label={strings.onboarding.customMonthsLabel}
-        value={value}
-        onChangeText={onChange}
-        keyboardType="number-pad"
-        help={strings.coverageRangeHelp(MINIMUM_COVERAGE_MONTHS, MAXIMUM_COVERAGE_MONTHS)}
-        error={error}
-        required
-        testID="coverage-input"
-      />
-      {typedMonths === null ? null : <CoverageMeter covered={typedMonths} total={typedMonths} />}
-    </View>
   )
 }
 
@@ -205,20 +112,3 @@ function parseExpenses(value: string | undefined): Money | null {
 
 /** Only digits: a sign, a separator, or an exponent is not a figure this screen produced. */
 const DIGITS = /^\d+$/
-
-/**
- * The duration currently in the custom field, when it is one the app would accept.
- *
- * Null keeps the meter off a value that is not a duration at all — an empty field, or a
- * count outside the range FR-002 permits. Drawing thirty squares for a duration the app is
- * about to refuse would illustrate a choice the user cannot make.
- */
-function typedCoverage(value: string): number | null {
-  const validated = validateCoverageMonths(Number.parseInt(value, 10))
-  return isErr(validated) ? null : validated.value
-}
-
-const styles = StyleSheet.create({
-  options: { gap: spacing.sm } satisfies ViewStyle,
-  custom: { gap: spacing.xs } satisfies ViewStyle,
-})

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query'
 
-import { queryKeys } from '@/runtime/query'
+import { queryKeys, type QueryLike } from '@/runtime/query'
 import { useServices } from '@/runtime/services-context'
 import type { AppError } from '@/domain/errors'
 import { submitGoal } from '@/domain/goal/submit-goal'
@@ -62,9 +62,59 @@ export function useGoal(): UseQueryResult<Goal | null, AppError> {
 
 /*
  * A `useGoalChanges` reading the revision history belongs here too, but nothing renders it
- * until the goal revision screen exists — T066. Written now it would be untested code whose
- * only proof of working is that it compiles.
+ * until FR-035's history view exists. Written now it would be untested code whose only
+ * proof of working is that it compiles.
  */
+
+/** A stored goal together with the expenses it was derived from. */
+export interface StoredGoal {
+  /** The active goal. */
+  readonly goal: Goal
+  /** The figure its target is derived from, which a revision may also change. */
+  readonly monthlyExpenses: Money
+}
+
+/**
+ * Both halves of a stored goal, as one query.
+ *
+ * Revising a goal needs the target and the expenses behind it, and the two live in
+ * different rows. Nesting one view state inside another would make the screen handle four
+ * states twice over and invent an answer for the pairs that cannot happen — loaded goal,
+ * failed profile — so they are combined into a single state here instead.
+ *
+ * Null when either row is absent. A goal without the expenses it derives from is not a
+ * goal this screen can revise: the form would open on a figure nobody entered.
+ *
+ * @returns The pair, mapped onto the four states with `toViewState`.
+ */
+export function useStoredGoal(): QueryLike<StoredGoal | null> {
+  const goal = useGoal()
+  const profile = useProfile()
+
+  // Either failure is the pair's failure, and retrying runs both: the one that succeeded
+  // costs a single local read to repeat, and tracking which half to retry would be state
+  // this screen has no other use for.
+  const failure = goal.error ?? profile.error
+  if (failure !== null) {
+    return {
+      status: 'error',
+      data: undefined,
+      error: failure,
+      refetch: () => Promise.all([goal.refetch(), profile.refetch()]),
+    }
+  }
+  if (goal.data === undefined || profile.data === undefined) {
+    return { status: 'pending', data: undefined, error: null }
+  }
+  return { status: 'success', data: pairOf(goal.data, profile.data), error: null }
+}
+
+/** The pair, or null when either row is missing. */
+function pairOf(goal: Goal | null, profile: Profile | null): StoredGoal | null {
+  return goal === null || profile === null
+    ? null
+    : { goal, monthlyExpenses: profile.monthlyExpenses }
+}
 
 /**
  * Saves the expenses and the goal, recording the revision when there is one.

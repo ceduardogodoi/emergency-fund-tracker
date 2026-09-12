@@ -114,7 +114,7 @@ Eleven screens. Each lists the states it must handle beyond `ready`.
 | Statistics | `/statistics` | loading, empty, insufficient-data per card, ready |
 | Forecast | `/forecast` | loading, insufficient-history, no-pace, reached, projected |
 | Settings | `/settings/*` | permission-denied (reminders), import in progress, import failed |
-| Goal revision | `/settings/goal` | validation error, impact-on-progress preview |
+| Goal revision | `/settings/goal` | loading, empty (no goal → onboarding), error, validation error, impact preview |
 
 The forecast screen's four states map one-to-one onto the `ForecastState` union in [domain-ports.md](./domain-ports.md), so FR-029's insufficient-history case and FR-030's zero-pace case cannot be skipped — the compiler requires both.
 
