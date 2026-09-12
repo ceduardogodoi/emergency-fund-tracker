@@ -56,12 +56,16 @@ export const SCREEN_KEYBOARD_TEST_ID = 'screen-keyboard'
  * resize the window used to do, and the scroll view then brings the focused field back
  * into view the way it does on any Android screen.
  *
- * `babel-preset-expo` folds this to a constant per platform bundle, so whichever branch is
- * not the running platform's does not exist at runtime — which is why the component suite
- * can only ever assert the iOS half. The Android half is guarded on a device instead, by
- * `e2e/us1-set-target.yaml` typing into the override field with the keyboard up.
+ * Called at render rather than read once into a module constant, which is what lets one
+ * test cover both branches: nothing inlines `Platform.OS` here — the bundler leaves the
+ * comparison in the output — so a test can set it and render. A constant would have been
+ * evaluated at import, before any test could reach it.
+ *
+ * @returns The behaviour for this platform, or undefined where the scroll view handles it.
  */
-const KEYBOARD_BEHAVIOR = Platform.OS === 'android' ? 'padding' : undefined
+function keyboardBehavior(): 'padding' | undefined {
+  return Platform.OS === 'android' ? 'padding' : undefined
+}
 
 /**
  * The outermost element of every screen.
@@ -97,7 +101,7 @@ export function Screen({ children, title, scrolls = true, testID }: ScreenProps)
     <SafeAreaView style={styles.screen} testID={testID}>
       <KeyboardAvoidingView
         style={styles.fill}
-        behavior={KEYBOARD_BEHAVIOR}
+        behavior={keyboardBehavior()}
         testID={SCREEN_KEYBOARD_TEST_ID}
       >
         {scrolls ? (

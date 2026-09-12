@@ -1,5 +1,5 @@
 import { render, screen, userEvent, within } from '@testing-library/react-native'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 
 import {
   SCREEN_KEYBOARD_TEST_ID,
@@ -269,25 +269,48 @@ function isFilled(unit: unknown): boolean {
 }
 
 describe('Screen and the keyboard', () => {
-  /**
-   * Neither platform is served by the other's mechanism, and applying both to one of them
-   * is its own bug: on iOS the scroll view already insets by the keyboard's height, so a
-   * behaviour on the container as well would leave a gap exactly that tall above it.
-   *
-   * Only the iOS half is asserted here, and not for want of trying: `babel-preset-expo`
-   * folds `Platform.OS` to a literal per bundle, so the Android branch does not exist in
-   * the bundle this suite runs. Its guard is `e2e/us1-set-target.yaml`, which types into
-   * the override field with the keyboard up — Maestro's view tree omits anything the
-   * keyboard covers, so the assertion fails on exactly the defect this fixed.
-   */
-  it('leaves the keyboard to the scroll view on iOS, which already insets for it', async () => {
+  const realPlatform = Platform.OS
+
+  afterEach(() => {
+    Platform.OS = realPlatform
+  })
+
+  async function renderOn(platform: typeof Platform.OS): Promise<void> {
+    Platform.OS = platform
     await render(
       <Screen>
         <Text>Conteúdo</Text>
       </Screen>,
     )
+  }
 
-    expect(screen.getByTestId(SCREEN_KEYBOARD_TEST_ID).props.behavior).toBeUndefined()
+  /**
+   * Asserted through what the container renders, because `behavior` is not readable any
+   * other way: `KeyboardAvoidingView` consumes it and the host view it renders carries only
+   * children, onLayout, style and testID. A test reading `props.behavior` off that element
+   * gets `undefined` on every platform and passes while asserting nothing — which is what
+   * the first version of this test did.
+   *
+   * `paddingBottom: 0` is the inset with no keyboard up. Zero is not the point; its
+   * presence is. The container reserves the keyboard's space on Android and does not on
+   * iOS, which is the whole of the decision being made here.
+   */
+  it('reserves the keyboard’s space on Android, where the window no longer resizes', async () => {
+    await renderOn('android')
+
+    expect(screen.getByTestId(SCREEN_KEYBOARD_TEST_ID)).toHaveStyle({ paddingBottom: 0 })
+  })
+
+  it('leaves iOS to the scroll view, so the inset is never applied twice', async () => {
+    await renderOn('ios')
+
+    expect(screen.getByTestId(SCREEN_KEYBOARD_TEST_ID)).not.toHaveStyle({ paddingBottom: 0 })
+  })
+
+  // The iOS half of the pair, on the scroll view rather than the container.
+  it('asks the scroll view to inset for the keyboard, which is the iOS mechanism', async () => {
+    await renderOn('ios')
+
     expect(screen.getByTestId(SCREEN_SCROLL_TEST_ID).props.automaticallyAdjustKeyboardInsets).toBe(
       true,
     )
