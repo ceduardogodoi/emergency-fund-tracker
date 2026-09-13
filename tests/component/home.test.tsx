@@ -1,4 +1,5 @@
 import { screen, userEvent } from '@testing-library/react-native'
+import type { RedirectProps } from 'expo-router'
 
 import { money } from '@/domain/money/money'
 import { strings } from '@/ui/strings'
@@ -20,7 +21,7 @@ const mockPush = jest.fn()
 // drawing — so the assertion is about the destination, which is the whole decision.
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
-  Redirect: ({ href }: { href: string }) => {
+  Redirect: ({ href }: RedirectProps) => {
     mockRedirect(href)
     return null
   },

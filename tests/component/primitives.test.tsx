@@ -1,5 +1,6 @@
 import { render, screen, userEvent, within } from '@testing-library/react-native'
-import { Platform, View } from 'react-native'
+import type { ReactElement } from 'react'
+import { Platform, View, type ViewProps } from 'react-native'
 
 import {
   SCREEN_KEYBOARD_TEST_ID,
@@ -208,7 +209,7 @@ describe('CoverageMeter', () => {
   const hidden = { includeHiddenElements: true } as const
 
   /** Its children are the units, so counting them is asking "how many months". */
-  function unitsIn(testID: string): unknown[] {
+  function unitsIn(testID: string): ReactElement<ViewProps>[] {
     return screen.getByTestId(testID, hidden).props.children
   }
 
@@ -256,9 +257,19 @@ describe('CoverageMeter', () => {
   })
 })
 
-/** Whether a rendered unit carries the accent fill, which is what "covered" looks like. */
-function isFilled(unit: unknown): boolean {
-  const style = (unit as { props: { style: unknown[] } }).props.style
+/**
+ * Whether a rendered unit carries the accent fill, which is what "covered" looks like.
+ *
+ * The units are the elements the meter rendered, so they are `ReactElement`s and their
+ * props are `ViewProps` — not the `TestInstance` a query would have returned. `style` is
+ * narrowed rather than assumed: `StyleProp` admits an object, a falsy value, or a nested
+ * array, and only this component's own use of it makes an array the right expectation.
+ */
+function isFilled(unit: ReactElement<ViewProps>): boolean {
+  const style = unit.props.style
+  if (!Array.isArray(style)) {
+    return false
+  }
   return style.some(
     (layer) =>
       typeof layer === 'object' &&
@@ -268,6 +279,20 @@ function isFilled(unit: unknown): boolean {
   )
 }
 
+/**
+ * The two platforms this app ships to, per `app.json`.
+ *
+ * Narrower than either type react-native offers, deliberately. `PlatformOSType` admits
+ * 'native', which `Platform.OS` never holds; `typeof Platform.OS` admits macos, windows and
+ * web, which this app has no build for — and `renderOn('web')` would have compiled and then
+ * asserted something about a platform nobody ships. The union `Platform.OS` actually has is
+ * unnamed in react-native's types, so there is nothing canonical to import here either way.
+ *
+ * Local to this file until something outside it needs the same constraint: an exported type
+ * with one consumer is a guess about the second.
+ */
+type ShippedPlatform = 'ios' | 'android'
+
 describe('Screen and the keyboard', () => {
   const realPlatform = Platform.OS
 
@@ -275,7 +300,7 @@ describe('Screen and the keyboard', () => {
     Platform.OS = realPlatform
   })
 
-  async function renderOn(platform: typeof Platform.OS): Promise<void> {
+  async function renderOn(platform: ShippedPlatform): Promise<void> {
     Platform.OS = platform
     await render(
       <Screen>

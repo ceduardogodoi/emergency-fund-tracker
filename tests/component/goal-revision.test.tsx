@@ -1,4 +1,5 @@
 import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native'
+import type { RedirectProps } from 'expo-router'
 
 import { storageError } from '@/domain/errors/app-error'
 import type { GoalInput } from '@/domain/goal/types'
@@ -41,7 +42,7 @@ const mockRedirect = jest.fn()
 // expo-router's own behaviour and is not this suite's subject.
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: mockBack, replace: mockReplace, canGoBack: mockCanGoBack }),
-  Redirect: ({ href }: { href: string }) => {
+  Redirect: ({ href }: RedirectProps) => {
     mockRedirect(href)
     return null
   },

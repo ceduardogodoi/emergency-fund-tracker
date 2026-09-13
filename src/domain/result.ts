@@ -15,9 +15,31 @@ import type { AppError } from './errors/app-error'
  *
  * Exceptions stay reserved for programmer errors — a fractional cent passed to `money`,
  * say — which no caller should be writing recovery code for.
+ *
+ * The two branches are named rather than written inline in the union. The same two shapes
+ * are referred to by both type guards below and by the test helpers that narrow a result
+ * by hand, and six copies of `{ readonly ok: true; readonly value: T }` is six places for
+ * the shape to drift from itself.
  */
-export type Result<T, E = AppError> =
-  { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: E }
+
+/** The success branch of a {@link Result}. */
+export interface Ok<T> {
+  /** Discriminant. Always true on this branch. */
+  readonly ok: true
+  /** What the operation produced. */
+  readonly value: T
+}
+
+/** The failure branch of a {@link Result}. */
+export interface Err<E> {
+  /** Discriminant. Always false on this branch. */
+  readonly ok: false
+  /** Why the operation failed, in a shape the UI can turn into a message. */
+  readonly error: E
+}
+
+/** @see The module documentation above for why results are used instead of exceptions. */
+export type Result<T, E = AppError> = Ok<T> | Err<E>
 
 /**
  * Wraps a value as a success.
@@ -42,9 +64,7 @@ export function err<E>(error: E): Result<never, E> {
  *
  * @returns True when the operation succeeded, narrowing `value` for the caller.
  */
-export function isOk<T, E>(
-  result: Result<T, E>,
-): result is { readonly ok: true; readonly value: T } {
+export function isOk<T, E>(result: Result<T, E>): result is Ok<T> {
   return result.ok
 }
 
@@ -53,9 +73,7 @@ export function isOk<T, E>(
  *
  * @returns True when the operation failed, narrowing `error` for the caller.
  */
-export function isErr<T, E>(
-  result: Result<T, E>,
-): result is { readonly ok: false; readonly error: E } {
+export function isErr<T, E>(result: Result<T, E>): result is Err<E> {
   return !result.ok
 }
 

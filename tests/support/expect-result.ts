@@ -1,4 +1,4 @@
-import type { Result } from '@/domain/result'
+import type { Err, Ok, Result } from '@/domain/result'
 
 /**
  * Unwraps a `Result` for the assertions that follow, failing if it is not a success.
@@ -23,7 +23,7 @@ export function expectOk<T, E>(result: Result<T, E>): T {
   // A failed result still prints in full, so the reported error is the real one.
   expect(result).toMatchObject({ ok: true })
   // Unreachable when the assertion above fails: Jest throws out of the test first.
-  return (result as { readonly ok: true; readonly value: T }).value
+  return (result as Ok<T>).value
 }
 
 /**
@@ -37,5 +37,5 @@ export function expectOk<T, E>(result: Result<T, E>): T {
  */
 export function expectErr<T, E>(result: Result<T, E>): E {
   expect(result).toMatchObject({ ok: false })
-  return (result as { readonly ok: false; readonly error: E }).error
+  return (result as Err<E>).error
 }

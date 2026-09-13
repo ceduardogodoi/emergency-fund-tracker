@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from 'expo-router'
+import { Redirect, useRouter, type ImperativeRouter } from 'expo-router'
 import type { ReactNode } from 'react'
 
 import { toViewState } from '@/runtime/query'
@@ -117,7 +117,7 @@ function RevisionForm({ stored }: RevisionFormProps): ReactNode {
  *
  * @param router The router this screen is navigating with.
  */
-function leaveRevision(router: ReturnType<typeof useRouter>): void {
+function leaveRevision(router: ImperativeRouter): void {
   if (router.canGoBack()) {
     router.back()
     return
