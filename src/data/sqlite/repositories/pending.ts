@@ -1,9 +1,5 @@
 import { storageError } from '@/domain/errors/app-error'
-import type {
-  LedgerRepository,
-  MilestoneRepository,
-  ReminderRepository,
-} from '@/domain/ports/repositories'
+import type { MilestoneRepository, ReminderRepository } from '@/domain/ports/repositories'
 import { err, type Result } from '@/domain/result'
 
 /**
@@ -18,25 +14,13 @@ import { err, type Result } from '@/domain/result'
  * the truth — a wrong number a user would act on. A storage failure surfaces as the error
  * state every view already handles.
  *
- * Each of these is deleted by the task that implements it for real: the ledger at T078,
- * milestones at T100, reminders at T131. Nothing in User Story 1 calls any of them.
+ * Each of these is deleted by the task that implements it for real: milestones at T100,
+ * reminders at T131. The ledger's went at T078, which is what these are waiting to become.
  */
 
 /** The failure every pending method returns. */
 function pending<T>(): Promise<Result<T>> {
   return Promise.resolve(err(storageError('repository.not-implemented')))
-}
-
-/** The ledger, until T078. */
-export function createPendingLedgerRepository(): LedgerRepository {
-  return {
-    add: pending,
-    update: pending,
-    remove: pending,
-    getById: pending,
-    list: pending,
-    listFutureDated: pending,
-  }
 }
 
 /** The reminder schedule, until T131. */

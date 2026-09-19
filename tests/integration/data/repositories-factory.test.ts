@@ -11,8 +11,8 @@ import { createMigratedDatabase, type TestDatabase } from '@tests/support/sqlite
 /**
  * The factory the composition root hands to the unit of work.
  *
- * Two of the five repositories are implemented; the rest arrive with their own user
- * stories. What matters here is that the unimplemented three fail loudly — a stub that
+ * Three of the five repositories are implemented; the rest arrive with their own user
+ * stories. What matters here is that the unimplemented two fail loudly — a stub that
  * returned an empty list would be indistinguishable from a fund with no entries, and the
  * app would render a zero balance as though it were the truth.
  */
@@ -53,6 +53,17 @@ describe('the repository set', () => {
       })
       expect(expectOk(await repositories.goal.get())).toMatchObject({ target: money(1_200_000) })
     })
+
+    it('binds the ledger repository to the database it was given', async () => {
+      await repositories.ledger.add({
+        type: 'contribution',
+        amount: money(50_000),
+        date: calendarDate('2026-08-22'),
+        note: null,
+        withdrawalReason: null,
+      })
+      expect(expectOk(await repositories.ledger.list())).toMatchObject([{ amount: money(50_000) }])
+    })
   })
 
   describe('what is not implemented yet', () => {
@@ -67,25 +78,6 @@ describe('the repository set', () => {
       string,
       (repos: Repositories) => Promise<Result<unknown>>,
     ])[] = [
-      [
-        'ledger.add',
-        (repos) =>
-          repos.ledger.add({
-            type: 'contribution',
-            amount: money(1),
-            date: calendarDate('2026-08-22'),
-            note: null,
-            withdrawalReason: null,
-          }),
-      ],
-      ['ledger.list', (repos) => repos.ledger.list()],
-      ['ledger.getById', (repos) => repos.ledger.getById('id-1')],
-      [
-        'ledger.listFutureDated',
-        (repos) => repos.ledger.listFutureDated(calendarDate('2026-08-22')),
-      ],
-      ['ledger.update', (repos) => repos.ledger.update('id-1', {})],
-      ['ledger.remove', (repos) => repos.ledger.remove('id-1')],
       ['reminders.get', (repos) => repos.reminders.get()],
       [
         'reminders.save',
