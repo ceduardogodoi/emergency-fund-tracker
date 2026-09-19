@@ -59,6 +59,28 @@ export interface DateRange {
   readonly to: CalendarDate
 }
 
+/**
+ * Where the fund stands against its target (FR-013, FR-015).
+ *
+ * Every figure a screen needs to describe the position, computed together so no screen has
+ * to derive one of them itself and reach a different answer. Exactly one of `remaining` and
+ * `surplus` is non-zero; at exactly the target both are zero and `isReached` is true.
+ */
+export interface ProgressSummary {
+  /** The balance the figures below were computed from. May be negative after a withdrawal. */
+  readonly balance: Money
+  /** The target being measured against. */
+  readonly target: Money
+  /** What is still to be saved. Never negative — FR-015 forbids showing one. */
+  readonly remaining: Money
+  /** Anything saved beyond the target. Zero until the goal is reached. */
+  readonly surplus: Money
+  /** Progress as a percentage, clamped to 0–100 and rounded to two decimals. Display only. */
+  readonly percentComplete: number
+  /** Whether the balance meets or exceeds the target. */
+  readonly isReached: boolean
+}
+
 /** The progress thresholds the app acknowledges as the balance crosses them (FR-024). */
 export type MilestoneThreshold = 25 | 50 | 75 | 100
 

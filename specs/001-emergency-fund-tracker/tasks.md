@@ -158,9 +158,9 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Tests for User Story 2
 
-- [ ] T068 [P] [US2] Unit tests for balance calculation including the opening-entry rules in `tests/unit/domain/ledger/balance.test.ts`
-- [ ] T069 [P] [US2] Unit tests for progress summary — remaining, surplus, percentage, reached, and the exact-target boundary — in `tests/unit/domain/ledger/progress.test.ts`
-- [ ] T070 [P] [US2] Unit tests for entry validation — amount above zero, no future dates, at most one opening, note length — in `tests/unit/domain/ledger/entry.test.ts`
+- [X] T068 [P] [US2] Unit tests for balance calculation including the opening-entry rules in `tests/unit/domain/ledger/balance.test.ts` — covers the FR-033 exclusion and its boundary (today counts, tomorrow does not), a negative balance after an overdrawing withdrawal, and order independence, since addition commutes and a repository that changes its sort must not change the fund
+- [X] T069 [P] [US2] Unit tests for progress summary — remaining, surplus, percentage, reached, and the exact-target boundary — in `tests/unit/domain/ledger/progress.test.ts` — the exact-target case is the one FR-015 turns on: both figures zero and the goal reached. Also pins the negative-balance case to no progress rather than a negative share, and the spec's own 4.17% example
+- [X] T070 [P] [US2] Unit tests for entry validation — amount above zero, no future dates, at most one opening, note length — in `tests/unit/domain/ledger/entry.test.ts` — withdrawal-specific rules are deliberately absent: a reason (FR-016) and the over-balance warning (FR-017) need the balance rather than one entry, and belong to T117
 - [ ] T071 [P] [US2] Integration tests for `LedgerRepository` covering CRUD, ordering, and the future-dated query in `tests/integration/data/ledger-repository.test.ts`
 - [ ] T072 [P] [US2] Reconciliation test running at least 1,000 randomized entry sequences and asserting exact balances with zero rounding drift (SC-007) in `tests/integration/data/reconciliation.test.ts`
 - [ ] T073 [P] [US2] Component tests for the contribute form and the history list in `tests/component/entries.test.tsx`
@@ -168,9 +168,9 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Implementation for User Story 2
 
-- [ ] T075 [P] [US2] Implement the `LedgerEntry` model and its validation rules in `src/domain/ledger/entry.ts`
-- [ ] T076 [US2] Implement `calculateBalance`, excluding future-dated entries, in `src/domain/ledger/balance.ts`
-- [ ] T077 [US2] Implement `summarizeProgress` in `src/domain/ledger/progress.ts`
+- [X] T075 [P] [US2] Implement the `LedgerEntry` model and its validation rules in `src/domain/ledger/entry.ts` — the rules take an `EntryContext` (`today` and `hasOpening`) rather than reading a clock or a repository, which is what keeps them pure and lets the import path (FR-046) apply the same rules a form does. Checks run in the order a user would correct them: amount, date, note, then type
+- [X] T076 [US2] Implement `calculateBalance`, excluding future-dated entries, in `src/domain/ledger/balance.ts` — never stored, summed on every call, which is what makes an edit or deletion correct by construction rather than by remembering to adjust a total. Returns a negative balance rather than clamping: an overdrawing withdrawal is a real state FR-017 warns about but does not forbid
+- [X] T077 [US2] Implement `summarizeProgress` in `src/domain/ledger/progress.ts` — also adds the `ProgressSummary` type the domain-ports contract names but nothing had declared. `remaining` and `surplus` are clamped at zero so FR-015's ban on a negative remaining holds for every caller rather than at each screen, and the percentage routes through `percentOf`, the one place division happens
 - [ ] T078 [US2] Implement `LedgerRepository` in `src/data/sqlite/repositories/ledger-repository.ts` — and delete its placeholder from `src/data/sqlite/repositories/pending.ts`, which fails every call so an unimplemented repository can never be mistaken for an empty fund
 - [ ] T079 [US2] Implement the ledger query hooks and mutation invalidation in `src/features/entries/hooks.ts`
 - [ ] T080 [P] [US2] Build the opening balance onboarding screen, skippable, in `app/onboarding/opening-balance.tsx`
