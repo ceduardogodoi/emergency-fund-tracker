@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 House rules live in [`.claude/rules/`](.claude/rules/), one file per topic, each with the reason it exists. They load automatically — the code ones when you touch `.ts`/`.tsx`, the testing ones under `tests/`, and `workflow.md` and `tooling.md` always. They are not preferences to weigh; they are decisions already made.
 
+[`anti-patterns.md`](.claude/rules/anti-patterns.md) sits alongside them and is different in kind: mistakes this project has actually made, each with the tell that was visible at the time. It grows at the end of a round of work, by offer rather than by habit.
+
 The two that change what you do rather than how you write it:
 
 - **Present the diff and wait for review before committing.** A green `npm run verify` means the change is ready to show, not ready to commit.
