@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react-native'
+import { Platform } from 'react-native'
 
 import { calendarDate } from '@/domain/dates/calendar-date'
 import { DatePicker } from '@/ui/primitives'
+import { color } from '@/ui/tokens'
 
 /**
  * The calendar the contribute screen reveals under "Outra data".
@@ -11,8 +13,23 @@ import { DatePicker } from '@/ui/primitives'
  * strings and reports a tap as `{ nativeEvent: { date } }`. What the device does with them
  * was measured on both platforms (see `src/ui/format/utc-date.ts`); what is checked here
  * is that the primitive speaks only in calendar dates and translates them the measured way.
+ *
+ * The primitive branches by platform — its own SwiftUI composition on iOS, the community
+ * wrapper on Android — so the shared behaviour runs on both. Jest resolves the wrapper to
+ * its iOS implementation whatever `Platform.OS` says, so on the Android branch these still
+ * read the same host view; what they establish is that the branch hands the wrapper what it
+ * needs, not how Compose draws it. That half was measured on the emulator.
  */
 const PICKER = 'picker'
+
+/** The two platforms this app builds for — see `primitives.test.tsx` for why not wider. */
+type ShippedPlatform = 'ios' | 'android'
+
+const realPlatform = Platform.OS
+
+afterEach(() => {
+  Platform.OS = realPlatform
+})
 
 /** Renders the picker on the 10th, with today as the 26th. */
 async function renderPicker(onChange: (value: string) => void = jest.fn()): Promise<void> {
@@ -32,7 +49,11 @@ async function tapDay(isoInstant: string): Promise<void> {
   await fireEvent(screen.getByTestId(PICKER), 'dateChange', { nativeEvent: { date: isoInstant } })
 }
 
-describe('DatePicker', () => {
+describe.each<ShippedPlatform>(['ios', 'android'])('DatePicker on %s', (platform) => {
+  beforeEach(() => {
+    Platform.OS = platform
+  })
+
   it('opens on the chosen day, at UTC midnight', async () => {
     await renderPicker()
 
@@ -90,5 +111,45 @@ describe('DatePicker', () => {
     expect(screen.getByTestId(PICKER).props.modifiers).toContainEqual(
       expect.objectContaining({ key: 'locale', value: 'pt_BR' }),
     )
+  })
+})
+
+/**
+ * The selected day in the app's accent rather than the system's.
+ *
+ * The platforms need it said in different places, which is why the primitive branches at
+ * all. The community wrapper's `accentColor` reaches the Compose picker as its colour, and
+ * reaches SwiftUI as a `.tint` shape style that the graphical calendar ignores — measured
+ * on the simulator as system blue. The `Host`'s `seedColor` sets `.tint(Color)`, which it
+ * honours, and the wrapper does not forward it.
+ */
+describe('DatePicker colour', () => {
+  it('seeds the SwiftUI host with the accent on iOS', async () => {
+    Platform.OS = 'ios'
+    await renderPicker()
+
+    expect(screen.getByTestId(PICKER).parent?.props.seedColor).toBe(color.text.accent)
+  })
+
+  it('hands the accent to the community picker on Android', async () => {
+    Platform.OS = 'android'
+    await renderPicker()
+
+    expect(screen.getByTestId(PICKER).props.modifiers).toContainEqual({
+      $type: 'tint',
+      tint: { type: 'color', color: color.text.accent },
+    })
+  })
+
+  // The inline calendar, not the compact button that opens one: "Outra data" has already
+  // been pressed, and a second press to see the days would be one tap too many.
+  it('lays the calendar out in full on iOS', async () => {
+    Platform.OS = 'ios'
+    await renderPicker()
+
+    expect(screen.getByTestId(PICKER).props.modifiers).toContainEqual({
+      $type: 'datePickerStyle',
+      style: 'graphical',
+    })
   })
 })
