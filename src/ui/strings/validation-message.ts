@@ -22,6 +22,10 @@ const MESSAGES: Readonly<Record<string, string>> = {
   'goal.target-not-a-number': strings.validation.amountNotANumber,
   'goal.target-must-be-positive': strings.validation.targetMustBePositive,
   'goal.target-does-not-match': strings.validation.targetDoesNotMatch,
+  'entry.amount-must-be-positive': strings.validation.entryAmountMustBePositive,
+  'entry.date-in-future': strings.validation.entryDateInFuture,
+  'entry.note-too-long': strings.validation.entryNoteTooLong,
+  'entry.opening-already-exists': strings.validation.entryOpeningAlreadyExists,
 }
 
 /**
@@ -36,4 +40,18 @@ const MESSAGES: Readonly<Record<string, string>> = {
  */
 export function validationMessage(error: ValidationError): string {
   return MESSAGES[error.messageKey] ?? strings.validation.unknown
+}
+
+/**
+ * The message a form shows under one field — the refusal's, if that field was refused.
+ *
+ * One refusal names one field, and every other field has to stay quiet about it: repeated
+ * under the wrong input, a message sends the user to correct something that is fine.
+ *
+ * @param rejected What the last submission refused, or null when nothing was.
+ * @param field The field asking, by the name the domain reports.
+ * @returns The message to show under it, or undefined when it has nothing to say.
+ */
+export function fieldMessage(rejected: ValidationError | null, field: string): string | undefined {
+  return rejected !== null && rejected.field === field ? validationMessage(rejected) : undefined
 }

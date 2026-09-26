@@ -185,6 +185,26 @@ export const strings = {
     decrease: (amount: string): string => `Redução de ${amount}`,
   },
 
+  /**
+   * Recording money moving into or out of the fund (FR-008 through FR-011).
+   *
+   * "Contribuição" throughout, never "depósito" — the ui-contract's rule that one concept
+   * keeps one word wherever it appears.
+   */
+  entries: {
+    contributeTitle: 'Nova contribuição',
+    amountLabel: 'Valor',
+    amountHelp: 'Quanto você está guardando agora.',
+    noteLabel: 'Observação (opcional)',
+    noteHelp: 'Para lembrar de onde veio, se quiser.',
+    /** The date group. Most contributions are today, so today is where it opens. */
+    dateLabel: 'Data',
+    today: 'Hoje',
+    yesterday: 'Ontem',
+    otherDate: 'Outra data',
+    otherDateExplanation: 'Para registrar uma contribuição de outro dia.',
+  },
+
   /** The first screen after launch. */
   home: {
     title: 'Sua reserva',
@@ -210,6 +230,10 @@ export const strings = {
     coverageNotAWholeNumber: 'Use meses inteiros.',
     targetMustBePositive: 'A meta precisa ser maior que zero.',
     targetDoesNotMatch: 'A meta não corresponde aos gastos e à duração escolhidos.',
+    entryAmountMustBePositive: 'Informe um valor maior que zero.',
+    entryDateInFuture: 'A data não pode ser no futuro.',
+    entryNoteTooLong: 'A observação ficou longa demais.',
+    entryOpeningAlreadyExists: 'Você já registrou um saldo inicial.',
     /** For a key no screen knows about — an older stored value, or a new rule. */
     unknown: 'Confira este valor.',
   },

@@ -24,6 +24,11 @@ import { CountingIdGenerator, FakeClock, createInMemoryRepositories } from './do
  * so the suite succeeds and then never exits.
  */
 export interface AppHarness {
+  /**
+   * The clock the services report, as the fake it is — so a test can move today while a
+   * screen is open, which is the one way a date the form accepted can stop being valid.
+   */
+  readonly clock: FakeClock
   /** The storage the rendered screens read and write. Assert against it directly. */
   readonly repositories: Repositories
   /** The cache behind every hook, for tests that inspect or seed it. */
@@ -58,10 +63,12 @@ export function createAppHarness(today = '2026-08-22'): AppHarness {
     logger: { debug: jest.fn(), warn: jest.fn(), error: jest.fn() },
     format: createFormatters({ currency, locale: LOCALE }),
     currency,
+    locale: LOCALE,
     unitOfWork: directUnitOfWork(repositories),
   }
 
   return {
+    clock,
     repositories,
     queryClient,
     services,

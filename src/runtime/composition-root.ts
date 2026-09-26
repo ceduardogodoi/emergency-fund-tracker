@@ -55,6 +55,7 @@ export function createServices(db: SqliteDatabase): Services {
     logger: createLogger({ enabled: __DEV__ }),
     format: createFormatters({ currency: CURRENCY, locale: LOCALE }),
     currency: CURRENCY,
+    locale: LOCALE,
     unitOfWork: createUnitOfWork(db, createRepositoriesFactory(clock, ids)),
   }
 }

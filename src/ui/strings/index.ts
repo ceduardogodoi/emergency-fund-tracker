@@ -5,4 +5,4 @@
  * anything with logic in it would sit outside the floor.
  */
 export { strings } from './strings'
-export { validationMessage } from './validation-message'
+export { fieldMessage, validationMessage } from './validation-message'

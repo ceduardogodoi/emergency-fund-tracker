@@ -1,4 +1,4 @@
-import { Redirect, useRouter, type ImperativeRouter } from 'expo-router'
+import { Redirect, useRouter } from 'expo-router'
 import type { ReactNode } from 'react'
 
 import { toViewState } from '@/runtime/query'
@@ -8,6 +8,7 @@ import { useStoredGoal, type StoredGoal } from '@/features/goal/hooks'
 import { LevelOptions } from '@/features/goal/level-options'
 import { TargetPreview } from '@/features/goal/target-preview'
 import { storedGoalDraft, useGoalDraft, type GoalDraftState } from '@/features/goal/use-goal-draft'
+import { leaveScreen } from '@/features/navigation/leave-screen'
 import {
   Button,
   ErrorState,
@@ -71,7 +72,7 @@ function RevisionForm({ stored }: RevisionFormProps): ReactNode {
   const router = useRouter()
   const { format } = useServices()
   const draft = useGoalDraft(storedGoalDraft(stored.goal, stored.monthlyExpenses), () => {
-    leaveRevision(router)
+    leaveScreen(router)
   })
 
   return (
@@ -106,23 +107,6 @@ function RevisionForm({ stored }: RevisionFormProps): ReactNode {
       {draft.hasFailed ? <Text tone="negative">{strings.state.errorBody}</Text> : null}
     </>
   )
-}
-
-/**
- * Where the screen goes once the revision is saved.
- *
- * Back to wherever the user opened it from, which is Home in the one route that reaches it
- * today. The fallback is for arriving by deep link, where there is no history to return to
- * and `back()` would leave the app on a blank stack.
- *
- * @param router The router this screen is navigating with.
- */
-function leaveRevision(router: ImperativeRouter): void {
-  if (router.canGoBack()) {
-    router.back()
-    return
-  }
-  router.replace('/')
 }
 
 /** Props for {@link RevisedTarget}. */

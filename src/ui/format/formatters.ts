@@ -1,6 +1,7 @@
 import type { CalendarDate, MonthKey } from '@/domain/dates/calendar-date'
 import type { CurrencyCode } from '@/domain/money/currency'
 import type { Money } from '@/domain/money/money'
+import { toUtcDate } from './utc-date'
 
 /**
  * A calendar date carries no time and no zone, so it is rendered in one — UTC — and built
@@ -80,20 +81,4 @@ export function createFormatters({ currency, locale }: FormatterOptions): Format
     date: (value) => dateFormat.format(toUtcDate(value)),
     month: (key) => monthFormat.format(toUtcDate(`${key}-01`)),
   }
-}
-
-/**
- * Builds a `Date` fixed at UTC midnight on the given calendar day.
- *
- * Reads the digits by position instead of handing the string to the `Date` constructor.
- * The parse would happen to work for this format today, but it is the same call that
- * silently accepts a dozen other shapes and resolves several of them in local time.
- *
- * @param value A `YYYY-MM-DD` date. Its shape is guaranteed by the `CalendarDate` brand.
- */
-function toUtcDate(value: string): Date {
-  const year = Number(value.slice(0, 4))
-  const month = Number(value.slice(5, 7))
-  const day = Number(value.slice(8, 10))
-  return new Date(Date.UTC(year, month - 1, day))
 }

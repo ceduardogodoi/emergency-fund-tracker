@@ -27,6 +27,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@expo-google-fonts/archivo": "^0.4.2",
+    "@expo/ui": "~57.0.19",
     "@tanstack/react-query": "^5.101.4",
     "expo": "^57.0.13",
     "expo-constants": "~57.0.11",

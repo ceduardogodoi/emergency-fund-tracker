@@ -47,6 +47,12 @@ describe('createServices', () => {
     expect(createServices(unusedDatabase).format.money(money(123_456))).toContain('1.234,56')
   })
 
+  // The same locale, carried on its own for the one consumer that cannot take a formatter:
+  // the native date picker names its months and weekdays itself.
+  it('carries the locale the formatters were bound to, for the native controls', () => {
+    expect(createServices(unusedDatabase).locale).toBe('pt-BR')
+  })
+
   it('supplies a clock that reports the device zone rather than assuming UTC', () => {
     expect(createServices(unusedDatabase).clock.timeZone()).toBe(
       Intl.DateTimeFormat().resolvedOptions().timeZone,

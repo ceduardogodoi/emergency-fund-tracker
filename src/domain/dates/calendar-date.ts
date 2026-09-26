@@ -115,6 +115,30 @@ export function addMonths(date: CalendarDate, months: number): CalendarDate {
 }
 
 /**
+ * Shifts a date by whole days.
+ *
+ * In UTC like everything else in this module, where every day is 24 hours long. The step is
+ * made by calendar field — the constructor rolls day 0 back into the previous month — so it
+ * would survive local time too; what would not is the tempting shortcut of adding
+ * `86_400_000` to a local midnight, which across a daylight-saving change lands an hour
+ * short of the next day.
+ *
+ * @param days May be negative to move backward.
+ */
+export function addDays(date: CalendarDate, days: number): CalendarDate {
+  const shifted = new Date(
+    Date.UTC(
+      Number(date.slice(0, 4)),
+      Number(date.slice(5, 7)) - 1,
+      Number(date.slice(8, 10)) + days,
+    ),
+  )
+  return calendarDate(
+    `${pad(shifted.getUTCFullYear(), 4)}-${pad(shifted.getUTCMonth() + 1, 2)}-${pad(shifted.getUTCDate(), 2)}`,
+  )
+}
+
+/**
  * The final day of a month — the date a projection resolves to, since reaching a target
  * "in N months" means by the end of that month.
  */

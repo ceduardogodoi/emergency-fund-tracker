@@ -11,7 +11,7 @@ import {
 } from '@/domain/goal/validation'
 import type { Money } from '@/domain/money/money'
 import { isErr, ok, type Result } from '@/domain/result'
-import { validationMessage } from '@/ui/strings'
+import { fieldMessage } from '@/ui/strings'
 import { useSubmitGoal } from './hooks'
 
 /** The level offered first: the most common starting point rather than the smallest fund. */
@@ -160,9 +160,9 @@ export function useGoalDraft(start: GoalDraftStart, onSaved: () => void): GoalDr
     coverageMonths,
     override: draft.override,
     target: previewTarget(draft, coverageMonths),
-    expensesError: messageFor(draft.rejected, 'monthlyExpenses'),
-    coverageError: messageFor(draft.rejected, 'coverageMonths'),
-    targetError: messageFor(draft.rejected, 'target'),
+    expensesError: fieldMessage(draft.rejected, 'monthlyExpenses'),
+    coverageError: fieldMessage(draft.rejected, 'coverageMonths'),
+    targetError: fieldMessage(draft.rejected, 'target'),
     isSaving: submit.isPending,
     hasFailed: submit.isError,
     ...editors(dispatch),
@@ -311,9 +311,4 @@ function buildGoal(draft: GoalDraft, coverageMonths: number): Result<GoalInput, 
     coverageMonths: coverage.value,
     desiredCompletionDate: null,
   })
-}
-
-/** The message for a rejection, if it was this field that was rejected. */
-function messageFor(rejected: ValidationError | null, field: string): string | undefined {
-  return rejected !== null && rejected.field === field ? validationMessage(rejected) : undefined
 }

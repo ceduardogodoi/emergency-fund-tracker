@@ -1,4 +1,5 @@
 import {
+  addDays,
   addMonths,
   calendarDate,
   compareDates,
@@ -93,6 +94,35 @@ describe('calendarDate', () => {
 
     it('steps forward a month, rolling into January of the next year', () => {
       expect([nextMonth('2026-03'), nextMonth('2026-12')]).toEqual(['2026-04', '2027-01'])
+    })
+  })
+
+  // "Ontem" on the contribute screen is the first caller. The cases are the boundaries a
+  // day step crosses, which are the ones string arithmetic on the last two digits gets wrong.
+  describe('day arithmetic', () => {
+    it('steps back a day into the previous month', () => {
+      expect(addDays(calendarDate('2026-03-01'), -1)).toBe('2026-02-28')
+    })
+
+    it('steps back a day into the previous year', () => {
+      expect(addDays(calendarDate('2026-01-01'), -1)).toBe('2025-12-31')
+    })
+
+    it('lands on the leap day when there is one', () => {
+      expect(addDays(calendarDate('2024-03-01'), -1)).toBe('2024-02-29')
+    })
+
+    it('steps forward across a month boundary', () => {
+      expect(addDays(calendarDate('2026-08-31'), 1)).toBe('2026-09-01')
+    })
+
+    // America/Sao_Paulo observed daylight saving until 2019, and the suite runs in that
+    // zone. 2018-11-04 was 23 hours long there, so a step made by adding a day's worth of
+    // milliseconds to a local midnight lands on the 3rd. Stepping by calendar field is
+    // immune in either zone; this is the case that tells the two approaches apart.
+    it('is unaffected by a daylight-saving change in the host zone', () => {
+      expect(addDays(calendarDate('2018-11-05'), -1)).toBe('2018-11-04')
+      expect(addDays(calendarDate('2018-11-04'), -1)).toBe('2018-11-03')
     })
   })
 

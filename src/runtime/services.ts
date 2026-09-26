@@ -34,6 +34,14 @@ export interface Services {
    */
   readonly currency: CurrencyCode
   /**
+   * The locale the interface is written in (D-020), as a BCP 47 tag.
+   *
+   * Also inside `format`, and carried here for the controls that render dates themselves:
+   * the native date picker names its months and weekdays, and left to the device it would
+   * print English month names around Portuguese copy on a phone set to English.
+   */
+  readonly locale: string
+  /**
    * The only door to storage. Every read and write runs inside one of its transactions.
    *
    * The repository set is reached through here rather than exposed alongside it, so no

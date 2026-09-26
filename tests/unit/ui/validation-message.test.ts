@@ -1,3 +1,4 @@
+import { calendarDate } from '@/domain/dates/calendar-date'
 import { validationError, type ValidationError } from '@/domain/errors'
 import { levelForCoverageMonths } from '@/domain/goal/levels'
 import { validateCalculatedTarget } from '@/domain/goal/target'
@@ -6,9 +7,21 @@ import {
   validateMonthlyExpenses,
   validateTarget,
 } from '@/domain/goal/validation'
+import { MAXIMUM_NOTE_LENGTH, validateEntry } from '@/domain/ledger/entry'
+import type { LedgerEntryInput } from '@/domain/ledger/types'
 import { money } from '@/domain/money/money'
-import { strings, validationMessage } from '@/ui/strings'
+import { fieldMessage, strings, validationMessage } from '@/ui/strings'
 import { expectErr } from '@tests/support/expect-result'
+
+/** A contribution every entry rule accepts, so each rejection below breaks exactly one. */
+const entry: LedgerEntryInput = {
+  type: 'contribution',
+  amount: money(1),
+  date: calendarDate('2026-09-26'),
+  note: null,
+  withdrawalReason: null,
+}
+const entryContext = { today: calendarDate('2026-09-26'), hasOpening: false }
 
 /**
  * The domain reports rejections as keys so it holds no opinion about language, which only
@@ -37,6 +50,10 @@ const rejections: readonly ValidationError[] = [
       money(200_000),
     ),
   ) as ValidationError,
+  expectErr(validateEntry({ ...entry, amount: money(0) }, entryContext)),
+  expectErr(validateEntry({ ...entry, date: calendarDate('2026-09-27') }, entryContext)),
+  expectErr(validateEntry({ ...entry, note: 'a'.repeat(MAXIMUM_NOTE_LENGTH + 1) }, entryContext)),
+  expectErr(validateEntry({ ...entry, type: 'opening' }, { ...entryContext, hasOpening: true })),
 ]
 
 describe('validationMessage', () => {
@@ -52,5 +69,27 @@ describe('validationMessage', () => {
   it('falls back rather than showing the key itself', () => {
     const message = validationMessage(validationError('target', 'goal.some-future-rule'))
     expect(message).toBe(strings.validation.unknown)
+  })
+})
+
+/**
+ * The message a form shows under one field.
+ *
+ * A refusal names one field, and every other field on the form must stay quiet about it —
+ * a message repeated under the wrong input sends the user to correct something that is fine.
+ */
+describe('fieldMessage', () => {
+  const refused = validationError('amount', 'entry.amount-must-be-positive')
+
+  it('speaks under the field that was refused', () => {
+    expect(fieldMessage(refused, 'amount')).toBe(strings.validation.entryAmountMustBePositive)
+  })
+
+  it('stays quiet under every other field', () => {
+    expect(fieldMessage(refused, 'note')).toBeUndefined()
+  })
+
+  it('stays quiet when nothing was refused', () => {
+    expect(fieldMessage(null, 'amount')).toBeUndefined()
   })
 })
