@@ -27,6 +27,7 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 
 **AP-011 — an event fired and not awaited.** RNTL v14 made `fireEvent` return a promise, and the state updates it causes land when it resolves. Six contribute-screen tests failed as though the reducer were broken — a refusal that would not clear, a picked day that never showed. The picker's own tests had the same missing `await` and passed, only because the callback they asserted on runs synchronously. Nothing in lint flagged either.
 **The tell:** a rendered value that should follow an event does not, while a spy on the same event reports it was called. Check the signature in the `.d.ts` before suspecting the component.
+**Now enforced:** `@typescript-eslint/no-floating-promises` in `eslint.config.mjs`. Turning it on found fourteen more in the older suites, each passing only because a later `await` happened to flush it. The tell still applies to a promise silenced with `void`.
 
 ## Explanations invented to fit a surprise
 

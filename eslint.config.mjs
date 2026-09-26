@@ -97,6 +97,22 @@ export default defineConfig(
     },
   },
 
+  // A promise nobody awaits is work whose outcome nobody observes: its failure is
+  // swallowed (Principle II) and its effects land after whatever read them. RNTL v14's
+  // `fireEvent` is the case that made this a rule — unawaited, the state it causes had not
+  // landed when the next assertion ran, and six tests failed as though the reducer were
+  // broken (AP-011). `void` remains the explicit way to say "fire and forget", which is how
+  // an async effect body is started. Needs type information, hence the project service.
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+    },
+  },
+
   // Constitution Principle III: the domain boundary.
   {
     files: ['src/domain/**/*.ts'],

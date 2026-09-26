@@ -57,7 +57,7 @@ describe('the expenses step', () => {
   it('carries the amount to the level step, in minor units', async () => {
     await harness.render(<ExpensesScreen />)
 
-    fireEvent.changeText(screen.getByTestId('expenses-input'), '200000')
+    await fireEvent.changeText(screen.getByTestId('expenses-input'), '200000')
     await userEvent.press(screen.getByRole('button', { name: strings.action.continue }))
 
     expect(mockPush).toHaveBeenCalledWith({
@@ -90,7 +90,7 @@ describe('the expenses step', () => {
     await harness.render(<ExpensesScreen />)
     await userEvent.press(screen.getByRole('button', { name: strings.action.continue }))
 
-    fireEvent.changeText(screen.getByTestId('expenses-input'), '200000')
+    await fireEvent.changeText(screen.getByTestId('expenses-input'), '200000')
 
     await waitFor(() => {
       expect(screen.queryByText(strings.validation.expensesMustBePositive)).toBeNull()
@@ -149,7 +149,7 @@ describe('the level step', () => {
     await harness.render(<LevelScreen />)
 
     await chooseLevel(strings.levels.custom.name)
-    fireEvent.changeText(screen.getByTestId('coverage-input'), '8')
+    await fireEvent.changeText(screen.getByTestId('coverage-input'), '8')
 
     expect(
       await screen.findByText(
@@ -166,7 +166,7 @@ describe('the level step', () => {
     await harness.render(<LevelScreen />)
 
     await chooseLevel(strings.levels.custom.name)
-    fireEvent.changeText(screen.getByTestId('coverage-input'), '30')
+    await fireEvent.changeText(screen.getByTestId('coverage-input'), '30')
     await userEvent.press(screen.getByRole('button', { name: strings.action.save }))
 
     expect(
@@ -205,7 +205,7 @@ describe('the level step', () => {
     await harness.render(<LevelScreen />)
 
     await userEvent.press(screen.getByRole('button', { name: strings.goal.overrideAction }))
-    fireEvent.changeText(screen.getByTestId('target-input'), '5000000')
+    await fireEvent.changeText(screen.getByTestId('target-input'), '5000000')
     await userEvent.press(screen.getByRole('button', { name: strings.action.save }))
 
     expect(expectOk(await harness.repositories.goal.get())).toMatchObject({
@@ -220,7 +220,7 @@ describe('the level step', () => {
     await harness.render(<LevelScreen />)
 
     await userEvent.press(screen.getByRole('button', { name: strings.goal.overrideAction }))
-    fireEvent.changeText(screen.getByTestId('target-input'), '')
+    await fireEvent.changeText(screen.getByTestId('target-input'), '')
     await userEvent.press(screen.getByRole('button', { name: strings.action.save }))
 
     expect(await screen.findByText(strings.validation.targetMustBePositive)).toBeTruthy()
@@ -231,7 +231,7 @@ describe('the level step', () => {
     await harness.render(<LevelScreen />)
 
     await userEvent.press(screen.getByRole('button', { name: strings.goal.overrideAction }))
-    fireEvent.changeText(screen.getByTestId('target-input'), '5000000')
+    await fireEvent.changeText(screen.getByTestId('target-input'), '5000000')
     await userEvent.press(screen.getByRole('button', { name: strings.goal.calculatedAction }))
     await userEvent.press(screen.getByRole('button', { name: strings.action.save }))
 

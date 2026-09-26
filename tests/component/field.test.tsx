@@ -31,7 +31,7 @@ describe('Field', () => {
   it('reports what was typed', async () => {
     const onChangeText = jest.fn()
     await render(<Field label="Apelido" value="" onChangeText={onChangeText} />)
-    fireEvent.changeText(screen.getByLabelText('Apelido'), 'Reserva')
+    await fireEvent.changeText(screen.getByLabelText('Apelido'), 'Reserva')
     expect(onChangeText).toHaveBeenCalledWith('Reserva')
   })
 
@@ -90,7 +90,7 @@ describe('MoneyInput', () => {
     await render(
       <MoneyInput label="Valor" value={money(0)} onChangeValue={onChangeValue} format={format} />,
     )
-    fireEvent.changeText(screen.getByLabelText('Valor'), '1234')
+    await fireEvent.changeText(screen.getByLabelText('Valor'), '1234')
     expect(onChangeValue).toHaveBeenCalledWith(money(1_234))
   })
 
@@ -99,7 +99,7 @@ describe('MoneyInput', () => {
     await render(
       <MoneyInput label="Valor" value={money(0)} onChangeValue={onChangeValue} format={format} />,
     )
-    fireEvent.changeText(screen.getByLabelText('Valor'), 'R$ 1.234,56')
+    await fireEvent.changeText(screen.getByLabelText('Valor'), 'R$ 1.234,56')
     expect(onChangeValue).toHaveBeenCalledWith(money(123_456))
   })
 
@@ -108,7 +108,7 @@ describe('MoneyInput', () => {
     await render(
       <MoneyInput label="Valor" value={money(500)} onChangeValue={onChangeValue} format={format} />,
     )
-    fireEvent.changeText(screen.getByLabelText('Valor'), '')
+    await fireEvent.changeText(screen.getByLabelText('Valor'), '')
     expect(onChangeValue).toHaveBeenCalledWith(money(0))
   })
 
@@ -117,7 +117,7 @@ describe('MoneyInput', () => {
     await render(
       <MoneyInput label="Valor" value={money(0)} onChangeValue={onChangeValue} format={format} />,
     )
-    fireEvent.changeText(screen.getByLabelText('Valor'), '9'.repeat(20))
+    await fireEvent.changeText(screen.getByLabelText('Valor'), '9'.repeat(20))
     expect(onChangeValue).not.toHaveBeenCalled()
   })
 

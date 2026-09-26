@@ -186,7 +186,7 @@ describe('the goal revision screen', () => {
     await storeGoal()
     await openRevision()
 
-    fireEvent.changeText(screen.getByTestId('expenses-input'), '300000')
+    await fireEvent.changeText(screen.getByTestId('expenses-input'), '300000')
 
     expect(await screen.findByText(formatted(300_000 * BALANCED_MONTHS))).toBeTruthy()
   })
@@ -237,7 +237,7 @@ describe('the goal revision screen', () => {
     await storeGoal()
     await openRevision()
 
-    fireEvent.changeText(screen.getByTestId('expenses-input'), '')
+    await fireEvent.changeText(screen.getByTestId('expenses-input'), '')
     await userEvent.press(screen.getByRole('button', { name: strings.action.save }))
 
     expect(
