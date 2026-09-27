@@ -53,3 +53,8 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 
 **AP-010 — a rule written for a practice the project has never followed.** The TDD rule said the failing-test and implementation tasks were separate commits. The pre-commit hook makes that impossible, and the history had bundled them from the start. A week was spent parking files to obey it.
 **The tell:** the rule describes what ought to be true. Check `git log` for whether it ever was.
+
+## Fixes that break what they touch
+
+**AP-012 — changing a rule without reading where it came from.** `percentOf` rounded to nearest, so a fund one centavo short of R$ 12.000,00 read 100% — reached, to the reader and to the 100% milestone. The fix reached for was rounding down, and the test pinning 500 of 12 000 at 4,17 was edited to expect 4,16 as part of it. That figure is User Story 2's first acceptance scenario. A second copy of it, in `progress.test.ts`, carried a comment citing the spec, and that is what stopped the change. The fix that survived keeps to-nearest and caps anything short of the target at 99,99.
+**The tell:** editing an existing test's expectation so that a fix passes. Before changing what a test expects, find out why it expects it — the comment, the task, the spec — and treat a citation as a requirement, not as documentation.
