@@ -1,9 +1,13 @@
 import { screen, userEvent } from '@testing-library/react-native'
 import type { RedirectProps } from 'expo-router'
 
+import { calendarDate } from '@/domain/dates/calendar-date'
+import { storageError } from '@/domain/errors/app-error'
 import { money } from '@/domain/money/money'
+import { err } from '@/domain/result'
 import { strings } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
+import { expectOk } from '@tests/support/expect-result'
 import HomeScreen from '../../app/index'
 
 /**
@@ -54,6 +58,26 @@ async function storeGoal(): Promise<void> {
   })
 }
 
+/** Records contributions, the way the contribute screen would, dated before today. */
+async function contribute(...amounts: number[]): Promise<void> {
+  for (const amount of amounts) {
+    expectOk(
+      await harness.repositories.ledger.add({
+        type: 'contribution',
+        amount: money(amount),
+        date: calendarDate('2026-08-01'),
+        note: null,
+        withdrawalReason: null,
+      }),
+    )
+  }
+}
+
+/** An amount as Home renders it. */
+function shown(minorUnits: number): string {
+  return harness.services.format.money(money(minorUnits))
+}
+
 describe('Home', () => {
   // No stored goal means setup never finished. That is the only definition of first launch
   // that survives the app being deleted and reinstalled with its data restored — a flag
@@ -92,5 +116,99 @@ describe('Home', () => {
     await userEvent.press(screen.getByRole('button', { name: strings.home.reviseAction }))
 
     expect(mockPush).toHaveBeenCalledWith('/settings/goal')
+  })
+
+  it('offers a way to record a contribution', async () => {
+    await storeGoal()
+    await harness.render(<HomeScreen />)
+    await screen.findByTestId('standing-card')
+
+    await userEvent.press(screen.getByRole('button', { name: strings.home.contributeAction }))
+
+    expect(mockPush).toHaveBeenCalledWith('/entries/contribute')
+  })
+})
+
+/**
+ * Where the fund stands (FR-013, FR-015).
+ *
+ * The figures are odd on purpose. A balance of 300.123 against 1.200.000 is 25,01%, so a
+ * screen that rounded, or that showed the target where the balance belongs, or a remaining
+ * that was not the difference, would each show a number these tests do not expect.
+ */
+describe('Home, once there is money in the fund', () => {
+  it('shows the balance, what remains, and how far along the fund is', async () => {
+    await storeGoal()
+    await contribute(250_000, 50_123)
+
+    await harness.render(<HomeScreen />)
+
+    expect(await screen.findByText(shown(300_123))).toBeTruthy()
+    expect(
+      screen.getByText(strings.home.progress(harness.services.format.percent(25.01))),
+    ).toBeTruthy()
+    expect(screen.getByText(strings.home.remaining(shown(899_877)))).toBeTruthy()
+    expect(screen.queryByText(strings.home.reached)).toBeNull()
+  })
+
+  it('starts from nothing, with the whole target still to save', async () => {
+    await storeGoal()
+
+    await harness.render(<HomeScreen />)
+
+    expect(await screen.findByText(strings.home.remaining(shown(TARGET_MINOR_UNITS)))).toBeTruthy()
+    expect(screen.getByText(strings.home.progress(harness.services.format.percent(0)))).toBeTruthy()
+  })
+
+  // One unit short. To nearest, 99,9999…% is 100% — beside a goal that has not been
+  // reached. The domain stops it at 99,99.
+  it('does not call a goal reached, or 100%, while anything remains', async () => {
+    await storeGoal()
+    await contribute(TARGET_MINOR_UNITS - 1)
+
+    await harness.render(<HomeScreen />)
+
+    expect(await screen.findByText(strings.home.remaining(shown(1)))).toBeTruthy()
+    expect(screen.getByText(strings.home.progress('99,99%'))).toBeTruthy()
+    expect(screen.queryByText(strings.home.reached)).toBeNull()
+  })
+
+  // FR-015: the surplus, never a negative remaining.
+  it('shows the goal reached, and by how much it was passed', async () => {
+    await storeGoal()
+    await contribute(TARGET_MINOR_UNITS, 50_000)
+
+    await harness.render(<HomeScreen />)
+
+    expect(await screen.findByText(strings.home.reached)).toBeTruthy()
+    expect(screen.getByText(strings.home.surplus(shown(50_000)))).toBeTruthy()
+    expect(screen.queryByText(/Faltam/)).toBeNull()
+  })
+
+  // The spec's edge case: exactly the target is reached, with no surplus figure at all —
+  // "R$ 0,00 além da meta" would be a sentence about nothing.
+  it('at exactly the target, shows it reached with no surplus line', async () => {
+    await storeGoal()
+    await contribute(TARGET_MINOR_UNITS)
+
+    await harness.render(<HomeScreen />)
+
+    expect(await screen.findByText(strings.home.reached)).toBeTruthy()
+    expect(screen.queryByText(strings.home.surplus(shown(0)))).toBeNull()
+    expect(screen.queryByText(/Faltam/)).toBeNull()
+  })
+
+  // The balance is half of what Home stands on. A ledger that cannot be read must say so
+  // rather than show the goal beside a balance of zero that is not the truth.
+  it('reports a ledger it cannot read, rather than a zero balance', async () => {
+    await storeGoal()
+    jest
+      .spyOn(harness.repositories.ledger, 'list')
+      .mockResolvedValue(err(storageError('ledger.read-failed')))
+
+    await harness.render(<HomeScreen />)
+
+    expect(await screen.findByText(strings.state.errorTitle)).toBeTruthy()
+    expect(screen.queryByTestId('standing-card')).toBeNull()
   })
 })

@@ -1,4 +1,10 @@
-import { createQueryClient, queryKeys, toViewState, type QueryLike } from '@/runtime/query'
+import {
+  combineQueries,
+  createQueryClient,
+  queryKeys,
+  toViewState,
+  type QueryLike,
+} from '@/runtime/query'
 import { calendarDate } from '@/domain/dates/calendar-date'
 import { storageError } from '@/domain/errors'
 import type { ViewState } from '@/ui/primitives/state-view'
@@ -146,5 +152,67 @@ describe('toViewState', () => {
       error: null,
     })
     expect(state).toEqual({ kind: 'loading' })
+  })
+})
+
+/**
+ * Two queries a screen needs together, as one.
+ *
+ * Nesting one view state inside another would make a screen handle four states twice over,
+ * and invent an answer for pairs that cannot be told apart from the user's side — one half
+ * loaded, the other failed. Combined, the pair has the four states a single query has.
+ */
+describe('combineQueries', () => {
+  const pending: QueryLike<number> = { status: 'pending', data: undefined, error: null }
+
+  function resolved<T>(data: T): QueryLike<T> {
+    return { status: 'success', data, error: null }
+  }
+
+  function failed(refetch: () => unknown = jest.fn()): QueryLike<number> {
+    return { status: 'error', data: undefined, error: storageError('test.failed'), refetch }
+  }
+
+  it('combines two answers once both have arrived', () => {
+    const combined = combineQueries(resolved(2), resolved(3), (first, second) => first * second)
+
+    expect(combined).toEqual({ status: 'success', data: 6, error: null })
+  })
+
+  it('waits while either half is still pending', () => {
+    expect(combineQueries(resolved(2), pending, (first, second) => first + second).status).toBe(
+      'pending',
+    )
+    expect(combineQueries(pending, resolved(2), (first, second) => first + second).status).toBe(
+      'pending',
+    )
+  })
+
+  // A failure is reported even while the other half is still loading: waiting for it would
+  // show a spinner in front of an answer that is already known.
+  it('fails as soon as either half fails, whatever the other is doing', () => {
+    expect(combineQueries(pending, failed(), (first, second) => first + second).status).toBe(
+      'error',
+    )
+    expect(combineQueries(failed(), resolved(2), (first, second) => first + second).status).toBe(
+      'error',
+    )
+  })
+
+  // Retrying runs both halves. The one that succeeded costs a local read to repeat, and
+  // tracking which half failed would be state no screen has any other use for.
+  it('retries both halves', async () => {
+    const firstRefetch = jest.fn()
+    const secondRefetch = jest.fn()
+    const combined = combineQueries(
+      failed(firstRefetch),
+      { ...resolved(2), refetch: secondRefetch },
+      (first, second) => first + second,
+    )
+
+    await combined.refetch?.()
+
+    expect(firstRefetch).toHaveBeenCalled()
+    expect(secondRefetch).toHaveBeenCalled()
   })
 })

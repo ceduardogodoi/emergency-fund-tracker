@@ -135,6 +135,43 @@ export function toViewState<T>(
 }
 
 /**
+ * Two queries a screen needs together, as one.
+ *
+ * Nesting one view state inside another would make a screen handle four states twice over
+ * and invent an answer for pairs the user cannot tell apart — one half loaded, the other
+ * failed. Combined, the pair has the four states a single query has, so it maps onto a view
+ * through {@link toViewState} like any other.
+ *
+ * Either failure is the pair's failure, reported as soon as it is known rather than after
+ * the other half settles. Retrying runs both: the half that succeeded costs a local read to
+ * repeat, and tracking which one failed would be state no screen has any use for.
+ *
+ * @param first One of the queries.
+ * @param second The other.
+ * @param combine Builds the pair's value once both have arrived.
+ * @returns The pair, as a query.
+ */
+export function combineQueries<A, B, T>(
+  first: QueryLike<A>,
+  second: QueryLike<B>,
+  combine: (first: A, second: B) => T,
+): QueryLike<T> {
+  const failure = first.error ?? second.error
+  if (failure !== null) {
+    return {
+      status: 'error',
+      data: undefined,
+      error: failure,
+      refetch: () => Promise.all([first.refetch?.(), second.refetch?.()]),
+    }
+  }
+  if (first.data === undefined || second.data === undefined) {
+    return { status: 'pending', data: undefined, error: null }
+  }
+  return { status: 'success', data: combine(first.data, second.data), error: null }
+}
+
+/**
  * The default emptiness test: a collection with nothing in it.
  *
  * Anything that is not an array is content, which is why a single record has to supply its

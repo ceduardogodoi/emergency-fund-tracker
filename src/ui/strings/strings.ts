@@ -214,6 +214,33 @@ export const strings = {
     emptyTitle: 'Defina sua meta',
     emptyBody: 'Informe seus gastos mensais para descobrir de quanto a sua reserva precisa.',
     emptyAction: 'Começar',
+    /** Where the fund stands (FR-013, FR-015). */
+    balanceLabel: 'Saldo',
+    /**
+     * How far along the fund is.
+     *
+     * @param percent The formatted percentage, `%` included.
+     * @returns The line under the balance.
+     */
+    progress: (percent: string): string => `${percent} da meta`,
+    /**
+     * What is still to be saved. Never shown once the goal is reached — FR-015.
+     *
+     * @param amount The formatted amount.
+     * @returns The line under the balance.
+     */
+    remaining: (amount: string): string => `Faltam ${amount}`,
+    reached: 'Meta alcançada',
+    /**
+     * How far the balance has passed the target. Not shown at exactly the target, where it
+     * would be a sentence about nothing.
+     *
+     * @param amount The formatted surplus.
+     * @returns The line under "Meta alcançada".
+     */
+    surplus: (amount: string): string => `${amount} além da meta`,
+    /** The way to the contribute screen. The same words as its title, deliberately. */
+    contributeAction: 'Nova contribuição',
   },
 
   /**

@@ -4,7 +4,8 @@ import type { ReactNode } from 'react'
 import { toViewState } from '@/runtime/query'
 import { useServices } from '@/runtime/services-context'
 import type { Goal } from '@/domain/goal/types'
-import { useGoal } from '@/features/goal/hooks'
+import type { ProgressSummary } from '@/domain/ledger/types'
+import { useStanding, type Standing } from '@/features/progress/use-standing'
 import {
   Button,
   Card,
@@ -21,7 +22,7 @@ import { strings } from '@/ui/strings'
 const ONBOARDING = '/onboarding/expenses'
 
 /**
- * Home: the target, and later the progress towards it.
+ * Home: where the fund stands, and the target it stands against (FR-013, FR-015).
  *
  * This is also where first launch is decided. No stored goal means setup never finished,
  * which is the only definition that survives the app being deleted and reinstalled with
@@ -34,8 +35,8 @@ const ONBOARDING = '/onboarding/expenses'
  * @returns The rendered screen
  */
 export default function HomeScreen(): ReactNode {
-  const goal = useGoal()
-  const state = toViewState(goal, (data) => data === null)
+  const standing = useStanding()
+  const state = toViewState(standing, (data) => data === null)
 
   return (
     <Screen title={strings.home.title}>
@@ -49,10 +50,86 @@ export default function HomeScreen(): ReactNode {
         // redirect rather than a cast keeps the impossible case correct if it ever stops
         // being impossible.
         ready={(stored) =>
-          stored === null ? <Redirect href={ONBOARDING} /> : <GoalCard goal={stored} />
+          stored === null ? <Redirect href={ONBOARDING} /> : <StandingView standing={stored} />
         }
       />
     </Screen>
+  )
+}
+
+/** Props for {@link StandingView}. */
+interface StandingViewProps {
+  readonly standing: Standing
+}
+
+/**
+ * The fund's position, the way in to change it, and the goal it is measured against.
+ *
+ * The balance leads because it is what moves: the target changes rarely and on purpose,
+ * and the question a returning user opens the app with is how far along they are.
+ */
+function StandingView({ standing }: StandingViewProps): ReactNode {
+  const router = useRouter()
+  return (
+    <>
+      <StandingCard progress={standing.progress} />
+      <Button
+        label={strings.home.contributeAction}
+        onPress={() => {
+          router.push('/entries/contribute')
+        }}
+        testID="contribute"
+      />
+      <GoalCard goal={standing.goal} />
+    </>
+  )
+}
+
+/** Props for {@link StandingCard}. */
+interface StandingCardProps {
+  readonly progress: ProgressSummary
+}
+
+/** The balance, the share of the target it represents, and what is left or passed. */
+function StandingCard({ progress }: StandingCardProps): ReactNode {
+  const { format } = useServices()
+  return (
+    <Card testID="standing-card">
+      <Text variant="label" tone="secondary">
+        {strings.home.balanceLabel}
+      </Text>
+      <Text variant="display" numeric testID="balance-amount">
+        {format.money(progress.balance)}
+      </Text>
+      <Text tone="secondary">
+        {strings.home.progress(format.percent(progress.percentComplete))}
+      </Text>
+      <StandingLine progress={progress} />
+    </Card>
+  )
+}
+
+/**
+ * What is left, or that nothing is (FR-015).
+ *
+ * Reached is said in words, not only in the positive colour, so it reaches a screen reader
+ * and a reader who does not see green (FR-049). The surplus appears only when there is one:
+ * at exactly the target, "R$ 0,00 além da meta" would be a sentence about nothing.
+ */
+function StandingLine({ progress }: StandingCardProps): ReactNode {
+  const { format } = useServices()
+  if (!progress.isReached) {
+    return <Text>{strings.home.remaining(format.money(progress.remaining))}</Text>
+  }
+  return (
+    <>
+      <Text variant="label" tone="positive">
+        {strings.home.reached}
+      </Text>
+      {progress.surplus > 0 ? (
+        <Text>{strings.home.surplus(format.money(progress.surplus))}</Text>
+      ) : null}
+    </>
   )
 }
 
@@ -76,13 +153,12 @@ function GoalCard({ goal }: GoalCardProps): ReactNode {
       <Text variant="label" tone="secondary">
         {strings.goal.targetLabel}
       </Text>
-      <Text variant="display" numeric testID="goal-amount">
+      <Text variant="title" numeric testID="goal-amount">
         {format.money(goal.target)}
       </Text>
       {/* The duration the target buys, as units to count. Every unit is filled because
-          this is the plan, not progress against it — once the ledger exists (US2) the
-          filled count becomes the months the balance actually covers, and the caption
-          below it gains the second number. */}
+          this is the plan, not progress against it — T157 turns the filled count into the
+          months the balance actually covers, and gives the caption the second number. */}
       <CoverageMeter covered={goal.coverageMonths} total={goal.coverageMonths} />
       <Text variant="caption" tone="secondary">
         {strings.goal.levelSummary(

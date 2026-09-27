@@ -34,6 +34,16 @@ export interface Formatters {
   money(amount: Money): string
 
   /**
+   * Renders progress as a percentage, to at most two decimals (FR-013).
+   *
+   * The value arrives already rounded by `percentOf`, which is also where 99,99 is kept
+   * from becoming 100 below the target — so this adds no rounding of its own.
+   *
+   * @param value A percentage from 0 to 100, as `summarizeProgress` reports it.
+   */
+  percent(value: number): string
+
+  /**
    * Renders a calendar date as the day the user chose, in every timezone.
    *
    * @param value The stored `YYYY-MM-DD` date.
@@ -64,6 +74,10 @@ export function createFormatters({ currency, locale }: FormatterOptions): Format
   // Always populated under `style: 'currency'`. The fallback exists to satisfy the type,
   // which marks it optional because other number styles may leave it unset.
   const exponent = currencyFormat.resolvedOptions().maximumFractionDigits ?? 2
+  const percentFormat = new Intl.NumberFormat(locale, {
+    style: 'percent',
+    maximumFractionDigits: 2,
+  })
   const dateFormat = new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
     timeZone: CALENDAR_ZONE,
@@ -78,6 +92,8 @@ export function createFormatters({ currency, locale }: FormatterOptions): Format
     // Division reaches floating point, which FR-038 permits for display alone — the stored
     // integer is untouched and no calculation reads this result back.
     money: (amount) => currencyFormat.format(amount / 10 ** exponent),
+    // `Intl`'s percent style takes a fraction; FR-038 permits the division for display.
+    percent: (value) => percentFormat.format(value / 100),
     date: (value) => dateFormat.format(toUtcDate(value)),
     month: (key) => monthFormat.format(toUtcDate(`${key}-01`)),
   }

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query'
 
-import { queryKeys, type QueryLike } from '@/runtime/query'
+import { combineQueries, queryKeys, type QueryLike } from '@/runtime/query'
 import { useServices } from '@/runtime/services-context'
 import type { AppError } from '@/domain/errors'
 import { submitGoal } from '@/domain/goal/submit-goal'
@@ -78,9 +78,7 @@ export interface StoredGoal {
  * Both halves of a stored goal, as one query.
  *
  * Revising a goal needs the target and the expenses behind it, and the two live in
- * different rows. Nesting one view state inside another would make the screen handle four
- * states twice over and invent an answer for the pairs that cannot happen — loaded goal,
- * failed profile — so they are combined into a single state here instead.
+ * different rows — combined with `combineQueries` so the screen has four states, not eight.
  *
  * Null when either row is absent. A goal without the expenses it derives from is not a
  * goal this screen can revise: the form would open on a figure nobody entered.
@@ -88,25 +86,7 @@ export interface StoredGoal {
  * @returns The pair, mapped onto the four states with `toViewState`.
  */
 export function useStoredGoal(): QueryLike<StoredGoal | null> {
-  const goal = useGoal()
-  const profile = useProfile()
-
-  // Either failure is the pair's failure, and retrying runs both: the one that succeeded
-  // costs a single local read to repeat, and tracking which half to retry would be state
-  // this screen has no other use for.
-  const failure = goal.error ?? profile.error
-  if (failure !== null) {
-    return {
-      status: 'error',
-      data: undefined,
-      error: failure,
-      refetch: () => Promise.all([goal.refetch(), profile.refetch()]),
-    }
-  }
-  if (goal.data === undefined || profile.data === undefined) {
-    return { status: 'pending', data: undefined, error: null }
-  }
-  return { status: 'success', data: pairOf(goal.data, profile.data), error: null }
+  return combineQueries(useGoal(), useProfile(), pairOf)
 }
 
 /** The pair, or null when either row is missing. */

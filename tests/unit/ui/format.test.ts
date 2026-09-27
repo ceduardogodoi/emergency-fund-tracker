@@ -57,6 +57,24 @@ describe('formatters', () => {
     })
   })
 
+  // Progress towards the target (FR-013), as `percentOf` rounded it: two decimals at most,
+  // in the locale's notation.
+  describe('percent', () => {
+    it('renders the spec’s example in pt-BR notation', () => {
+      expect(formatters('BRL', 'pt-BR').percent(4.17)).toBe('4,17%')
+    })
+
+    it('drops decimals a whole percentage does not have', () => {
+      expect(formatters('BRL', 'pt-BR').percent(25)).toBe('25%')
+    })
+
+    // The highest figure a fund short of its target is given. Printed as it is, not rounded
+    // up to the "100%" that would contradict the words beside it.
+    it('prints 99,99 as it is, never as 100%', () => {
+      expect(formatters('BRL', 'pt-BR').percent(99.99)).toBe('99,99%')
+    })
+  })
+
   describe('date', () => {
     it('renders the calendar date the user chose', () => {
       expect(formatters('USD', 'en-US').date(calendarDate('2026-03-10'))).toBe('Mar 10, 2026')

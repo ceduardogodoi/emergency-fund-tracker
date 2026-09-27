@@ -55,8 +55,16 @@ describe('rounding policy', () => {
   })
 
   describe('percentOf — presentation only', () => {
-    it('computes a percentage to two decimals', () => {
-      expect(percentOf(money(500), money(12_000))).toBeCloseTo(4.17, 2)
+    // The spec's own example (User Story 2, scenario 1): 500 of 12 000 shows 4,17%.
+    it('computes a percentage to two decimals, rounded to nearest', () => {
+      expect(percentOf(money(500), money(12_000))).toBe(4.17)
+    })
+
+    // 99,99991… rounded to nearest is 100, which is "reached" in every reader's eyes and in
+    // the 100% milestone's (FR-024) — for a fund one unit short. 100 is kept for what FR-015
+    // calls reached: the balance meets the target. Below it, the figure stops at 99,99.
+    it('never reaches 100 while any of the target remains', () => {
+      expect(percentOf(money(1_199_999), money(1_200_000))).toBe(99.99)
     })
 
     it('returns 100 when the parts are equal', () => {
