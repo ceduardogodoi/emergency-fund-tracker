@@ -1,4 +1,4 @@
-import { screen, userEvent } from '@testing-library/react-native'
+import { screen, userEvent, waitFor } from '@testing-library/react-native'
 import type { RedirectProps } from 'expo-router'
 
 import { calendarDate } from '@/domain/dates/calendar-date'
@@ -85,8 +85,12 @@ describe('Home', () => {
   it('sends a user with no goal into setup', async () => {
     await harness.render(<HomeScreen />)
 
-    await screen.findByText(strings.home.title)
-    expect(mockRedirect).toHaveBeenCalledWith('/onboarding/expenses')
+    // Waited for, and for the redirect itself. The title is drawn on the first render,
+    // while the goal is still being read, so waiting for it waits for nothing: the
+    // assertion then raced the read, and lost once on a slow CI runner.
+    await waitFor(() => {
+      expect(mockRedirect).toHaveBeenCalledWith('/onboarding/expenses')
+    })
   })
 
   it('shows the stored target, and the choice behind it', async () => {
