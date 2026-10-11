@@ -41,8 +41,11 @@ interface LevelFormProps {
 /** The choice itself, once there is a figure to multiply. */
 function LevelForm({ monthlyExpenses }: LevelFormProps): ReactNode {
   const router = useRouter()
+  // On to the opening balance, not to Home: the goal is stored by now, so a user who leaves
+  // on the next step comes back to a working fund, and that step is the only moment setup
+  // has to ask what was saved before the app was (FR-010).
   const draft = useGoalDraft(firstGoalDraft(monthlyExpenses), () => {
-    router.replace('/')
+    router.replace('/onboarding/opening-balance')
   })
 
   return (

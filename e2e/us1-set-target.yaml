@@ -128,6 +128,15 @@ name: US1 — set a savings target
 - tapOn:
     id: 'save-goal'
 
+# Setup ends by asking what is already saved (FR-010). Declined here: that step is
+# `us2-record-progress.yaml`'s subject, and this journey is about the target.
+- extendedWaitUntil:
+    visible:
+      id: 'skip-opening'
+    timeout: 15000
+- tapOn:
+    id: 'skip-opening'
+
 # FR-007 — Home shows the stored target, and it is the one the user typed rather than the
 # one the app calculated.
 - extendedWaitUntil:

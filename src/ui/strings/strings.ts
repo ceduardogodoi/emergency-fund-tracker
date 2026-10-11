@@ -105,7 +105,7 @@ export const strings = {
    */
   coverageDuration: (count: number): string => (count === 1 ? '1 mês' : `${count} meses`),
 
-  /** The two-step flow that sizes the fund (FR-001 through FR-005). */
+  /** Setup: the two steps that size the fund (FR-001 through FR-005), then what it starts with. */
   onboarding: {
     /** Step one asks for the figure everything else is derived from. */
     expensesTitle: 'Seus gastos mensais',
@@ -117,6 +117,17 @@ export const strings = {
     customMonthsLabel: 'Meses de cobertura',
     /** Shown when the level step is opened without the figure step one produces. */
     missingExpenses: 'Comece informando seus gastos mensais.',
+    /** Step three asks what was saved before the app was (FR-010). */
+    openingTitle: 'O que você já guardou',
+    openingIntro:
+      'Se você já tem dinheiro separado para emergências, informe quanto. Ele conta para a meta desde o primeiro dia.',
+    openingLabel: 'Saldo inicial',
+    openingHelp: 'Só o que está reservado para emergências.',
+    /**
+     * The way past the step. It says what skipping means rather than "Pular": the user is
+     * answering the question the screen asked, not declining to.
+     */
+    openingSkip: 'Ainda não guardei nada',
   },
 
   /** The target itself, wherever it is shown or changed. */

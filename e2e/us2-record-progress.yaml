@@ -1,0 +1,109 @@
+# User Story 2 — record savings, and see where the fund stands.
+#
+# So far: an opening balance entered during setup counts toward the fund from the first
+# screen (FR-010), a contribution moves the balance on the screen the user returns to
+# (FR-008, FR-012, FR-013), and both survive a restart.
+#
+# Not yet the whole journey. The spec's Independent Test goes on to edit one entry and delete
+# another, and those steps join this flow with the screens that make them possible (T082,
+# T083) — which is why T074 stays open until they have.
+#
+# Runs inside Expo Go; see `us1-set-target.yaml` for why, for why `APP_ID` and `DEV_URL` come
+# from the npm scripts rather than an `env:` block here, and for why amounts are matched by
+# their digits alone.
+appId: ${APP_ID}
+name: US2 — record progress
+---
+- clearState
+- runFlow: open-app.yaml
+
+# The target, as briefly as it can be set: `us1-set-target.yaml` owns that journey.
+- extendedWaitUntil:
+    visible:
+      id: 'expenses-input'
+    timeout: 30000
+- tapOn:
+    id: 'expenses-input'
+- inputText: '200000'
+- tapOn:
+    id: 'continue'
+- extendedWaitUntil:
+    visible:
+      id: 'level-balanced'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: 'save-goal'
+    direction: DOWN
+- tapOn:
+    id: 'save-goal'
+
+# FR-010 — what was saved before the app was. R$ 3.000,00 against a target of R$ 12.000,00.
+- extendedWaitUntil:
+    visible:
+      id: 'opening-input'
+    timeout: 20000
+- tapOn:
+    id: 'opening-input'
+- inputText: '300000'
+# The number pad is put away before the save control is tapped; see `us1-set-target.yaml`
+# for why the drag starts where it does.
+- swipe:
+    start: 50%, 32%
+    end: 50%, 22%
+- scrollUntilVisible:
+    element:
+      id: 'save-opening'
+    direction: DOWN
+- tapOn:
+    id: 'save-opening'
+
+# Home, with the opening balance already counted.
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 20000
+- assertVisible:
+    id: 'balance-amount'
+    text: '.*3[.,]000[.,]00.*'
+
+# FR-008 — a contribution, dated today, which is what the form opens on.
+- tapOn:
+    id: 'contribute'
+- extendedWaitUntil:
+    visible:
+      id: 'amount-input'
+    timeout: 20000
+- tapOn:
+    id: 'amount-input'
+- inputText: '50000'
+- swipe:
+    start: 50%, 32%
+    end: 50%, 22%
+- scrollUntilVisible:
+    element:
+      id: 'save-entry'
+    direction: DOWN
+- tapOn:
+    id: 'save-entry'
+
+# FR-012, FR-013 — back on Home, which was mounted with the old balance and has to show
+# the new one.
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 20000
+- assertVisible:
+    id: 'balance-amount'
+    text: '.*3[.,]500[.,]00.*'
+
+# Both entries are in storage, not only in the cache.
+- stopApp
+- runFlow: open-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+- assertVisible:
+    id: 'balance-amount'
+    text: '.*3[.,]500[.,]00.*'

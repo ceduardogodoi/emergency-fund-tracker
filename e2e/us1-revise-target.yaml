@@ -41,6 +41,12 @@ name: US1 — revise a savings target
     id: 'save-goal'
 - extendedWaitUntil:
     visible:
+      id: 'skip-opening'
+    timeout: 20000
+- tapOn:
+    id: 'skip-opening'
+- extendedWaitUntil:
+    visible:
       id: 'goal-card'
     timeout: 20000
 - assertVisible:
