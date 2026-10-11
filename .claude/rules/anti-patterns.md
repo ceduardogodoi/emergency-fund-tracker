@@ -29,6 +29,11 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 **The tell:** a rendered value that should follow an event does not, while a spy on the same event reports it was called. Check the signature in the `.d.ts` before suspecting the component.
 **Now enforced:** `@typescript-eslint/no-floating-promises` in `eslint.config.mjs`. Turning it on found fourteen more in the older suites, each passing only because a later `await` happened to flush it. The tell still applies to a promise silenced with `void`.
 
+## Tests that fail when nothing is wrong
+
+**AP-013 — a wait on something already on screen.** Home's redirect test awaited `findByText(strings.home.title)` and then asserted the redirect. `Screen` draws the title on the first render, while the goal is still being read, so the wait returned at once and the assertion raced the read. It won on every local run and lost once in CI, as `Number of calls: 0`. Slowing the read by 50ms reproduced it exactly; waiting for the redirect itself fixed it.
+**The tell:** a `findBy` on text the screen draws in every state — a title, a label — followed by an assertion about data. Ask whether the thing waited for could appear before the thing asserted, and wait for the consequence instead.
+
 ## Explanations invented to fit a surprise
 
 **AP-005 — reaching for a mechanism instead of measuring one.** A surviving mutation was explained by "`babel-preset-expo` folds `Platform.OS` per bundle, so the other branch does not exist". It was false, it was written into three files and a commit message, and it sent a whole task down the wrong path. The real cause was AP-001.
