@@ -127,6 +127,17 @@ describe('Home', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/entries/contribute')
   })
+
+  // FR-014: the history exists to be read, and Home is the only screen a user is sure to see.
+  it('offers a way to the history', async () => {
+    await storeGoal()
+    await harness.render(<HomeScreen />)
+    await screen.findByTestId('standing-card')
+
+    await userEvent.press(screen.getByRole('button', { name: strings.home.historyAction }))
+
+    expect(mockPush).toHaveBeenCalledWith('/entries')
+  })
 })
 
 /**

@@ -80,6 +80,14 @@ function StandingView({ standing }: StandingViewProps): ReactNode {
         }}
         testID="contribute"
       />
+      <Button
+        label={strings.home.historyAction}
+        variant="secondary"
+        onPress={() => {
+          router.push('/entries')
+        }}
+        testID="history"
+      />
       <GoalCard goal={standing.goal} />
     </>
   )

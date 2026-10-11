@@ -2,11 +2,11 @@
 #
 # So far: an opening balance entered during setup counts toward the fund from the first
 # screen (FR-010), a contribution moves the balance on the screen the user returns to
-# (FR-008, FR-012, FR-013), and both survive a restart.
+# (FR-008, FR-012, FR-013), the history lists both (FR-014), and both survive a restart.
 #
 # Not yet the whole journey. The spec's Independent Test goes on to edit one entry and delete
-# another, and those steps join this flow with the screens that make them possible (T082,
-# T083) — which is why T074 stays open until they have.
+# another, and those steps join this flow with the screen that makes them possible (T083) —
+# which is why T074 stays open until they have.
 #
 # Runs inside Expo Go; see `us1-set-target.yaml` for why, for why `APP_ID` and `DEV_URL` come
 # from the npm scripts rather than an `env:` block here, and for why amounts are matched by
@@ -97,7 +97,21 @@ name: US2 — record progress
     id: 'balance-amount'
     text: '.*3[.,]500[.,]00.*'
 
-# Both entries are in storage, not only in the cache.
+# FR-014 — the history lists both, each as what it is. Matched by text alone, with no id:
+# a row is one accessible element, so iOS exposes it as a single node carrying everything
+# in it, while Android exposes the texts inside it. The contribution's pattern insists on
+# its sign, because without it `500,00` is also the tail of the balance.
+- tapOn:
+    id: 'history'
+- extendedWaitUntil:
+    visible:
+      id: 'history-list'
+    timeout: 20000
+- assertVisible: '.*\+ \D*500[.,]00.*'
+- assertVisible: '.*3[.,]000[.,]00.*'
+
+# Both entries are in storage, not only in the cache. Restarted from the history rather
+# than from Home: Maestro's `back` is Android's, and the restart lands on Home either way.
 - stopApp
 - runFlow: open-app.yaml
 - extendedWaitUntil:

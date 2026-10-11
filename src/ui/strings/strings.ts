@@ -214,6 +214,52 @@ export const strings = {
     yesterday: 'Ontem',
     otherDate: 'Outra data',
     otherDateExplanation: 'Para registrar uma contribuição de outro dia.',
+    /** The history (FR-014). */
+    historyTitle: 'Histórico',
+    historyEmptyTitle: 'Nada registrado ainda',
+    historyEmptyBody:
+      'Cada contribuição que você registrar aparece aqui, da mais recente à mais antiga.',
+    /**
+     * What each kind of entry is called, how it is marked, and how its amount is written.
+     *
+     * Three signals that do not depend on colour, because FR-014 asks for the kinds to be
+     * told apart and FR-049 forbids colour from being the only way: a word, a mark beside
+     * it, and a sign on the amount. The withdrawal's is a true minus (U+2212) rather than
+     * a hyphen — it is as wide as the plus, so signed amounts stay aligned down a column,
+     * and a screen reader says "menos" where it would skip a hyphen. An opening balance
+     * carries no sign: it was not a movement, it is where the fund started.
+     *
+     * Keyed by `EntryType`, so a row renders whatever the domain records.
+     */
+    kinds: {
+      opening: {
+        label: 'Saldo inicial',
+        mark: '=',
+        /**
+         * @param amount The formatted amount.
+         * @returns The amount as the row shows it.
+         */
+        amount: (amount: string): string => amount,
+      },
+      contribution: {
+        label: 'Contribuição',
+        mark: '+',
+        /**
+         * @param amount The formatted amount.
+         * @returns The amount as the row shows it.
+         */
+        amount: (amount: string): string => `+ ${amount}`,
+      },
+      withdrawal: {
+        label: 'Retirada',
+        mark: '−',
+        /**
+         * @param amount The formatted amount.
+         * @returns The amount as the row shows it.
+         */
+        amount: (amount: string): string => `− ${amount}`,
+      },
+    },
   },
 
   /** The first screen after launch. */
@@ -252,6 +298,8 @@ export const strings = {
     surplus: (amount: string): string => `${amount} além da meta`,
     /** The way to the contribute screen. The same words as its title, deliberately. */
     contributeAction: 'Nova contribuição',
+    /** The way to the history (FR-014). */
+    historyAction: 'Ver histórico',
   },
 
   /**
