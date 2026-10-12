@@ -284,8 +284,11 @@ describe('the entry hooks', () => {
       </>,
     )
 
+    // Each waited for on its own. They are two queries, and the warning arriving says
+    // nothing about whether the balance has: asserted in the same breath, the balance was
+    // still `pending` about one run in fifteen (AP-013).
     expect(await screen.findByText('future:1')).toBeTruthy()
-    expect(screen.getByText('balance:0')).toBeTruthy()
+    expect(await screen.findByText('balance:0')).toBeTruthy()
   })
 
   // The other half of FR-009, from the hook's side: the rule reaches the mutation, so a
