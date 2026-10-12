@@ -33,12 +33,14 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 
 **AP-013 — a wait on something already on screen.** Home's redirect test awaited `findByText(strings.home.title)` and then asserted the redirect. `Screen` draws the title on the first render, while the goal is still being read, so the wait returned at once and the assertion raced the read. It won on every local run and lost once in CI, as `Number of calls: 0`. Slowing the read by 50ms reproduced it exactly; waiting for the redirect itself fixed it.
 **The tell:** a `findBy` on text the screen draws in every state — a title, a label — followed by an assertion about data. Ask whether the thing waited for could appear before the thing asserted, and wait for the consequence instead.
+**Again (T083), in a second shape:** an entry-hooks test waited for the future-dated warning and then asserted the balance with `getByText`. Nothing was already on screen this time — they are two queries, and one arriving says nothing about the other. The balance was still `pending` about one run in fifteen. A wait covers only the thing it names.
 
 ## Explanations invented to fit a surprise
 
 **AP-005 — reaching for a mechanism instead of measuring one.** A surviving mutation was explained by "`babel-preset-expo` folds `Platform.OS` per bundle, so the other branch does not exist". It was false, it was written into three files and a commit message, and it sent a whole task down the wrong path. The real cause was AP-001.
 **The tell:** the explanation is about a tool's internals, arrived at by reasoning rather than by looking, and it conveniently means nothing needs fixing. Read the `.d.ts`, transform the file, print the value.
 **Again, twice in one round (T081):** `addDays` shipped a comment saying local time would break across daylight saving — a mutation to local time survived, because stepping by calendar field is correct in any zone; only adding a day of milliseconds breaks. And the iOS date picker was handed `pt-BR` on the belief that SwiftUI accepts either form; the simulator drew "September 2026" until it got `pt_BR`. Both were caught by looking — a mutation and a screenshot — which is the point of this entry.
+**And once more (T083):** the edit screen's deletion was hoisted above the form with a comment saying TanStack does not call back into an unmounted observer, so a form-owned deletion would delete and never leave. Moving it into the form to check, the screen left anyway. The hoist stayed for a reason that was measured — the screen has to know a deletion is under way, or it reads "not found" on the way out — and the comment was rewritten to say that.
 
 **AP-006 — trusting a type's name over its declaration.** `PlatformOSType` looked like the type of `Platform.OS`. It is wider — it admits `'native'`, which `Platform.OS` never holds.
 **The tell:** the names match. Check the declaration, and let `npm run typecheck` decide.
