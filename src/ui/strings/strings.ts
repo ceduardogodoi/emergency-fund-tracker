@@ -219,6 +219,23 @@ export const strings = {
     historyEmptyTitle: 'Nada registrado ainda',
     historyEmptyBody:
       'Cada contribuição que você registrar aparece aqui, da mais recente à mais antiga.',
+    /** What a screen reader says a row in the history does when it is pressed. */
+    rowHint: 'Abre o registro para corrigir ou excluir.',
+    /** Correcting or deleting an entry already recorded (FR-011). */
+    editTitle: 'Corrigir registro',
+    deleteAction: 'Excluir registro',
+    /**
+     * The question the confirmation asks, and what answering yes costs.
+     *
+     * Says the balance is recalculated rather than which way it moves: deleting a
+     * contribution lowers it and deleting a withdrawal raises it, and one sentence has to
+     * be true of both.
+     */
+    deleteTitle: 'Excluir este registro?',
+    deleteBody: 'Ele sai do histórico e o saldo é recalculado sem ele. Não é possível desfazer.',
+    /** An entry the screen was asked for and the ledger does not have. */
+    missingTitle: 'Registro não encontrado',
+    missingBody: 'Ele pode ter sido excluído. Volte ao histórico para ver o que está registrado.',
     /**
      * What each kind of entry is called, how it is marked, and how its amount is written.
      *

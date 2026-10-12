@@ -6,6 +6,7 @@ import { useServices } from '@/runtime/services-context'
 import type { AppError } from '@/domain/errors'
 import { calculateBalance } from '@/domain/ledger/balance'
 import { recordEntry } from '@/domain/ledger/record-entry'
+import { reviseEntry } from '@/domain/ledger/revise-entry'
 import type { LedgerEntry, LedgerEntryInput, LedgerEntryPatch } from '@/domain/ledger/types'
 import type { Money } from '@/domain/money/money'
 import type { UnitOfWork } from '@/domain/ports/unit-of-work'
@@ -55,6 +56,24 @@ export function useBalance(): UseQueryResult<Money, AppError> {
 }
 
 /**
+ * One entry, by its id — or null when the ledger has none by that id (FR-011).
+ *
+ * Found in the list every other reader shares rather than fetched on its own, for the
+ * reason the balance is: the screen that corrects an entry is opened from the history, and
+ * the two must not be able to disagree about what the entry says.
+ *
+ * @param id The entry to find.
+ * @returns The query, resolving to the entry or to null.
+ */
+export function useEntry(id: string): UseQueryResult<LedgerEntry | null, AppError> {
+  const { unitOfWork } = useServices()
+  return useQuery({
+    ...entriesQuery(unitOfWork),
+    select: (entries) => entries.find((entry) => entry.id === id) ?? null,
+  })
+}
+
+/**
  * Entries dated after today, which every calculation excludes and the user must correct
  * (FR-033).
  *
@@ -99,15 +118,22 @@ export function useAddEntry(): UseMutationResult<LedgerEntry, AppError, LedgerEn
 /**
  * Corrects an entry already recorded (FR-011).
  *
- * @returns The mutation. A missing entry arrives as a not-found `error`.
+ * Through `reviseEntry`, so a correction is held to the rules a new entry is.
+ *
+ * @returns The mutation. A refused correction arrives as a validation `error`, and a
+ *   missing entry as a not-found one.
  */
 export function useUpdateEntry(): UseMutationResult<LedgerEntry, AppError, EntryEdit> {
-  const { unitOfWork } = useServices()
+  const { unitOfWork, clock } = useServices()
   const refresh = useLedgerRefresh()
 
   return useMutation<LedgerEntry, AppError, EntryEdit>({
     mutationFn: async ({ id, patch }) =>
-      unwrap(await unitOfWork.run(async (repositories) => repositories.ledger.update(id, patch))),
+      unwrap(
+        await unitOfWork.run(async (repositories) =>
+          reviseEntry(repositories, id, patch, clock.today()),
+        ),
+      ),
     onSuccess: refresh,
   })
 }

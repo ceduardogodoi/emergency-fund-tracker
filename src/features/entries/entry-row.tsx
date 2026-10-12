@@ -1,16 +1,18 @@
 import type { ReactNode } from 'react'
-import { StyleSheet, View, type ViewStyle } from 'react-native'
+import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native'
 
 import { useServices } from '@/runtime/services-context'
 import type { EntryType, LedgerEntry } from '@/domain/ledger/types'
 import { Text, type TextTone } from '@/ui/primitives'
 import { strings } from '@/ui/strings'
-import { borderWidth, color, radius, spacing } from '@/ui/tokens'
+import { borderWidth, color, opacity, radius, spacing } from '@/ui/tokens'
 
 /** Props for {@link EntryRow}. */
 export interface EntryRowProps {
   /** The entry the row describes. */
   readonly entry: LedgerEntry
+  /** Called when the row is pressed — the way to correcting or deleting the entry. */
+  readonly onPress: () => void
 }
 
 /**
@@ -33,10 +35,13 @@ const TONES = {
  * repeats the word beside it for the eye, and announced it would be a stray "mais" before
  * every contribution.
  *
+ * The whole row is the control (FR-011). A button drawn inside it would be a second stop
+ * per entry for a screen reader, and a smaller target for a thumb.
+ *
  * @param props - See {@link EntryRowProps}
  * @returns The rendered row
  */
-export function EntryRow({ entry }: EntryRowProps): ReactNode {
+export function EntryRow({ entry, onPress }: EntryRowProps): ReactNode {
   const { format } = useServices()
   const kind = strings.entries.kinds[entry.type]
   const tone = TONES[entry.type]
@@ -46,7 +51,13 @@ export function EntryRow({ entry }: EntryRowProps): ReactNode {
   const remark = entry.note ?? entry.withdrawalReason
 
   return (
-    <View accessible style={styles.row} testID="entry-row">
+    <Pressable
+      accessibilityRole="button"
+      accessibilityHint={strings.entries.rowHint}
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      testID="entry-row"
+    >
       <View
         style={styles.mark}
         accessibilityElementsHidden
@@ -68,7 +79,7 @@ export function EntryRow({ entry }: EntryRowProps): ReactNode {
         </Text>
         {remark === null ? null : <Text tone="secondary">{remark}</Text>}
       </View>
-    </View>
+    </Pressable>
   )
 }
 
@@ -80,6 +91,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.background.card,
     borderRadius: radius.none,
   } satisfies ViewStyle,
+  pressed: { opacity: opacity.pressed } satisfies ViewStyle,
   // A square with an edge, like an empty unit in the coverage meter: the mark is a glyph
   // set in the app's own face rather than an icon from a set, which would bring a second
   // drawing style — and a dependency — for three shapes.

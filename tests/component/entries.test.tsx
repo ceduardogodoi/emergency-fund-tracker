@@ -1,20 +1,21 @@
-import { fireEvent, screen, userEvent, within } from '@testing-library/react-native'
+import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 
 import { calendarDate } from '@/domain/dates/calendar-date'
 import { storageError } from '@/domain/errors/app-error'
 import { MAXIMUM_NOTE_LENGTH } from '@/domain/ledger/entry'
-import type { LedgerEntryInput } from '@/domain/ledger/types'
+import type { LedgerEntry, LedgerEntryInput } from '@/domain/ledger/types'
 import { money } from '@/domain/money/money'
 import { err } from '@/domain/result'
 import { strings, validationMessage } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
 import { expectOk } from '@tests/support/expect-result'
+import EditEntryScreen from '../../app/entries/[id]'
 import ContributeScreen from '../../app/entries/contribute'
 import HistoryScreen from '../../app/entries/index'
 
 /**
- * Recording a contribution (FR-008, FR-009, FR-010), and reading back what was recorded
- * (FR-014).
+ * Recording a contribution (FR-008, FR-009, FR-010), reading back what was recorded
+ * (FR-014), and correcting or deleting it (FR-011).
  *
  * Today is the first of a month, so "Ontem" has to cross into the previous one: a date that
  * could be produced by editing the last digit would pass against arithmetic that is wrong.
@@ -26,6 +27,7 @@ const mockBack = jest.fn()
 const mockPush = jest.fn()
 const mockReplace = jest.fn()
 let mockCanGoBack = true
+let mockParams: { id: string } = { id: '' }
 
 // Where the screen goes once it has saved is the router's business; the screen is tested
 // for asking to go there.
@@ -36,6 +38,7 @@ jest.mock('expo-router', () => ({
     replace: mockReplace,
     canGoBack: () => mockCanGoBack,
   }),
+  useLocalSearchParams: () => mockParams,
 }))
 
 let harness: AppHarness
@@ -46,6 +49,7 @@ beforeEach(() => {
   mockPush.mockClear()
   mockReplace.mockClear()
   mockCanGoBack = true
+  mockParams = { id: '' }
 })
 
 afterEach(async () => {
@@ -63,6 +67,25 @@ async function save(): Promise<void> {
 
 async function stored(): Promise<readonly unknown[]> {
   return expectOk(await harness.repositories.ledger.list())
+}
+
+/** Stores an entry directly, the way a screen's save would have. */
+async function record(entry: Partial<LedgerEntryInput> = {}): Promise<LedgerEntry> {
+  return expectOk(
+    await harness.repositories.ledger.add({
+      type: 'contribution',
+      amount: money(12_345),
+      date: calendarDate('2026-09-15'),
+      note: null,
+      withdrawalReason: null,
+      ...entry,
+    }),
+  )
+}
+
+/** An amount as the formatter renders it, before a row says which way it moved. */
+function formatted(minorUnits: number): string {
+  return harness.services.format.money(money(minorUnits))
 }
 
 /** A date as the screen renders it. */
@@ -277,27 +300,8 @@ describe('the contribute screen', () => {
 })
 
 describe('the history screen', () => {
-  /** Stores an entry directly, the way a screen's save would have. */
-  async function record(entry: Partial<LedgerEntryInput>): Promise<void> {
-    expectOk(
-      await harness.repositories.ledger.add({
-        type: 'contribution',
-        amount: money(12_345),
-        date: calendarDate('2026-09-15'),
-        note: null,
-        withdrawalReason: null,
-        ...entry,
-      }),
-    )
-  }
-
   /** For what is on screen but kept from assistive technology, which queries skip by default. */
   const DRAWN = { includeHiddenElements: true }
-
-  /** An amount as the formatter renders it, before the row says which way it moved. */
-  function formatted(minorUnits: number): string {
-    return harness.services.format.money(money(minorUnits))
-  }
 
   // Recorded out of order on purpose, and in neither direction the screen could fall into
   // by doing nothing: the ledger hands entries over oldest first, and these were not
@@ -403,6 +407,24 @@ describe('the history screen', () => {
     expect(mockPush).toHaveBeenCalledWith('/entries/contribute')
   })
 
+  // FR-011's way in. Three rows and the middle one pressed, so that neither end of the
+  // list — in the order shown or the order stored — is the right answer by accident.
+  it('opens the entry whose row is pressed', async () => {
+    await record({ date: calendarDate('2026-09-10') })
+    const pressed = await record({ date: calendarDate('2026-09-20') })
+    await record({ date: calendarDate('2026-09-30') })
+    await harness.render(<HistoryScreen />)
+
+    const rows = await screen.findAllByRole('button')
+    expect(rows).toHaveLength(3)
+    await userEvent.press(rows[1]!)
+
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/entries/[id]',
+      params: { id: pressed.id },
+    })
+  })
+
   // An unreadable ledger is not an empty one, and saying "nothing recorded yet" to someone
   // with years of entries would be the worst thing this screen could do.
   it('reports a ledger it cannot read, rather than an empty history', async () => {
@@ -414,5 +436,281 @@ describe('the history screen', () => {
 
     expect(await screen.findByText(strings.state.errorTitle)).toBeTruthy()
     expect(screen.queryByText(strings.entries.historyEmptyTitle)).toBeNull()
+  })
+})
+
+describe('the edit screen', () => {
+  /** Stores an entry and opens the screen on it, as a press on its row would. */
+  async function open(entry: Partial<LedgerEntryInput> = {}): Promise<LedgerEntry> {
+    const recorded = await record({ amount: money(43_210), note: 'Décimo terceiro', ...entry })
+    mockParams = { id: recorded.id }
+    await harness.render(<EditEntryScreen />)
+    await screen.findByTestId('amount-input')
+    return recorded
+  }
+
+  async function readBack(id: string): Promise<LedgerEntry | null> {
+    return expectOk(await harness.repositories.ledger.getById(id))
+  }
+
+  async function askToDelete(): Promise<void> {
+    await userEvent.press(screen.getByRole('button', { name: strings.entries.deleteAction }))
+  }
+
+  async function confirmDeletion(): Promise<void> {
+    await userEvent.press(screen.getByRole('button', { name: strings.action.delete }))
+  }
+
+  // None of these is what an empty form would hold: the amount is not zero, the day is not
+  // today, and the note is not blank.
+  it('opens on the entry as it is stored', async () => {
+    await open()
+
+    expect(screen.getByTestId('amount-input').props.value).toBe(formatted(43_210))
+    expect(screen.getByTestId('note-input').props.value).toBe('Décimo terceiro')
+    expect(screen.getByText(shown('2026-09-15'))).toBeTruthy()
+    expect(screen.getByTestId('entry-date-picker').props.selection).toBe('2026-09-15T00:00:00.000Z')
+  })
+
+  // Stated, since it cannot be changed here: a form that showed only an amount would not
+  // say whether correcting it moves the balance up or down.
+  it('says which kind of entry is being corrected', async () => {
+    await open({ type: 'withdrawal', note: null, withdrawalReason: 'Conserto' })
+
+    expect(screen.getByText(strings.entries.kinds.withdrawal.label)).toBeTruthy()
+    expect(screen.queryByText(strings.entries.kinds.contribution.label)).toBeNull()
+  })
+
+  // User Story 2, scenario 2.
+  it('saves a corrected amount, leaves everything else alone, and leaves', async () => {
+    const entry = await open()
+
+    await typeAmount(70_000)
+    await save()
+
+    await waitFor(() => {
+      expect(mockBack).toHaveBeenCalled()
+    })
+    expect(await stored()).toEqual([
+      expect.objectContaining({
+        id: entry.id,
+        type: 'contribution',
+        amount: 70_000,
+        date: '2026-09-15',
+        note: 'Décimo terceiro',
+      }),
+    ])
+  })
+
+  it('moves the entry to a day picked from the calendar, and shows which one', async () => {
+    const entry = await open()
+
+    await pickDay('2026-09-03T00:00:00.000Z')
+
+    expect(screen.getByText(shown('2026-09-03'))).toBeTruthy()
+
+    await save()
+
+    await waitFor(() => {
+      expect(mockBack).toHaveBeenCalled()
+    })
+    expect(await readBack(entry.id)).toMatchObject({ date: '2026-09-03', amount: 43_210 })
+  })
+
+  // FR-009 holds for a correction as it does for a new entry.
+  it('offers no day after today', async () => {
+    await open()
+
+    expect(screen.getByTestId('entry-date-picker').props.range).toEqual({
+      end: `${TODAY}T12:00:00.000Z`,
+    })
+  })
+
+  it('rewrites the note, without the whitespace around it', async () => {
+    const entry = await open()
+
+    await fireEvent.changeText(screen.getByTestId('note-input'), '  Bônus de setembro  ')
+    await save()
+
+    await waitFor(() => {
+      expect(mockBack).toHaveBeenCalled()
+    })
+    expect(await readBack(entry.id)).toMatchObject({ note: 'Bônus de setembro' })
+  })
+
+  it('removes a note that is emptied', async () => {
+    const entry = await open()
+
+    await fireEvent.changeText(screen.getByTestId('note-input'), '   ')
+    await save()
+
+    await waitFor(() => {
+      expect(mockBack).toHaveBeenCalled()
+    })
+    expect(await readBack(entry.id)).toMatchObject({ note: null })
+  })
+
+  it('refuses an amount of zero under the amount, and changes nothing', async () => {
+    const entry = await open()
+
+    await typeAmount(0)
+    await save()
+
+    expect(await screen.findByText(strings.validation.entryAmountMustBePositive)).toBeTruthy()
+    expect(screen.queryByText(strings.state.errorBody)).toBeNull()
+    expect(await readBack(entry.id)).toEqual(entry)
+    expect(mockBack).not.toHaveBeenCalled()
+  })
+
+  it('clears the refusal once the amount is changed', async () => {
+    await open()
+    await typeAmount(0)
+    await save()
+    await screen.findByText(strings.validation.entryAmountMustBePositive)
+
+    await typeAmount(70_000)
+
+    expect(screen.queryByText(strings.validation.entryAmountMustBePositive)).toBeNull()
+  })
+
+  it('refuses a note over the limit, under the note', async () => {
+    const entry = await open()
+
+    await fireEvent.changeText(
+      screen.getByTestId('note-input'),
+      'a'.repeat(MAXIMUM_NOTE_LENGTH + 1),
+    )
+    await save()
+
+    expect(await screen.findByText(strings.validation.entryNoteTooLong)).toBeTruthy()
+    expect(await readBack(entry.id)).toEqual(entry)
+  })
+
+  // The calendar cannot offer a day after today, but today can move back under an open
+  // form — a device clock that was ahead and is corrected. The refusal belongs under the
+  // date, where the thing to change is, and not in the line that reports a storage failure.
+  it('refuses a day the clock has since put in the future, under the date', async () => {
+    const entry = await open({ date: calendarDate(YESTERDAY) })
+
+    harness.clock.setToday('2026-09-20')
+    await save()
+
+    expect(await screen.findByText(strings.validation.entryDateInFuture)).toBeTruthy()
+    expect(screen.queryByText(strings.state.errorBody)).toBeNull()
+    expect(await readBack(entry.id)).toEqual(entry)
+  })
+
+  it('says so when the correction cannot be stored, and keeps what was typed', async () => {
+    jest
+      .spyOn(harness.repositories.ledger, 'update')
+      .mockResolvedValue(err(storageError('ledger.update-failed')))
+    await open()
+
+    await typeAmount(70_000)
+    await save()
+
+    expect(await screen.findByText(strings.state.errorBody)).toBeTruthy()
+    expect(screen.getByTestId('amount-input').props.value).toBe(formatted(70_000))
+    expect(mockBack).not.toHaveBeenCalled()
+  })
+
+  // A withdrawal has a reason where the others have a note, and what a reason may be is
+  // User Story 5's to say (FR-016). Until then the form does not offer one to edit — and
+  // must not wipe the one that is there by saving a note over it.
+  it('corrects a withdrawal without touching why it was made', async () => {
+    const entry = await open({ type: 'withdrawal', note: null, withdrawalReason: 'Conserto' })
+
+    expect(screen.queryByTestId('note-input')).toBeNull()
+
+    await typeAmount(70_000)
+    await save()
+
+    await waitFor(() => {
+      expect(mockBack).toHaveBeenCalled()
+    })
+    expect(await readBack(entry.id)).toMatchObject({
+      amount: 70_000,
+      note: null,
+      withdrawalReason: 'Conserto',
+    })
+  })
+
+  // User Story 2, scenario 3: deletion requires explicit confirmation.
+  it('asks before deleting, and says what is lost', async () => {
+    const entry = await open()
+
+    expect(screen.queryByText(strings.entries.deleteTitle)).toBeNull()
+
+    await askToDelete()
+
+    expect(screen.getByText(strings.entries.deleteTitle)).toBeTruthy()
+    expect(screen.getByText(strings.entries.deleteBody)).toBeTruthy()
+    expect(await readBack(entry.id)).toEqual(entry)
+  })
+
+  it('keeps the entry when the question is answered with cancel', async () => {
+    const entry = await open()
+
+    await askToDelete()
+    await userEvent.press(screen.getByRole('button', { name: strings.action.cancel }))
+
+    expect(screen.queryByText(strings.entries.deleteTitle)).toBeNull()
+    expect(await readBack(entry.id)).toEqual(entry)
+    expect(mockBack).not.toHaveBeenCalled()
+  })
+
+  // The entry is gone from the cache before the screen has left, so for a moment this is
+  // a screen about an entry that does not exist. It must still leave, and it must not
+  // spend that moment telling the user the entry could not be found.
+  it('deletes once confirmed, and leaves without calling the entry missing', async () => {
+    const entry = await open()
+    const kept = await record({ amount: money(900) })
+
+    await askToDelete()
+    await confirmDeletion()
+
+    await waitFor(() => {
+      expect(mockBack).toHaveBeenCalled()
+    })
+    expect(await readBack(entry.id)).toBeNull()
+    expect(await stored()).toEqual([expect.objectContaining({ id: kept.id })])
+    expect(screen.queryByText(strings.entries.missingTitle)).toBeNull()
+  })
+
+  it('says so when the entry cannot be deleted, and stays', async () => {
+    jest
+      .spyOn(harness.repositories.ledger, 'remove')
+      .mockResolvedValue(err(storageError('ledger.remove-failed')))
+    const entry = await open()
+
+    await askToDelete()
+    await confirmDeletion()
+
+    expect(await screen.findByText(strings.state.errorBody)).toBeTruthy()
+    expect(screen.queryByText(strings.entries.deleteTitle)).toBeNull()
+    expect(await readBack(entry.id)).toEqual(entry)
+    expect(mockBack).not.toHaveBeenCalled()
+  })
+
+  it('says so when there is no such entry', async () => {
+    await record()
+    mockParams = { id: 'no-such-entry' }
+
+    await harness.render(<EditEntryScreen />)
+
+    expect(await screen.findByText(strings.entries.missingTitle)).toBeTruthy()
+    expect(screen.queryByTestId('amount-input')).toBeNull()
+  })
+
+  it('reports a ledger it cannot read, rather than a missing entry', async () => {
+    jest
+      .spyOn(harness.repositories.ledger, 'list')
+      .mockResolvedValue(err(storageError('ledger.read-failed')))
+    mockParams = { id: 'any' }
+
+    await harness.render(<EditEntryScreen />)
+
+    expect(await screen.findByText(strings.state.errorTitle)).toBeTruthy()
+    expect(screen.queryByText(strings.entries.missingTitle)).toBeNull()
   })
 })

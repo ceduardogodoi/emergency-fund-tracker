@@ -1,12 +1,10 @@
 # User Story 2 — record savings, and see where the fund stands.
 #
-# So far: an opening balance entered during setup counts toward the fund from the first
-# screen (FR-010), a contribution moves the balance on the screen the user returns to
-# (FR-008, FR-012, FR-013), the history lists both (FR-014), and both survive a restart.
-#
-# Not yet the whole journey. The spec's Independent Test goes on to edit one entry and delete
-# another, and those steps join this flow with the screen that makes them possible (T083) —
-# which is why T074 stays open until they have.
+# The story's Independent Test, on a device: an opening balance entered during setup counts
+# toward the fund from the first screen (FR-010), each contribution moves the balance on the
+# screen the user returns to (FR-008, FR-012, FR-013), the history lists them all (FR-014),
+# one is corrected and another deleted from there (FR-011), and what is left survives a
+# restart.
 #
 # Runs inside Expo Go; see `us1-set-target.yaml` for why, for why `APP_ID` and `DEV_URL` come
 # from the npm scripts rather than an `env:` block here, and for why amounts are matched by
@@ -97,10 +95,37 @@ name: US2 — record progress
     id: 'balance-amount'
     text: '.*3[.,]500[.,]00.*'
 
-# FR-014 — the history lists both, each as what it is. Matched by text alone, with no id:
-# a row is one accessible element, so iOS exposes it as a single node carrying everything
-# in it, while Android exposes the texts inside it. The contribution's pattern insists on
-# its sign, because without it `500,00` is also the tail of the balance.
+# A second contribution, so that one can be corrected and the other deleted.
+- tapOn:
+    id: 'contribute'
+- extendedWaitUntil:
+    visible:
+      id: 'amount-input'
+    timeout: 20000
+- tapOn:
+    id: 'amount-input'
+- inputText: '25000'
+- swipe:
+    start: 50%, 32%
+    end: 50%, 22%
+- scrollUntilVisible:
+    element:
+      id: 'save-entry'
+    direction: DOWN
+- tapOn:
+    id: 'save-entry'
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 20000
+- assertVisible:
+    id: 'balance-amount'
+    text: '.*3[.,]750[.,]00.*'
+
+# FR-014 — the history lists all three, each as what it is. Matched by text alone, with no
+# id: a row is one accessible element, so iOS exposes it as a single node carrying
+# everything in it, while Android exposes the texts inside it. A contribution's pattern
+# insists on its sign, because without it `500,00` is also the tail of a balance.
 - tapOn:
     id: 'history'
 - extendedWaitUntil:
@@ -108,10 +133,66 @@ name: US2 — record progress
       id: 'history-list'
     timeout: 20000
 - assertVisible: '.*\+ \D*500[.,]00.*'
+- assertVisible: '.*\+ \D*250[.,]00.*'
 - assertVisible: '.*3[.,]000[.,]00.*'
 
-# Both entries are in storage, not only in the cache. Restarted from the history rather
-# than from Home: Maestro's `back` is Android's, and the restart lands on Home either way.
+# FR-011 — a correction. R$ 500,00 becomes R$ 700,00. The field opens on the stored amount,
+# so that is erased first: the digits typed are appended to whatever is there.
+- tapOn: '.*\+ \D*500[.,]00.*'
+- extendedWaitUntil:
+    visible:
+      id: 'amount-input'
+    timeout: 20000
+- tapOn:
+    id: 'amount-input'
+- eraseText
+- inputText: '70000'
+- swipe:
+    start: 50%, 32%
+    end: 50%, 22%
+- scrollUntilVisible:
+    element:
+      id: 'save-entry'
+    direction: DOWN
+- tapOn:
+    id: 'save-entry'
+
+# Back in the history, which was mounted with the old amount and has to show the new one.
+- extendedWaitUntil:
+    visible:
+      id: 'history-list'
+    timeout: 20000
+- assertVisible: '.*\+ \D*700[.,]00.*'
+- assertNotVisible: '.*\+ \D*500[.,]00.*'
+
+# FR-011 — a deletion, which asks first. The sheet's action is the bare verb; the button
+# that opened it names what it deletes, so the two cannot be mistaken for each other here.
+- tapOn: '.*\+ \D*250[.,]00.*'
+- extendedWaitUntil:
+    visible:
+      id: 'amount-input'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: 'delete-entry'
+    direction: DOWN
+- tapOn:
+    id: 'delete-entry'
+- extendedWaitUntil:
+    visible:
+      id: 'delete-sheet'
+    timeout: 10000
+- tapOn: 'Excluir'
+- extendedWaitUntil:
+    visible:
+      id: 'history-list'
+    timeout: 20000
+- assertNotVisible: '.*\+ \D*250[.,]00.*'
+- assertVisible: '.*\+ \D*700[.,]00.*'
+
+# What is left is in storage, not only in the cache: the opening balance and the corrected
+# contribution, and nothing of the deleted one. Restarted from the history rather than from
+# Home: Maestro's `back` is Android's, and the restart lands on Home either way.
 - stopApp
 - runFlow: open-app.yaml
 - extendedWaitUntil:
@@ -120,4 +201,4 @@ name: US2 — record progress
     timeout: 60000
 - assertVisible:
     id: 'balance-amount'
-    text: '.*3[.,]500[.,]00.*'
+    text: '.*3[.,]700[.,]00.*'

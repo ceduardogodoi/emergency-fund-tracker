@@ -45,13 +45,23 @@ interface HistoryListProps {
  * The ledger's order is the one calculations want. A reader wants the other: what they
  * come here to check is what they just recorded, and under years of history that is the
  * last row.
+ *
+ * Pressing a row opens the entry, to be corrected or deleted (FR-011).
  */
 function HistoryList({ entries }: HistoryListProps): ReactNode {
+  const router = useRouter()
   return (
     <FlatList
       data={entries.toReversed()}
       keyExtractor={(entry) => entry.id}
-      renderItem={({ item }) => <EntryRow entry={item} />}
+      renderItem={({ item }) => (
+        <EntryRow
+          entry={item}
+          onPress={() => {
+            router.push({ pathname: '/entries/[id]', params: { id: item.id } })
+          }}
+        />
+      )}
       style={styles.list}
       contentContainerStyle={styles.rows}
       testID="history-list"
