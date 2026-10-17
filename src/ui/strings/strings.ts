@@ -194,6 +194,25 @@ export const strings = {
      * @returns The line shown under the two targets.
      */
     decrease: (amount: string): string => `Redução de ${amount}`,
+    /**
+     * What the new target does to progress (FR-006). In words rather than with an arrow,
+     * which a screen reader would read as a symbol or skip.
+     *
+     * @param from The formatted percentage against the stored target.
+     * @param to The formatted percentage against the new one.
+     * @returns The line shown under the change in target.
+     */
+    progressChange: (from: string, to: string): string => `Seu progresso vai de ${from} para ${to}`,
+    /**
+     * For a change that leaves the percentage where it was — a fund with nothing in it, or
+     * one already past both targets. "De 100% para 100%" would read as a change.
+     *
+     * @param percent The formatted percentage, the same against either target.
+     * @returns The line shown under the change in target.
+     */
+    progressUnchanged: (percent: string): string => `Seu progresso continua em ${percent}`,
+    /** When the balance cannot be read. Never a percentage computed from nothing. */
+    progressUnavailable: 'Não foi possível calcular o efeito no seu progresso.',
   },
 
   /**

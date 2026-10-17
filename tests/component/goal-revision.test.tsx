@@ -3,6 +3,7 @@ import type { RedirectProps } from 'expo-router'
 
 import { storageError } from '@/domain/errors/app-error'
 import type { GoalInput } from '@/domain/goal/types'
+import { calendarDate } from '@/domain/dates/calendar-date'
 import { money } from '@/domain/money/money'
 import { err } from '@/domain/result'
 import { strings, validationMessage } from '@/ui/strings'
@@ -18,11 +19,9 @@ import GoalRevisionScreen from '../../app/settings/goal'
  * time: starting from what is stored rather than from a default, saying what the change
  * costs before it is made, and leaving an audit row behind.
  *
- * The impact preview is deliberately about the target and not about progress. FR-006 also
- * asks for the change in progress percentage, which needs a balance, and the ledger does
- * not exist until User Story 2 — `pending.ts` fails every call rather than returning a
- * plausible zero. Asserting a percentage here would be asserting a number the app cannot
- * honestly know yet; T08x picks it up with the ledger.
+ * The impact preview states the target's change and the progress percentage's (FR-006).
+ * The percentages are asserted against a seeded balance, written as the figures a hand
+ * calculation gives rather than recomputed with the code's own arithmetic.
  */
 const MONTHLY_EXPENSES_MINOR_UNITS = 200_000
 const BALANCED_MONTHS = 6
@@ -76,6 +75,28 @@ async function storeGoal(overrides: Partial<GoalInput> = {}): Promise<void> {
     desiredCompletionDate: null,
     ...overrides,
   })
+}
+
+/**
+ * Stores an opening balance, so the fund has progress for a revision to change.
+ *
+ * Dated before the harness's today, since a future-dated entry is left out of the balance.
+ */
+async function storeBalance(minorUnits: number): Promise<void> {
+  expectOk(
+    await harness.repositories.ledger.add({
+      type: 'opening',
+      amount: money(minorUnits),
+      date: calendarDate('2026-08-01'),
+      note: null,
+      withdrawalReason: null,
+    }),
+  )
+}
+
+/** A percentage as the screen renders it. */
+function percent(value: number): string {
+  return harness.services.format.percent(value)
 }
 
 /** The formatted amount, so assertions read the way the screen does. */
@@ -168,6 +189,70 @@ describe('the goal revision screen', () => {
         strings.revision.decrease(formatted(STORED_TARGET_MINOR_UNITS - LEAN_TARGET_MINOR_UNITS)),
       ),
     ).toBeTruthy()
+  })
+
+  // FR-006's second half. R$ 3.000,00 of a R$ 12.000,00 goal is 25%; of the R$ 18.000,00
+  // the cautious level asks for, 16,67%. The balance is neither zero nor the target, so
+  // neither percentage is one a preview with no balance could fall back to.
+  it('says what the change does to progress', async () => {
+    await storeGoal()
+    await storeBalance(300_000)
+    await openRevision()
+
+    await userEvent.press(screen.getByLabelText(strings.levels.cautious.name))
+
+    expect(
+      await screen.findByText(strings.revision.progressChange(percent(25), percent(16.67))),
+    ).toBeTruthy()
+  })
+
+  // And down: the same balance is half of the lean level's R$ 6.000,00.
+  it('says what a smaller target does to progress', async () => {
+    await storeGoal()
+    await storeBalance(300_000)
+    await openRevision()
+
+    await userEvent.press(screen.getByLabelText(strings.levels.lean.name))
+
+    expect(
+      await screen.findByText(strings.revision.progressChange(percent(25), percent(50))),
+    ).toBeTruthy()
+  })
+
+  // A fund already past both targets is reached either way. "De 100% para 100%" would read
+  // as a change that is not one.
+  it('says progress stays where it is when the change does not move it', async () => {
+    await storeGoal()
+    await storeBalance(STORED_TARGET_MINOR_UNITS)
+    await openRevision()
+
+    await userEvent.press(screen.getByLabelText(strings.levels.lean.name))
+
+    expect(await screen.findByText(strings.revision.progressUnchanged(percent(100)))).toBeTruthy()
+  })
+
+  // A ledger that cannot be read is not an empty one. Showing 0% would tell the user their
+  // savings are gone; failing the whole screen would stop them revising a goal that reads
+  // fine. So the target's half stands, and the progress half says it could not be worked out.
+  it('says progress cannot be worked out when the ledger cannot be read, and still shows the target', async () => {
+    await storeGoal()
+    await storeBalance(300_000)
+    jest
+      .spyOn(harness.repositories.ledger, 'list')
+      .mockResolvedValue(err(storageError('ledger.read-failed')))
+    await openRevision()
+
+    await userEvent.press(screen.getByLabelText(strings.levels.cautious.name))
+
+    expect(await screen.findByText(strings.revision.progressUnavailable)).toBeTruthy()
+    expect(
+      screen.getByText(
+        strings.revision.increase(
+          formatted(CAUTIOUS_TARGET_MINOR_UNITS - STORED_TARGET_MINOR_UNITS),
+        ),
+      ),
+    ).toBeTruthy()
+    expect(screen.queryByText(/%/)).toBeNull()
   })
 
   // Nothing has changed yet, so there is no impact to state. A preview reading
