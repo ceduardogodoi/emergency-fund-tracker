@@ -46,7 +46,9 @@ interface HistoryListProps {
  * come here to check is what they just recorded, and under years of history that is the
  * last row.
  *
- * Pressing a row opens the entry, to be corrected or deleted (FR-011).
+ * Pressing a row opens the entry, to be corrected or deleted (FR-011), and the line above
+ * the rows says so. It is the list's header rather than fixed above it, so at the largest
+ * text size it scrolls away instead of taking a share of the screen from the rows.
  */
 function HistoryList({ entries }: HistoryListProps): ReactNode {
   const router = useRouter()
@@ -54,6 +56,7 @@ function HistoryList({ entries }: HistoryListProps): ReactNode {
     <FlatList
       data={entries.toReversed()}
       keyExtractor={(entry) => entry.id}
+      ListHeaderComponent={<Text tone="secondary">{strings.entries.historyHint}</Text>}
       renderItem={({ item }) => (
         <EntryRow
           entry={item}

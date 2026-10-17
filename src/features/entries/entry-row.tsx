@@ -58,15 +58,11 @@ export function EntryRow({ entry, onPress }: EntryRowProps): ReactNode {
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
       testID="entry-row"
     >
-      <View
-        style={styles.mark}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
+      <Unannounced style={styles.mark}>
         <Text variant="label" tone={tone} align="center">
           {kind.mark}
         </Text>
-      </View>
+      </Unannounced>
       <View style={styles.body}>
         <View style={styles.heading}>
           <Text variant="label">{kind.label}</Text>
@@ -79,7 +75,32 @@ export function EntryRow({ entry, onPress }: EntryRowProps): ReactNode {
         </Text>
         {remark === null ? null : <Text tone="secondary">{remark}</Text>}
       </View>
+      <Unannounced style={styles.opens}>
+        <Text variant="heading" tone="secondary">
+          {strings.entries.rowOpens}
+        </Text>
+      </Unannounced>
     </Pressable>
+  )
+}
+
+/** Props for {@link Unannounced}. */
+interface UnannouncedProps {
+  /** Where the drawing sits in the row. */
+  readonly style: ViewStyle
+  /** What is drawn. */
+  readonly children: ReactNode
+}
+
+/**
+ * Drawn for the eye and kept from a screen reader: the parts of a row that repeat, as a
+ * shape, what the row already says in words.
+ */
+function Unannounced({ style, children }: UnannouncedProps): ReactNode {
+  return (
+    <View style={style} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {children}
+    </View>
   )
 }
 
@@ -104,6 +125,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   } satisfies ViewStyle,
   body: { flex: 1, gap: spacing.xs } satisfies ViewStyle,
+  // Beside the body rather than inside it, so the body's wrapping never moves it, and
+  // centred on the row so it stays beside the entry however many lines the entry takes.
+  opens: { justifyContent: 'center' } satisfies ViewStyle,
   // Wraps, so at the largest text size the amount drops under the word instead of
   // squeezing it (FR-050).
   heading: {

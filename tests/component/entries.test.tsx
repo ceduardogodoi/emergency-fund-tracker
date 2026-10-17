@@ -401,6 +401,8 @@ describe('the history screen', () => {
     expect(await screen.findByText(strings.entries.historyEmptyTitle)).toBeTruthy()
     expect(screen.getByText(strings.entries.historyEmptyBody)).toBeTruthy()
     expect(screen.queryByTestId('entry-row')).toBeNull()
+    // Nothing to press, so nothing to say about pressing it.
+    expect(screen.queryByText(strings.entries.historyHint)).toBeNull()
 
     await userEvent.press(screen.getByRole('button', { name: strings.home.contributeAction }))
 
@@ -423,6 +425,33 @@ describe('the history screen', () => {
       pathname: '/entries/[id]',
       params: { id: pressed.id },
     })
+  })
+
+  // T158. A row opens its entry, and until this said so only a screen reader was told: the
+  // hint on the row is announced and never drawn. In words, so it holds without colour.
+  it('says above the list that an entry can be corrected or deleted by pressing it', async () => {
+    await record()
+
+    await harness.render(<HistoryScreen />)
+
+    expect(await screen.findByText(strings.entries.historyHint)).toBeTruthy()
+  })
+
+  // And the row looks like the control it is. The mark is drawn and not announced: the row
+  // already tells a screen reader what pressing it does, and a stray "›" would be read out
+  // on every row.
+  it('marks every row as something that opens, for the eye only', async () => {
+    await record({ type: 'contribution' })
+    await record({ type: 'withdrawal', withdrawalReason: 'Conserto' })
+
+    await harness.render(<HistoryScreen />)
+
+    const rows = await screen.findAllByTestId('entry-row')
+    expect(rows).toHaveLength(2)
+    for (const row of rows) {
+      expect(within(row).getByText(strings.entries.rowOpens, DRAWN)).toBeTruthy()
+      expect(within(row).queryByText(strings.entries.rowOpens)).toBeNull()
+    }
   })
 
   // An unreadable ledger is not an empty one, and saying "nothing recorded yet" to someone

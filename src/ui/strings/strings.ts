@@ -219,8 +219,18 @@ export const strings = {
     historyEmptyTitle: 'Nada registrado ainda',
     historyEmptyBody:
       'Cada contribuição que você registrar aparece aqui, da mais recente à mais antiga.',
+    /**
+     * Above the history, saying what a row does when pressed. The same thing `rowHint`
+     * tells a screen reader, said once for the eye, which has no other way to learn it.
+     */
+    historyHint: 'Toque em um registro para corrigir ou excluir.',
     /** What a screen reader says a row in the history does when it is pressed. */
     rowHint: 'Abre o registro para corrigir ou excluir.',
+    /**
+     * Drawn at the end of every row, so a row looks like something that opens. Kept from
+     * a screen reader, which is told by `rowHint`.
+     */
+    rowOpens: '›',
     /** Correcting or deleting an entry already recorded (FR-011). */
     editTitle: 'Corrigir registro',
     deleteAction: 'Excluir registro',
