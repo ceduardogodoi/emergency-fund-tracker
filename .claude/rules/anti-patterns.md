@@ -29,6 +29,9 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 **The tell:** a rendered value that should follow an event does not, while a spy on the same event reports it was called. Check the signature in the `.d.ts` before suspecting the component.
 **Now enforced:** `@typescript-eslint/no-floating-promises` in `eslint.config.mjs`. Turning it on found fourteen more in the older suites, each passing only because a later `await` happened to flush it. The tell still applies to a promise silenced with `void`.
 
+**AP-014 — a mutation that kills the test on another line.** The revision screen's unreadable-ledger test (T156) ends by asserting no percentage is shown. The mutation meant to prove it read the balance as zero, and the test went red — but at the assertion before it, because the mutation had also removed the "could not be worked out" line. The last assertion had never failed. A second mutation that kept that line and drew a 0% beside it was the one that proved it.
+**The tell:** the suite went red and the failure was read as a count, not a location. Check that the failure points at the assertion the mutation was aimed at; when a mutation breaks several things at once, narrow it until it breaks only the one.
+
 ## Tests that fail when nothing is wrong
 
 **AP-013 — a wait on something already on screen.** Home's redirect test awaited `findByText(strings.home.title)` and then asserted the redirect. `Screen` draws the title on the first render, while the goal is still being read, so the wait returned at once and the assertion raced the read. It won on every local run and lost once in CI, as `Number of calls: 0`. Slowing the read by 50ms reproduced it exactly; waiting for the redirect itself fixed it.
