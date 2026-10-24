@@ -407,6 +407,21 @@ export const strings = {
   },
 
   /** The states any data-backed view can be in, before its own content has anything to say. */
+  /**
+   * The development-only seed screen (T087). Read by whoever ran `npm run seed`, never by a
+   * user, so the problems name the flags to fix.
+   */
+  dev: {
+    seedTitle: 'Dados de exemplo',
+    seeding: 'Gerando o histórico de exemplo…',
+    seedFailed: 'Não foi possível gerar os dados. O motivo está no log do Metro.',
+    seedProblems: {
+      'months-missing': 'Diga quantos meses gerar, como em --months 8, ou use --reset sozinho.',
+      'months-out-of-range': 'Os meses vão de 1 a 120, em número inteiro.',
+      'pattern-unknown': 'O padrão é steady ou erratic.',
+    },
+  },
+
   state: {
     loading: 'Carregando',
     errorTitle: 'Algo deu errado',

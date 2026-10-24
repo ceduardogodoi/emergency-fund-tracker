@@ -109,6 +109,18 @@ export interface MilestoneRepository {
   clearAbove(percent: number): Promise<Result<void>>
 }
 
+/** The store as a whole, for the operations that are about all of it at once. */
+export interface StoreRepository {
+  /**
+   * Deletes every row of every table, leaving the store as it is on first launch (FR-048).
+   *
+   * The schema stays at its version: the next launch finds the tables it expects, empty.
+   * Run it inside a transaction, so an erase that fails partway leaves everything in place
+   * rather than half a fund.
+   */
+  eraseAll(): Promise<Result<void>>
+}
+
 /** The full set of repositories, handed to work running inside a transaction. */
 export interface Repositories {
   readonly profile: ProfileRepository
@@ -116,4 +128,5 @@ export interface Repositories {
   readonly ledger: LedgerRepository
   readonly reminders: ReminderRepository
   readonly milestones: MilestoneRepository
+  readonly store: StoreRepository
 }

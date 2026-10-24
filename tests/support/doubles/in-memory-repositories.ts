@@ -17,6 +17,7 @@ import type {
   ProfileRepository,
   Repositories,
   ReminderRepository,
+  StoreRepository,
 } from '@/domain/ports/repositories'
 import type { Profile, ProfileInput } from '@/domain/profile/types'
 import type { ReminderSetting } from '@/domain/reminders/types'
@@ -53,6 +54,11 @@ export class InMemoryProfileRepository implements ProfileRepository {
     this.stored = saved
     return ok(saved)
   }
+
+  /** Back to no profile, as before setup. */
+  public erase(): void {
+    this.stored = null
+  }
 }
 
 /** The single goal row and its append-only change log. */
@@ -86,6 +92,12 @@ export class InMemoryGoalRepository implements GoalRepository {
 
   public async listChanges(): Promise<Result<readonly GoalChange[]>> {
     return ok([...this.changes])
+  }
+
+  /** Back to no goal and no history of changes. */
+  public erase(): void {
+    this.stored = null
+    this.changes.length = 0
   }
 }
 
@@ -161,17 +173,25 @@ export class InMemoryLedgerRepository implements LedgerRepository {
       updatedAt: this.clock.now(),
     }
   }
+
+  /** Back to an empty ledger. */
+  public erase(): void {
+    this.entries.length = 0
+  }
+}
+
+/** The schedule a first launch reads: off, monthly on the 1st (FR-034). */
+const DEFAULT_REMINDER: ReminderSetting = {
+  enabled: false,
+  frequency: 'monthly',
+  dayOfMonth: 1,
+  dayOfWeek: null,
+  timeOfDay: '09:00',
 }
 
 /** The reminder schedule, disabled until the user turns it on (FR-034). */
 export class InMemoryReminderRepository implements ReminderRepository {
-  private stored: ReminderSetting = {
-    enabled: false,
-    frequency: 'monthly',
-    dayOfMonth: 1,
-    dayOfWeek: null,
-    timeOfDay: '09:00',
-  }
+  private stored: ReminderSetting = DEFAULT_REMINDER
 
   public async get(): Promise<Result<ReminderSetting>> {
     return ok(this.stored)
@@ -180,6 +200,11 @@ export class InMemoryReminderRepository implements ReminderRepository {
   public async save(setting: ReminderSetting): Promise<Result<ReminderSetting>> {
     this.stored = setting
     return ok(setting)
+  }
+
+  /** Back to the default schedule, which is what a first launch reads. */
+  public erase(): void {
+    this.stored = DEFAULT_REMINDER
   }
 }
 
@@ -204,6 +229,11 @@ export class InMemoryMilestoneRepository implements MilestoneRepository {
     }
     return ok(undefined)
   }
+
+  /** Back to no milestone announced. */
+  public erase(): void {
+    this.acknowledged.clear()
+  }
 }
 
 /**
@@ -214,12 +244,35 @@ export class InMemoryMilestoneRepository implements MilestoneRepository {
  * real thing.
  */
 export function createInMemoryRepositories(clock: Clock, ids: IdGenerator): Repositories {
-  return {
+  const repositories = {
     profile: new InMemoryProfileRepository(clock),
     goal: new InMemoryGoalRepository(clock, ids),
     ledger: new InMemoryLedgerRepository(clock, ids),
     reminders: new InMemoryReminderRepository(),
     milestones: new InMemoryMilestoneRepository(),
+  }
+  return { ...repositories, store: new InMemoryStoreRepository(repositories) }
+}
+
+/** The parts of the in-memory set an erase empties: every one that holds data. */
+interface Erasable {
+  erase(): void
+}
+
+/**
+ * Erases by asking each in-memory repository to empty itself.
+ *
+ * Each one owns its fields, so each one knows what "empty" means for it — the reminder
+ * setting goes back to its default rather than to nothing, as it does on first launch.
+ */
+export class InMemoryStoreRepository implements StoreRepository {
+  public constructor(private readonly parts: Readonly<Record<string, Erasable>>) {}
+
+  public async eraseAll(): Promise<Result<void>> {
+    for (const part of Object.values(this.parts)) {
+      part.erase()
+    }
+    return ok(undefined)
   }
 }
 

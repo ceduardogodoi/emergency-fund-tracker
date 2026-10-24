@@ -20,7 +20,7 @@
     "test:coverage": "jest --coverage",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage",
     "e2e": "maestro test -p android --test-output-dir .maestro-out/android --debug-output .maestro-out/android -e APP_ID=host.exp.exponent -e DEV_URL=exp://127.0.0.1:8081 e2e",
-    "seed": "node --experimental-strip-types scripts/seed.ts",
+    "seed": "node --experimental-strip-types scripts/seed.mts",
     "e2e:ios": "maestro test -p ios --test-output-dir .maestro-out/ios --debug-output .maestro-out/ios -e APP_ID=host.exp.Exponent -e DEV_URL=exp://127.0.0.1:8081 e2e",
     "e2e:clean": "rm -rf .maestro-out"
   },

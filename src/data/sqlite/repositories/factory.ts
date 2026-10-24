@@ -6,6 +6,7 @@ import { createGoalRepository } from './goal-repository'
 import { createLedgerRepository } from './ledger-repository'
 import { createPendingMilestoneRepository, createPendingReminderRepository } from './pending'
 import { createProfileRepository } from './profile-repository'
+import { createStoreRepository } from './store-repository'
 
 /**
  * Builds the repository set for whichever database handle a transaction is running on.
@@ -28,5 +29,6 @@ export function createRepositoriesFactory(clock: Clock, ids: IdGenerator): Repos
     // Not implemented yet, and failing rather than answering. See `pending.ts`.
     reminders: createPendingReminderRepository(),
     milestones: createPendingMilestoneRepository(),
+    store: createStoreRepository(db),
   })
 }

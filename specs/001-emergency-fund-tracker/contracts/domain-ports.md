@@ -113,6 +113,11 @@ export interface MilestoneRepository {
 }
 
 export type MilestoneThreshold = 25 | 50 | 75 | 100
+
+export interface StoreRepository {
+  /** Deletes every row of every table, leaving the store as on first launch (FR-048). */
+  eraseAll(): Promise<Result<void>>
+}
 ```
 
 ### Transactions

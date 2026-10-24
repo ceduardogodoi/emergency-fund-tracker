@@ -46,6 +46,8 @@ npm run seed -- --months 2                      # below the forecast threshold
 npm run seed -- --reset                         # wipe back to first launch
 ```
 
+The script opens a link on every booted emulator and simulator; the app's development-only `/dev/seed` route erases the fund and writes a balanced goal of R$ 12.000,00 and the history — R$ 500,00 on the 5th of each month for `steady`, varying amounts with missed months for `erratic`, the same every run. It needs the development server running, and on Android the `adb reverse` mapping. For a physical phone, open the link it prints.
+
 Seed data is synthetic. Real financial data must never enter the repository or a fixture (constitution, Quality Standards).
 
 ## Test commands

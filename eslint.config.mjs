@@ -104,7 +104,7 @@ export default defineConfig(
   // broken (AP-011). `void` remains the explicit way to say "fire and forget", which is how
   // an async effect body is started. Needs type information, hence the project service.
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['**/*.ts', '**/*.mts', '**/*.tsx'],
     languageOptions: {
       parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
@@ -162,7 +162,7 @@ export default defineConfig(
 
   // Tests and scripts may be long and may reach for console.
   {
-    files: ['tests/**/*.ts', 'tests/**/*.tsx', 'scripts/**/*.ts'],
+    files: ['tests/**/*.ts', 'tests/**/*.tsx', 'scripts/**/*.mts'],
     rules: {
       'max-lines-per-function': 'off',
       'no-console': 'off',
