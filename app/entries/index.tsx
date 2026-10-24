@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router'
 import type { ReactNode } from 'react'
-import { FlatList, StyleSheet, type ViewStyle } from 'react-native'
+import { FlatList, StyleSheet, View, type ViewStyle } from 'react-native'
 
 import { toViewState } from '@/runtime/query'
 import type { LedgerEntry } from '@/domain/ledger/types'
 import { EntryRow } from '@/features/entries/entry-row'
+import { FutureDatedBanner } from '@/features/entries/future-dated-banner'
 import { useEntries } from '@/features/entries/hooks'
 import { Button, Card, Screen, StateView, Text } from '@/ui/primitives'
 import { strings } from '@/ui/strings'
@@ -56,7 +57,7 @@ function HistoryList({ entries }: HistoryListProps): ReactNode {
     <FlatList
       data={entries.toReversed()}
       keyExtractor={(entry) => entry.id}
-      ListHeaderComponent={<Text tone="secondary">{strings.entries.historyHint}</Text>}
+      ListHeaderComponent={<HistoryHeader />}
       renderItem={({ item }) => (
         <EntryRow
           entry={item}
@@ -69,6 +70,21 @@ function HistoryList({ entries }: HistoryListProps): ReactNode {
       contentContainerStyle={styles.rows}
       testID="history-list"
     />
+  )
+}
+
+/**
+ * Above the rows: entries that need correcting, if any, then how to correct one.
+ *
+ * The warning first, because it is the one that asks something of the user. Both are the
+ * list's header, so at the largest text size they scroll away with the rows.
+ */
+function HistoryHeader(): ReactNode {
+  return (
+    <View style={styles.header}>
+      <FutureDatedBanner />
+      <Text tone="secondary">{strings.entries.historyHint}</Text>
+    </View>
   )
 }
 
@@ -95,4 +111,5 @@ function EmptyHistory(): ReactNode {
 const styles = StyleSheet.create({
   list: { flex: 1 } satisfies ViewStyle,
   rows: { gap: spacing.sm } satisfies ViewStyle,
+  header: { gap: spacing.sm } satisfies ViewStyle,
 })

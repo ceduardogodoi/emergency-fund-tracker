@@ -250,6 +250,25 @@ export const strings = {
      * a screen reader, which is told by `rowHint`.
      */
     rowOpens: '›',
+    /**
+     * Above the history when entries are dated after today (FR-033).
+     *
+     * The app refuses such a date at entry, so these came from an imported file or from a
+     * device clock that was ahead. They are left out of the balance until the day arrives,
+     * and the copy says so: a balance missing money the user remembers saving reads as a
+     * bug unless something explains it. It says where they are, too. The history is the
+     * most recent first, so a future-dated entry is always at the top.
+     */
+    futureDated: {
+      title: (count: number): string =>
+        count === 1 ? 'Um registro com data no futuro' : `${count} registros com data no futuro`,
+      body: (count: number): string =>
+        count === 1
+          ? 'Ele fica fora do saldo até essa data chegar. Se a data estiver errada, toque nele, no topo da lista, para corrigir.'
+          : 'Eles ficam fora do saldo até essas datas chegarem. Se alguma estiver errada, toque no registro, no topo da lista, para corrigir.',
+      /** When the check itself cannot be made. Silence would read as "none". */
+      unavailable: 'Não foi possível verificar se há registros com data no futuro.',
+    },
     /** Correcting or deleting an entry already recorded (FR-011). */
     editTitle: 'Corrigir registro',
     deleteAction: 'Excluir registro',

@@ -1,5 +1,6 @@
 import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 
+import { queryKeys } from '@/runtime/query'
 import { calendarDate } from '@/domain/dates/calendar-date'
 import { storageError } from '@/domain/errors/app-error'
 import { MAXIMUM_NOTE_LENGTH } from '@/domain/ledger/entry'
@@ -452,6 +453,65 @@ describe('the history screen', () => {
       expect(within(row).getByText(strings.entries.rowOpens, DRAWN)).toBeTruthy()
       expect(within(row).queryByText(strings.entries.rowOpens)).toBeNull()
     }
+  })
+
+  // FR-033. Seeded through the repository, because the app refuses a future date at entry:
+  // these arrive by import, or from a device clock that was ahead and has been corrected.
+  // One past entry beside it, so a banner counting every entry would say two.
+  it('warns about an entry dated after today, and says it is left out of the balance', async () => {
+    await record({ date: calendarDate('2026-09-20') })
+    await record({ date: calendarDate('2026-10-05') })
+
+    await harness.render(<HistoryScreen />)
+
+    expect(await screen.findByText(strings.entries.futureDated.title(1))).toBeTruthy()
+    expect(screen.getByText(strings.entries.futureDated.body(1))).toBeTruthy()
+  })
+
+  // Counted, and in the plural's own words: two future entries beside a past one, so
+  // neither "every entry" nor "one" is the right answer by accident.
+  it('counts every entry dated after today', async () => {
+    await record({ date: calendarDate('2026-11-12') })
+    await record({ date: calendarDate('2026-09-20') })
+    await record({ date: calendarDate('2026-10-05') })
+
+    await harness.render(<HistoryScreen />)
+
+    expect(await screen.findByText(strings.entries.futureDated.title(2))).toBeTruthy()
+    expect(screen.getByText(strings.entries.futureDated.body(2))).toBeTruthy()
+  })
+
+  // Today is not the future: an entry dated today counts in the balance, so warning about
+  // it would be false. Waits for the check to finish, since a banner that has not arrived
+  // yet is also absent.
+  it('says nothing about an entry dated today', async () => {
+    await record({ date: calendarDate(TODAY) })
+
+    await harness.render(<HistoryScreen />)
+
+    await screen.findByTestId('entry-row')
+    await waitFor(() => {
+      expect(
+        harness.queryClient.getQueryState(queryKeys.futureDatedEntries(calendarDate(TODAY)))
+          ?.status,
+      ).toBe('success')
+    })
+    expect(screen.queryByTestId('future-dated-banner')).toBeNull()
+    expect(screen.queryByText(strings.entries.futureDated.unavailable)).toBeNull()
+  })
+
+  // A check that could not be made is not a check that found nothing. The history itself
+  // still reads, so it stays; the banner's place says the check failed.
+  it('says when it cannot check for future-dated entries, and still lists the history', async () => {
+    await record()
+    jest
+      .spyOn(harness.repositories.ledger, 'listFutureDated')
+      .mockResolvedValue(err(storageError('ledger.read-failed')))
+
+    await harness.render(<HistoryScreen />)
+
+    expect(await screen.findByText(strings.entries.futureDated.unavailable)).toBeTruthy()
+    expect(screen.getByTestId('entry-row')).toBeTruthy()
   })
 
   // An unreadable ledger is not an empty one, and saying "nothing recorded yet" to someone
