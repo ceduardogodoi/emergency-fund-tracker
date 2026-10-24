@@ -269,6 +269,12 @@ export const strings = {
       /** When the check itself cannot be made. Silence would read as "none". */
       unavailable: 'Não foi possível verificar se há registros com data no futuro.',
     },
+    /**
+     * What a screen reader hears once an entry is recorded, corrected, or deleted: the
+     * figure a sighted user sees change on Home. "Atualizado" rather than "salvo", because
+     * a deletion moves the balance too.
+     */
+    balanceAnnounced: (amount: string): string => `Saldo atualizado: ${amount}`,
     /** Correcting or deleting an entry already recorded (FR-011). */
     editTitle: 'Corrigir registro',
     deleteAction: 'Excluir registro',

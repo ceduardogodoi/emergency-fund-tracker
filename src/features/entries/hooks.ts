@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query'
+import type { QueryClient, UseMutationResult, UseQueryResult } from '@tanstack/react-query'
+import { AccessibilityInfo } from 'react-native'
 
 import { queryKeys } from '@/runtime/query'
+import type { Services } from '@/runtime/services'
 import { useServices } from '@/runtime/services-context'
 import type { AppError } from '@/domain/errors'
 import { calculateBalance } from '@/domain/ledger/balance'
@@ -11,6 +13,7 @@ import type { LedgerEntry, LedgerEntryInput, LedgerEntryPatch } from '@/domain/l
 import type { Money } from '@/domain/money/money'
 import type { UnitOfWork } from '@/domain/ports/unit-of-work'
 import { isErr, type Result } from '@/domain/result'
+import { strings } from '@/ui/strings'
 
 /**
  * The ledger, as screens read and change it.
@@ -189,13 +192,50 @@ function entriesQuery(unitOfWork: UnitOfWork): {
  * invalidating a query that does not exist is a no-op dressed as correctness — they join
  * this list in the tasks that create them (T096, T111).
  *
+ * Then the new balance is announced to a screen reader, so its user gets the confirmation
+ * a sighted user gets from the figure on Home.
+ *
  * @returns An `onSuccess` handler for every ledger mutation.
  */
 function useLedgerRefresh(): () => Promise<void> {
   const queryClient = useQueryClient()
+  const services = useServices()
   return async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.entries(), refetchType: 'all' })
+    await announceBalance(queryClient, services)
   }
+}
+
+/**
+ * Says the balance a write left, through the screen reader (ui-contract, live regions).
+ *
+ * An announcement rather than a live region on a screen: every write is followed by the
+ * screen leaving, and a region unmounted as it changes says nothing.
+ *
+ * Read with `staleTime: Infinity`, so the entries the refresh just fetched are used without
+ * a second read. A refresh that failed is not taken as an answer: with the balance from
+ * before the write still cached, a failed read announces nothing rather than that figure,
+ * which is no longer true — `entry-hooks.test.tsx` holds exactly that cache. The failure is
+ * not rethrown, because the write itself landed, and failing the save would ask the user to
+ * redo something already done.
+ *
+ * Queued, on iOS, behind whatever VoiceOver is saying, such as the button just pressed.
+ */
+async function announceBalance(
+  queryClient: QueryClient,
+  { unitOfWork, clock, format }: Services,
+): Promise<void> {
+  let entries: readonly LedgerEntry[]
+  try {
+    entries = await queryClient.fetchQuery({ ...entriesQuery(unitOfWork), staleTime: Infinity })
+  } catch {
+    return
+  }
+  const balance = calculateBalance(entries, clock.today())
+  AccessibilityInfo.announceForAccessibilityWithOptions(
+    strings.entries.balanceAnnounced(format.money(balance)),
+    { queue: true },
+  )
 }
 
 /**

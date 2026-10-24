@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { screen, userEvent } from '@testing-library/react-native'
+import { screen, userEvent, waitFor } from '@testing-library/react-native'
 import { useState, type ReactNode } from 'react'
+import { AccessibilityInfo } from 'react-native'
 
 import { queryKeys } from '@/runtime/query'
 import { storageError } from '@/domain/errors/app-error'
@@ -17,6 +18,7 @@ import {
   useUpdateEntry,
 } from '@/features/entries/hooks'
 import { Button, Text } from '@/ui/primitives'
+import { strings } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
 import { expectOk } from '@tests/support/expect-result'
 
@@ -344,5 +346,137 @@ describe('the entry hooks', () => {
 
     expect(await screen.findByText('add:error')).toBeTruthy()
     expect(expectOk(await harness.repositories.ledger.list())).toHaveLength(1)
+  })
+})
+
+/**
+ * T086: after a write, a screen reader hears the balance a sighted user sees change on
+ * Home. Every case seeds a balance first, so the figure announced is neither the amount
+ * written nor the balance before it — the two answers a broken announcement would give.
+ */
+describe('announcing the new balance', () => {
+  let announce: jest.SpyInstance
+
+  beforeEach(() => {
+    announce = jest
+      .spyOn(AccessibilityInfo, 'announceForAccessibilityWithOptions')
+      .mockImplementation(() => undefined)
+  })
+
+  afterEach(() => {
+    announce.mockRestore()
+  })
+
+  /** The words a screen reader is handed for a balance, in minor units. */
+  function balanceAnnounced(minorUnits: number): string {
+    return strings.entries.balanceAnnounced(harness.services.format.money(money(minorUnits)))
+  }
+
+  /** An opening balance of R$ 3.000,00 dated before today, so it counts. */
+  async function seedOpening(): Promise<void> {
+    expectOk(
+      await harness.repositories.ledger.add(
+        entryInput({ type: 'opening', amount: money(300_000), date: calendarDate('2026-08-01') }),
+      ),
+    )
+  }
+
+  it('announces the balance a contribution leaves, queued behind what is being said', async () => {
+    await seedOpening()
+    await harness.render(<Adder input={entryInput()} />)
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    await waitFor(() => {
+      expect(announce).toHaveBeenCalledWith(balanceAnnounced(350_000), { queue: true })
+    })
+  })
+
+  // The balance announced is the one Home shows, so an entry dated ahead stays out of it.
+  it('leaves a future-dated entry out of the balance it announces', async () => {
+    await seedOpening()
+    expectOk(
+      await harness.repositories.ledger.add(
+        entryInput({ amount: money(70_000), date: calendarDate('2026-08-23') }),
+      ),
+    )
+    await harness.render(<Adder input={entryInput()} />)
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    await waitFor(() => {
+      expect(announce).toHaveBeenCalledWith(balanceAnnounced(350_000), { queue: true })
+    })
+  })
+
+  // The opening balance is corrected from R$ 3.000,00 to R$ 900,00 beside a R$ 500,00
+  // contribution: R$ 1.400,00 is neither figure the edit touched.
+  it('announces the balance after a correction', async () => {
+    await seedOpening()
+    expectOk(await harness.repositories.ledger.add(entryInput()))
+    await harness.render(<Editor />)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Editar' })).toBeEnabled()
+    })
+
+    await userEvent.press(screen.getByRole('button', { name: 'Editar' }))
+
+    await waitFor(() => {
+      expect(announce).toHaveBeenCalledWith(balanceAnnounced(140_000), { queue: true })
+    })
+  })
+
+  it('announces the balance after a deletion', async () => {
+    await seedOpening()
+    expectOk(await harness.repositories.ledger.add(entryInput()))
+    await harness.render(<Remover />)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Excluir' })).toBeEnabled()
+    })
+
+    await userEvent.press(screen.getByRole('button', { name: 'Excluir' }))
+
+    await waitFor(() => {
+      expect(announce).toHaveBeenCalledWith(balanceAnnounced(50_000), { queue: true })
+    })
+  })
+
+  // Nothing was written, so nothing changed to announce. The refusal is the form's to say.
+  it('announces nothing when the entry is refused', async () => {
+    await seedOpening()
+    await harness.render(<Adder input={entryInput({ amount: money(0) })} />)
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    expect(await screen.findByText('add:error')).toBeTruthy()
+    expect(announce).not.toHaveBeenCalled()
+  })
+
+  // The write landed and the read after it failed. Announcing the balance from before the
+  // write would state a figure that is no longer true; failing the save would tell the user
+  // to redo something that is done. So the save stands, and nothing is announced.
+  it('announces nothing, and still reports the save, when the balance cannot be read back', async () => {
+    await seedOpening()
+    const ledger = harness.repositories.ledger
+    const add = ledger.add.bind(ledger)
+    jest.spyOn(ledger, 'add').mockImplementation(async (input) => {
+      const written = await add(input)
+      jest.spyOn(ledger, 'list').mockResolvedValue(err(storageError('ledger.read-failed')))
+      return written
+    })
+    // A reader holds the balance from before the write, so the cache has a stale figure
+    // that a careless read would announce.
+    await harness.render(
+      <>
+        <BalanceReader />
+        <Adder input={entryInput()} />
+      </>,
+    )
+    await screen.findByText('balance:300000')
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    expect(await screen.findByText('add:success')).toBeTruthy()
+    expect(announce).not.toHaveBeenCalled()
   })
 })
