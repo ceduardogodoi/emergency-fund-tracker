@@ -20,7 +20,7 @@ The two that change what you do rather than how you write it:
 | `npm run verify`                                    | Format, lint, typecheck, and the full suite with coverage floors. The gate the pre-commit hook runs |
 | `npm test`                                          | All three Jest projects                                                                             |
 | `npm run test:unit` / `:integration` / `:component` | One project                                                                                         |
-| `npx jest --selectProjects unit path/to.test.ts`    | One file                                                                                            |
+| `npx jest path/to.test.ts --selectProjects unit`    | One file. The path goes first: `--selectProjects` takes a list, and swallows a path after it        |
 | `npx jest --selectProjects component -t "the name"` | One test by name. The filter matches across files, so a name shared with another suite runs both    |
 | `npm start`                                         | Expo dev server, which the e2e suites need                                                          |
 | `npm run e2e` / `npm run e2e:ios`                   | Maestro against an Android emulator / iOS simulator                                                 |
