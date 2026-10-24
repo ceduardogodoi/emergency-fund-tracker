@@ -274,6 +274,10 @@ describe('the goal revision screen', () => {
     await fireEvent.changeText(screen.getByTestId('expenses-input'), '300000')
 
     expect(await screen.findByText(formatted(300_000 * BALANCED_MONTHS))).toBeTruthy()
+    // The new target brings the impact panel, whose progress line reads the balance. The
+    // target arriving says nothing about the balance, which otherwise landed after the test
+    // had stopped waiting — an update outside act(), about one full run in six (AP-013).
+    expect(await screen.findByTestId('progress-difference')).toBeTruthy()
   })
 
   it('saves the revision, records it, and returns where the user came from', async () => {
