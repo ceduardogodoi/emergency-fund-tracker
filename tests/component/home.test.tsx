@@ -7,6 +7,7 @@ import { money } from '@/domain/money/money'
 import { err } from '@/domain/result'
 import { strings } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
+import { filledUnits, meterUnits } from '@tests/support/coverage-meter'
 import { expectOk } from '@tests/support/expect-result'
 import HomeScreen from '../../app/index'
 
@@ -211,6 +212,47 @@ describe('Home, once there is money in the fund', () => {
     expect(await screen.findByText(strings.home.reached)).toBeTruthy()
     expect(screen.queryByText(strings.home.surplus(shown(0)))).toBeNull()
     expect(screen.queryByText(/Faltam/)).toBeNull()
+  })
+
+  // T157. R$ 5.900,00 is 2,95 months of R$ 2.000,00: to nearest that is three, so a meter
+  // that rounded would fill one unit too many. Two of six, and the caption says both.
+  it('fills the meter with the whole months the balance covers, and says how many of the plan', async () => {
+    await storeGoal()
+    await contribute(590_000)
+
+    await harness.render(<HomeScreen />)
+
+    expect(
+      await screen.findByText(strings.home.coverage(2, strings.coverageDuration(6))),
+    ).toBeTruthy()
+    expect(meterUnits('coverage-meter')).toHaveLength(6)
+    expect(filledUnits('coverage-meter')).toHaveLength(2)
+  })
+
+  // Before T157 every unit was filled, so an empty fund is the case that tells the two apart.
+  it('fills nothing while the balance covers no whole month', async () => {
+    await storeGoal()
+
+    await harness.render(<HomeScreen />)
+
+    expect(
+      await screen.findByText(strings.home.coverage(0, strings.coverageDuration(6))),
+    ).toBeTruthy()
+    expect(filledUnits('coverage-meter')).toHaveLength(0)
+  })
+
+  // R$ 16.500,00 covers eight months of a six-month plan. The meter stops at six by itself;
+  // the caption is the check that the count was capped before it got there.
+  it('stops at the plan when the balance covers more', async () => {
+    await storeGoal()
+    await contribute(TARGET_MINOR_UNITS, 450_000)
+
+    await harness.render(<HomeScreen />)
+
+    expect(
+      await screen.findByText(strings.home.coverage(6, strings.coverageDuration(6))),
+    ).toBeTruthy()
+    expect(filledUnits('coverage-meter')).toHaveLength(6)
   })
 
   // The balance is half of what Home stands on. A ledger that cannot be read must say so

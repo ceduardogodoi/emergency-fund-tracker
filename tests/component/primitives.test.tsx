@@ -1,6 +1,5 @@
 import { render, screen, userEvent, within } from '@testing-library/react-native'
-import type { ReactElement } from 'react'
-import { Platform, View, type ViewProps } from 'react-native'
+import { Platform, View } from 'react-native'
 
 import {
   SCREEN_KEYBOARD_TEST_ID,
@@ -12,6 +11,7 @@ import {
   Text,
 } from '@/ui/primitives'
 import { color, minimumTouchTarget, typography } from '@/ui/tokens'
+import { filledUnits, meterUnits } from '@tests/support/coverage-meter'
 
 /**
  * React Native Testing Library v14 aligned with React 19 by making `render` asynchronous.
@@ -208,11 +208,6 @@ describe('CoverageMeter', () => {
    */
   const hidden = { includeHiddenElements: true } as const
 
-  /** Its children are the units, so counting them is asking "how many months". */
-  function unitsIn(testID: string): ReactElement<ViewProps>[] {
-    return screen.getByTestId(testID, hidden).props.children
-  }
-
   // The count is always stated in words beside it. Announcing the squares as well would
   // read the same fact twice — once as a sentence, once as a run of empty views.
   it('stays out of the accessibility tree, because the words beside it are the content', async () => {
@@ -237,14 +232,14 @@ describe('CoverageMeter', () => {
       </>,
     )
 
-    expect(unitsIn('lean')).toHaveLength(3)
-    expect(unitsIn('maximum')).toHaveLength(12)
+    expect(meterUnits('lean')).toHaveLength(3)
+    expect(meterUnits('maximum')).toHaveLength(12)
   })
 
   it('fills only the months covered, leaving the rest to be counted', async () => {
     await render(<CoverageMeter covered={2} total={6} testID="meter" />)
 
-    const filled = unitsIn('meter').filter(isFilled)
+    const filled = filledUnits('meter')
     expect(filled).toHaveLength(2)
   })
 
@@ -253,31 +248,9 @@ describe('CoverageMeter', () => {
   it('fills every unit when more is covered than the meter has room for', async () => {
     await render(<CoverageMeter covered={9} total={6} testID="meter" />)
 
-    expect(unitsIn('meter').filter(isFilled)).toHaveLength(6)
+    expect(filledUnits('meter')).toHaveLength(6)
   })
 })
-
-/**
- * Whether a rendered unit carries the accent fill, which is what "covered" looks like.
- *
- * The units are the elements the meter rendered, so they are `ReactElement`s and their
- * props are `ViewProps` — not the `TestInstance` a query would have returned. `style` is
- * narrowed rather than assumed: `StyleProp` admits an object, a falsy value, or a nested
- * array, and only this component's own use of it makes an array the right expectation.
- */
-function isFilled(unit: ReactElement<ViewProps>): boolean {
-  const style = unit.props.style
-  if (!Array.isArray(style)) {
-    return false
-  }
-  return style.some(
-    (layer) =>
-      typeof layer === 'object' &&
-      layer !== null &&
-      'backgroundColor' in layer &&
-      layer.backgroundColor === color.filled.accent.background,
-  )
-}
 
 /**
  * The two platforms this app ships to, per `app.json`.

@@ -4,12 +4,14 @@ import { money, type Money } from './money'
  * The single home for every division in this codebase. The constitution requires the
  * rounding policy to be defined once, centrally, and covered by tests.
  *
- * Two rules, chosen so the app is never optimistic about the user's position:
+ * Three rules, chosen so the app is never optimistic about the user's position:
  *   - amounts derived by division round DOWN, so it never overstates saving
- *   - month counts derived by division round UP, so it never promises an early date
+ *   - month counts still to save round UP, so it never promises an early date
+ *   - month counts already saved round DOWN, so it never claims cover the fund lacks
  *
- * Division appears in exactly four places — average monthly contribution, saving pace,
- * months to target, and required monthly contribution — and all four route through here.
+ * Division appears in exactly five places — average monthly contribution, saving pace,
+ * months to target, required monthly contribution, and months the balance covers — and
+ * all five route through here.
  */
 
 /** Divides an amount, rounding down. Floor, not truncation: -999.5 becomes -1_000. */
@@ -35,6 +37,22 @@ export function divideToWholeMonths(remaining: Money, perMonth: Money): number {
     return 0
   }
   return Math.ceil(remaining / perMonth)
+}
+
+/**
+ * How many whole months of `perMonth` the balance would pay for.
+ * Rounds down, because a month the fund cannot pay in full is not covered — the opposite
+ * direction to {@link divideToWholeMonths}, and for the same reason. Zero for an empty or
+ * overdrawn fund, never a negative count.
+ */
+export function wholeMonthsCovered(balance: Money, perMonth: Money): number {
+  if (perMonth <= 0) {
+    throw new RangeError('Cannot measure cover against expenses of zero or less')
+  }
+  if (balance <= 0) {
+    return 0
+  }
+  return Math.floor(balance / perMonth)
 }
 
 /** The highest percentage a fund short of its target may show. See {@link percentOf}. */

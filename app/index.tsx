@@ -88,7 +88,7 @@ function StandingView({ standing }: StandingViewProps): ReactNode {
         }}
         testID="history"
       />
-      <GoalCard goal={standing.goal} />
+      <GoalCard goal={standing.goal} monthsCovered={standing.monthsCovered} />
     </>
   )
 }
@@ -144,16 +144,19 @@ function StandingLine({ progress }: StandingCardProps): ReactNode {
 /** Props for {@link GoalCard}. */
 interface GoalCardProps {
   readonly goal: Goal
+  /** Whole months the balance covers, capped at the plan. */
+  readonly monthsCovered: number
 }
 
 /**
- * The target, with the choice behind it.
+ * The target, with the choice behind it, and how much of it the balance already covers.
  *
  * The level and duration are shown alongside the figure because a target on its own is a
  * number the user cannot evaluate — FR-004's derivation, kept visible after setup rather
- * than only during it.
+ * than only during it. The meter draws the plan as months and fills the ones the balance
+ * pays for, with the caption saying both numbers for a reader who cannot see it.
  */
-function GoalCard({ goal }: GoalCardProps): ReactNode {
+function GoalCard({ goal, monthsCovered }: GoalCardProps): ReactNode {
   const { format } = useServices()
   const router = useRouter()
   return (
@@ -164,10 +167,10 @@ function GoalCard({ goal }: GoalCardProps): ReactNode {
       <Text variant="title" numeric testID="goal-amount">
         {format.money(goal.target)}
       </Text>
-      {/* The duration the target buys, as units to count. Every unit is filled because
-          this is the plan, not progress against it — T157 turns the filled count into the
-          months the balance actually covers, and gives the caption the second number. */}
-      <CoverageMeter covered={goal.coverageMonths} total={goal.coverageMonths} />
+      <CoverageMeter covered={monthsCovered} total={goal.coverageMonths} testID="coverage-meter" />
+      <Text variant="caption" tone="secondary">
+        {strings.home.coverage(monthsCovered, strings.coverageDuration(goal.coverageMonths))}
+      </Text>
       <Text variant="caption" tone="secondary">
         {strings.goal.levelSummary(
           strings.levels[goal.levelKey].name,

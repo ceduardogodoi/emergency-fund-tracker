@@ -1,11 +1,17 @@
 import { money } from '@/domain/money/money'
-import { divideToAmount, divideToWholeMonths, percentOf } from '@/domain/money/rounding'
+import {
+  divideToAmount,
+  divideToWholeMonths,
+  percentOf,
+  wholeMonthsCovered,
+} from '@/domain/money/rounding'
 
 /**
  * The constitution requires one rounding policy with one home. These tests are that
  * policy's specification:
  *   - amounts derived by division round DOWN, so the app never overstates saving
- *   - month counts derived by division round UP, so it never promises an early date
+ *   - month counts still to save round UP, so it never promises an early date
+ *   - month counts already saved round DOWN, so it never claims cover the fund lacks
  */
 describe('rounding policy', () => {
   describe('divideToAmount — rounds down', () => {
@@ -51,6 +57,32 @@ describe('rounding policy', () => {
     it('rejects a pace of zero or less — no date is projectable', () => {
       expect(() => divideToWholeMonths(money(5_000), money(0))).toThrow()
       expect(() => divideToWholeMonths(money(5_000), money(-100))).toThrow()
+    })
+  })
+
+  describe('wholeMonthsCovered — rounds down', () => {
+    it('returns the exact count when it divides evenly', () => {
+      expect(wholeMonthsCovered(money(600_000), money(200_000))).toBe(3)
+    })
+
+    // 2,95 months. To nearest that is three, and a fund that cannot pay the third month
+    // does not cover it.
+    it('rounds down on any remainder, because a partial month is not covered', () => {
+      expect(wholeMonthsCovered(money(590_000), money(200_000))).toBe(2)
+    })
+
+    it('covers nothing until a whole month is saved', () => {
+      expect(wholeMonthsCovered(money(199_999), money(200_000))).toBe(0)
+    })
+
+    // An overdrawn fund covers nothing. Floor alone would say minus one month.
+    it('covers nothing when the balance is negative, rather than a negative count', () => {
+      expect(wholeMonthsCovered(money(-50_000), money(200_000))).toBe(0)
+    })
+
+    it('rejects monthly expenses of zero or less — no cover is measurable', () => {
+      expect(() => wholeMonthsCovered(money(100), money(0))).toThrow(RangeError)
+      expect(() => wholeMonthsCovered(money(100), money(-1))).toThrow(RangeError)
     })
   })
 

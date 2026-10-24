@@ -346,6 +346,17 @@ export const strings = {
     contributeAction: 'Nova contribuição',
     /** The way to the history (FR-014). */
     historyAction: 'Ver histórico',
+    /**
+     * Under the coverage meter: how many months the balance covers, and of how many. Both
+     * numbers, because the meter is hidden from a screen reader and a filled count without
+     * its total is not something a reader can place.
+     *
+     * @param covered Whole months covered, already capped at the plan.
+     * @param planned The formatted duration of the plan.
+     * @returns The caption.
+     */
+    coverage: (covered: number, planned: string): string =>
+      `Seu saldo cobre ${covered} de ${planned}`,
   },
 
   /**
