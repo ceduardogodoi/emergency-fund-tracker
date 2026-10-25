@@ -11,8 +11,8 @@ import { createMigratedDatabase, type TestDatabase } from '@tests/support/sqlite
 /**
  * The factory the composition root hands to the unit of work.
  *
- * Three of the five repositories are implemented; the rest arrive with their own user
- * stories. What matters here is that the unimplemented two fail loudly — a stub that
+ * Every repository but the reminders' is implemented; that one arrives with its own user
+ * story. What matters here is that it fails loudly — a stub that
  * returned an empty list would be indistinguishable from a fund with no entries, and the
  * app would render a zero balance as though it were the truth.
  */
@@ -64,6 +64,12 @@ describe('the repository set', () => {
       })
       expect(expectOk(await repositories.ledger.list())).toMatchObject([{ amount: money(50_000) }])
     })
+
+    it('binds the milestone repository to the database it was given', async () => {
+      expectOk(await repositories.milestones.acknowledge(50))
+
+      expect(expectOk(await repositories.milestones.listAcknowledged())).toEqual([50])
+    })
   })
 
   describe('what is not implemented yet', () => {
@@ -90,9 +96,6 @@ describe('the repository set', () => {
             timeOfDay: '09:00',
           }),
       ],
-      ['milestones.listAcknowledged', (repos) => repos.milestones.listAcknowledged()],
-      ['milestones.acknowledge', (repos) => repos.milestones.acknowledge(50)],
-      ['milestones.clearAbove', (repos) => repos.milestones.clearAbove(50)],
     ]
 
     // The dangerous failure is not a crash but a plausible answer: `ok([])` from the ledger

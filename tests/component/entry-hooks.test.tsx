@@ -17,6 +17,7 @@ import {
   useRemoveEntry,
   useUpdateEntry,
 } from '@/features/entries/hooks'
+import { MilestoneBanner } from '@/features/progress/milestone-banner'
 import { Button, Text } from '@/ui/primitives'
 import { strings } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
@@ -478,5 +479,191 @@ describe('announcing the new balance', () => {
 
     expect(await screen.findByText('add:success')).toBeTruthy()
     expect(announce).not.toHaveBeenCalled()
+  })
+})
+
+/** Deletes one named entry, so a case can choose which movement leaves the fund. */
+function RemoverOf({ id }: { readonly id: string }): ReactNode {
+  const remove = useRemoveEntry()
+  return (
+    <Button
+      label="Excluir este"
+      onPress={() => {
+        remove.mutate(id)
+      }}
+    />
+  )
+}
+
+/**
+ * T105: a save that carries the fund past 25%, 50%, 75%, or 100% of the target is
+ * acknowledged (FR-024) — shown on the screen the user lands on, and announced after the
+ * balance. Recorded as it is saved, so it is acknowledged once.
+ *
+ * Target R$ 10.000,00, and every case starts from an opening balance of R$ 2.000,00: 20%,
+ * below the first threshold, so a crossing is something the case itself causes.
+ */
+describe('acknowledging milestones', () => {
+  let announce: jest.SpyInstance
+
+  beforeEach(async () => {
+    announce = jest
+      .spyOn(AccessibilityInfo, 'announceForAccessibilityWithOptions')
+      .mockImplementation(() => undefined)
+    expectOk(
+      await harness.repositories.goal.save({
+        target: money(1_000_000),
+        source: 'calculated',
+        levelKey: 'cautious',
+        coverageMonths: 9,
+        desiredCompletionDate: null,
+      }),
+    )
+    expectOk(
+      await harness.repositories.ledger.add(
+        entryInput({ type: 'opening', amount: money(200_000), date: calendarDate('2026-08-01') }),
+      ),
+    )
+  })
+
+  afterEach(() => {
+    announce.mockRestore()
+  })
+
+  /** What the banner and the announcement say for a threshold. */
+  function reached(threshold: 25 | 50 | 75 | 100): string {
+    return strings.milestones.title(threshold, harness.services.format.percent(threshold))
+  }
+
+  /** An adder beside the banner, the way Home holds both. */
+  async function renderWithBanner(input: LedgerEntryInput): Promise<void> {
+    await harness.render(
+      <>
+        <MilestoneBanner />
+        <Adder input={input} />
+      </>,
+    )
+  }
+
+  it('shows the milestone a contribution crosses, and records it', async () => {
+    await renderWithBanner(entryInput({ amount: money(60_000) }))
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    expect(await screen.findByText(reached(25))).toBeTruthy()
+    expect(expectOk(await harness.repositories.milestones.listAcknowledged())).toEqual([25])
+  })
+
+  // From 20% to 80% passes three. The highest is the one worth saying; all three are on
+  // record, so none of them comes back later.
+  it('names the highest when one contribution crosses several', async () => {
+    await renderWithBanner(entryInput({ amount: money(600_000) }))
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    expect(await screen.findByText(reached(75))).toBeTruthy()
+    expect(screen.queryByText(reached(50))).toBeNull()
+    expect(expectOk(await harness.repositories.milestones.listAcknowledged())).toEqual([25, 50, 75])
+  })
+
+  // After the balance, so the figure comes first and the milestone after it.
+  it('announces the milestone after the balance', async () => {
+    await renderWithBanner(entryInput({ amount: money(60_000) }))
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    await waitFor(() => {
+      expect(announce.mock.calls).toEqual([
+        [
+          strings.entries.balanceAnnounced(harness.services.format.money(money(260_000))),
+          { queue: true },
+        ],
+        [reached(25), { queue: true }],
+      ])
+    })
+  })
+
+  it('shows nothing for a contribution that crosses nothing', async () => {
+    await renderWithBanner(entryInput({ amount: money(10_000) }))
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    expect(await screen.findByText('add:success')).toBeTruthy()
+    expect(screen.queryByTestId('milestone-banner')).toBeNull()
+    expect(announce).toHaveBeenCalledTimes(1)
+  })
+
+  // Dismissed, it stays gone, and the next save that crosses nothing does not bring it
+  // back: the crossing was acknowledged once.
+  it('goes when dismissed, and a later save does not bring it back', async () => {
+    await renderWithBanner(entryInput({ amount: money(60_000) }))
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+    await screen.findByText(reached(25))
+
+    await userEvent.press(screen.getByRole('button', { name: strings.milestones.dismiss }))
+    expect(screen.queryByTestId('milestone-banner')).toBeNull()
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+    await waitFor(async () => {
+      expect(expectOk(await harness.repositories.ledger.list())).toHaveLength(3)
+    })
+    expect(screen.queryByTestId('milestone-banner')).toBeNull()
+  })
+
+  // The re-crossing rule, end to end. Deleting the contribution that took the fund to 26%
+  // puts it back at 20%, and the save path forgets 25%; recording one again crosses it
+  // again, and says so.
+  it('acknowledges a milestone again once the fund has fallen back below it', async () => {
+    const crossing = expectOk(
+      await harness.repositories.ledger.add(entryInput({ amount: money(60_000) })),
+    )
+    expectOk(await harness.repositories.milestones.acknowledge(25))
+    await harness.render(
+      <>
+        <MilestoneBanner />
+        <RemoverOf id={crossing.id} />
+        <Adder input={entryInput({ amount: money(60_000) })} />
+      </>,
+    )
+
+    await userEvent.press(screen.getByRole('button', { name: 'Excluir este' }))
+    await waitFor(async () => {
+      expect(expectOk(await harness.repositories.milestones.listAcknowledged())).toEqual([])
+    })
+    expect(screen.queryByTestId('milestone-banner')).toBeNull()
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    expect(await screen.findByText(reached(25))).toBeTruthy()
+  })
+
+  // No goal, no target to measure against: the save is an ordinary save.
+  it('saves without a milestone when there is no goal', async () => {
+    jest.spyOn(harness.repositories.goal, 'get').mockResolvedValue({ ok: true, value: null })
+    await renderWithBanner(entryInput({ amount: money(600_000) }))
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    expect(await screen.findByText('add:success')).toBeTruthy()
+    expect(screen.queryByTestId('milestone-banner')).toBeNull()
+  })
+
+  // The write landed, and recording the milestone did not. Failing the save would ask the
+  // user to redo something already done, so the save stands, nothing is claimed, and the
+  // failure goes to the log rather than vanishing (Principle II).
+  it('keeps the save, and logs, when the milestone cannot be recorded', async () => {
+    jest
+      .spyOn(harness.repositories.milestones, 'acknowledge')
+      .mockResolvedValue(err(storageError('milestones.acknowledge-failed')))
+    await renderWithBanner(entryInput({ amount: money(60_000) }))
+
+    await userEvent.press(screen.getByRole('button', { name: 'Adicionar' }))
+
+    expect(await screen.findByText('add:success')).toBeTruthy()
+    expect(screen.queryByTestId('milestone-banner')).toBeNull()
+    expect(harness.services.logger.warn).toHaveBeenCalledWith('milestones.not-recorded', {
+      kind: 'storage',
+      messageKey: 'milestones.acknowledge-failed',
+    })
   })
 })

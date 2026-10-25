@@ -194,4 +194,40 @@ describe('the goal hooks', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Salvar' }))
     expect(await screen.findByText('no-goal')).toBeTruthy()
   })
+
+  // A raised target lowers the fund's percentage with no entry written, so the save path
+  // never sees it. The revision forgets what is now above the fund (data-model, state
+  // transitions), or climbing past 50% again would be filtered out as already said.
+  // R$ 4.000,00 is 66% of R$ 6.000,00 and 33% of the R$ 12.000,00 submitted.
+  it('forgets the milestones a raised target has put back above the fund', async () => {
+    await harness.repositories.profile.save({
+      monthlyExpenses: money(200_000),
+      currency: harness.services.currency,
+    })
+    await harness.repositories.goal.save({
+      target: money(600_000),
+      source: 'calculated',
+      levelKey: 'lean',
+      coverageMonths: 3,
+      desiredCompletionDate: null,
+    })
+    await harness.repositories.ledger.add({
+      type: 'opening',
+      amount: money(400_000),
+      date: harness.clock.today(),
+      note: null,
+      withdrawalReason: null,
+    })
+    await harness.repositories.milestones.acknowledge(25)
+    await harness.repositories.milestones.acknowledge(50)
+    await harness.render(<Submitter target={1_200_000} />)
+
+    await userEvent.press(screen.getByRole('button', { name: 'Salvar' }))
+
+    expect(await screen.findByText('mutation:success')).toBeTruthy()
+    expect(await harness.repositories.milestones.listAcknowledged()).toEqual({
+      ok: true,
+      value: [25],
+    })
+  })
 })

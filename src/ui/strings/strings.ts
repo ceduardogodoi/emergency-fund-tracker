@@ -385,6 +385,129 @@ export const strings = {
   },
 
   /**
+   * A milestone crossed by a save (FR-024), on the screen the user lands on and through the
+   * screen reader after the balance.
+   *
+   * The 100% case has words of its own. "Você chegou a 100% da sua meta" is true, but it is
+   * the moment the fund is complete, and Home says so in the same words.
+   */
+  milestones: {
+    /**
+     * @param threshold The milestone crossed.
+     * @param percent The same threshold, formatted.
+     * @returns The banner's title, which is also what is announced.
+     */
+    title: (threshold: number, percent: string): string =>
+      threshold === 100 ? 'Você alcançou sua meta' : `Você chegou a ${percent} da sua meta`,
+    /**
+     * @param threshold The milestone crossed.
+     * @returns The line under the title.
+     */
+    body: (threshold: number): string =>
+      threshold === 100
+        ? 'Sua reserva de emergência está completa. O que você guardar daqui em diante é folga.'
+        : 'Cada contribuição deixa você mais perto da reserva completa.',
+    dismiss: 'Fechar',
+  },
+
+  /**
+   * The statistics view (FR-020 – FR-025).
+   *
+   * Every figure is written out with its label rather than drawn: this release has no
+   * charts (research D-011, amended), so the words are the whole of what the screen says.
+   */
+  statistics: {
+    title: 'Estatísticas',
+    /** The way in, from Home. */
+    action: 'Ver estatísticas',
+    periodLabel: 'Período',
+    /** The filter's options (FR-023). Keyed so the screen offers whatever the domain does. */
+    allTime: 'Desde o início',
+    /**
+     * @param months How many complete months.
+     * @returns The option's name.
+     */
+    recent: (months: number): string => `Últimos ${months} meses`,
+    /**
+     * What a period covers, said in months so "last 3 months" cannot be misread as the
+     * last ninety days. A recent period is complete months only, and this is where the
+     * user can see that the month in progress is not in it.
+     *
+     * @param from The first month, formatted.
+     * @param to The last month, formatted.
+     * @returns The line under the option, and above the figures.
+     */
+    covers: (from: string, to: string): string => (from === to ? from : `De ${from} a ${to}`),
+    /** Under a filter option whose period has no complete month yet. */
+    periodNoMonths: 'Ainda sem um mês completo',
+    /** In place of the figures, for a recent period with no complete month yet. */
+    periodEmpty:
+      'Ainda não há um mês completo neste período. Ele passa a contar quando o primeiro mês do seu histórico terminar.',
+    /** Before the first contribution (FR-025): what will be here, and what makes it appear. */
+    emptyTitle: 'Suas estatísticas começam na primeira contribuição',
+    emptyBody:
+      'Aqui você vai ver quanto já guardou, sua média por mês, há quantos meses contribui sem falhar e como o saldo cresceu mês a mês.',
+    /** The totals (FR-020). */
+    totalsHeading: 'Movimentação',
+    totalContributed: 'Total contribuído',
+    totalWithdrawn: 'Total retirado',
+    /** Contributed less withdrawn — what the period added to the fund by the user's hand. */
+    netSaved: 'Guardado no período',
+    contributionCount: 'Contribuições',
+    largestContribution: 'Maior contribuição',
+    noContribution: 'Nenhuma contribuição neste período.',
+    averageContribution: 'Média por mês',
+    /**
+     * What the average divides by, so the figure can be checked.
+     *
+     * @param months Complete months in the period.
+     * @returns The caption under the average.
+     */
+    averageBasis: (months: number): string =>
+      months === 1 ? 'Em 1 mês completo' : `Em ${months} meses completos`,
+    averageUnavailable: 'A média aparece quando o primeiro mês do seu histórico terminar.',
+    /** The streaks (FR-021). */
+    streaksHeading: 'Constância',
+    streaksHelp: 'Meses seguidos com pelo menos uma contribuição.',
+    currentStreak: 'Sequência atual',
+    longestStreak: 'Maior sequência',
+    /**
+     * @param months The length of a streak.
+     * @returns The streak as text, agreeing in number.
+     */
+    streak: (months: number): string =>
+      months === 0 ? 'Nenhum mês' : months === 1 ? '1 mês' : `${months} meses`,
+    /** Month by month (FR-019, FR-022): the flows, and where the balance closed. */
+    breakdownHeading: 'Mês a mês',
+    contributed: 'Contribuído',
+    withdrawn: 'Retirado',
+    closingBalance: 'Saldo no fim do mês',
+    /** The month in progress has not closed, so its balance is today's. */
+    balanceSoFar: 'Saldo até hoje',
+    /**
+     * A month of the breakdown as a screen reader hears it: one sentence, in the order the
+     * row is laid out.
+     *
+     * @param month The month, formatted.
+     * @param contributed What went in, formatted.
+     * @param withdrawn What went out, formatted.
+     * @param balance Where the balance closed, formatted.
+     * @param inProgress Whether the month is still running, so the balance is today's.
+     * @returns The row's accessible name.
+     */
+    monthSummary: (
+      month: string,
+      contributed: string,
+      withdrawn: string,
+      balance: string,
+      inProgress: boolean,
+    ): string =>
+      inProgress
+        ? `${month}, até hoje: contribuído ${contributed}, retirado ${withdrawn}, saldo ${balance}`
+        : `${month}: contribuído ${contributed}, retirado ${withdrawn}, saldo no fim do mês ${balance}`,
+  },
+
+  /**
    * What a rejected value means, keyed the way the domain reports it.
    *
    * Two of the entries are shared, because "not a number" is the same problem whichever

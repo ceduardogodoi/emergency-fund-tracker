@@ -81,10 +81,10 @@ describe('queryKeys', () => {
       queryKeys.goalChanges(),
       queryKeys.entries(),
       queryKeys.futureDatedEntries(calendarDate('2026-08-29')),
-      queryKeys.statistics(),
       queryKeys.forecast(),
       queryKeys.reminder(),
       queryKeys.milestones(),
+      queryKeys.milestoneReached(),
     ].map((key) => JSON.stringify(key))
     expect(new Set(keys).size).toBe(keys.length)
   })

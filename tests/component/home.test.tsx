@@ -1,6 +1,7 @@
 import { screen, userEvent, waitFor } from '@testing-library/react-native'
 import type { RedirectProps } from 'expo-router'
 
+import { queryKeys } from '@/runtime/query'
 import { calendarDate } from '@/domain/dates/calendar-date'
 import { storageError } from '@/domain/errors/app-error'
 import { money } from '@/domain/money/money'
@@ -142,6 +143,41 @@ describe('Home', () => {
     await userEvent.press(screen.getByRole('button', { name: strings.home.historyAction }))
 
     expect(mockPush).toHaveBeenCalledWith('/entries')
+  })
+
+  // FR-020 – FR-025 live on their own screen, and Home is the way in.
+  it('offers a way to the statistics', async () => {
+    await storeGoal()
+    await harness.render(<HomeScreen />)
+    await screen.findByTestId('standing-card')
+
+    await userEvent.press(screen.getByRole('button', { name: strings.statistics.action }))
+
+    expect(mockPush).toHaveBeenCalledWith('/statistics')
+  })
+
+  // FR-024. A contribution returns here, so this is where the milestone it crossed is
+  // shown. 50 rather than 25, so a banner that named the first threshold whatever it was
+  // told would fail.
+  it('shows the milestone the last save crossed, until dismissed', async () => {
+    await storeGoal()
+    harness.queryClient.setQueryData(queryKeys.milestoneReached(), 50)
+    await harness.render(<HomeScreen />)
+
+    expect(
+      await screen.findByText(strings.milestones.title(50, harness.services.format.percent(50))),
+    ).toBeTruthy()
+
+    await userEvent.press(screen.getByRole('button', { name: strings.milestones.dismiss }))
+    expect(screen.queryByTestId('milestone-banner')).toBeNull()
+  })
+
+  it('shows no milestone when the last save crossed none', async () => {
+    await storeGoal()
+    await harness.render(<HomeScreen />)
+    await screen.findByTestId('standing-card')
+
+    expect(screen.queryByTestId('milestone-banner')).toBeNull()
   })
 })
 

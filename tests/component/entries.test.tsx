@@ -526,6 +526,21 @@ describe('the history screen', () => {
     expect(await screen.findByText(strings.state.errorTitle)).toBeTruthy()
     expect(screen.queryByText(strings.entries.historyEmptyTitle)).toBeNull()
   })
+
+  // FR-024. A correction or a deletion returns here rather than to Home, so a milestone
+  // that save crossed has to be shown here too. 75 rather than 25: the value the cache
+  // holds, not the first threshold a hard-coded banner would name.
+  it('shows the milestone the last save crossed', async () => {
+    await record({})
+    harness.queryClient.setQueryData(queryKeys.milestoneReached(), 75)
+
+    await harness.render(<HistoryScreen />)
+
+    const banner = await screen.findByTestId('milestone-banner')
+    expect(
+      within(banner).getByText(strings.milestones.title(75, harness.services.format.percent(75))),
+    ).toBeTruthy()
+  })
 })
 
 describe('the edit screen', () => {

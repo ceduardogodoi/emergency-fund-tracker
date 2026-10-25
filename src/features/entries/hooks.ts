@@ -5,14 +5,23 @@ import { AccessibilityInfo } from 'react-native'
 import { queryKeys } from '@/runtime/query'
 import type { Services } from '@/runtime/services'
 import { useServices } from '@/runtime/services-context'
+import type { CalendarDate } from '@/domain/dates/calendar-date'
 import type { AppError } from '@/domain/errors'
+import { acknowledgeMilestones, readProgress } from '@/domain/ledger/acknowledge-milestones'
 import { calculateBalance } from '@/domain/ledger/balance'
 import { recordEntry } from '@/domain/ledger/record-entry'
 import { reviseEntry } from '@/domain/ledger/revise-entry'
-import type { LedgerEntry, LedgerEntryInput, LedgerEntryPatch } from '@/domain/ledger/types'
+import type {
+  LedgerEntry,
+  LedgerEntryInput,
+  LedgerEntryPatch,
+  MilestoneThreshold,
+  ProgressSummary,
+} from '@/domain/ledger/types'
 import type { Money } from '@/domain/money/money'
+import type { Repositories } from '@/domain/ports/repositories'
 import type { UnitOfWork } from '@/domain/ports/unit-of-work'
-import { isErr, type Result } from '@/domain/result'
+import { isErr, ok, type Result } from '@/domain/result'
 import { strings } from '@/ui/strings'
 
 /**
@@ -42,38 +51,48 @@ export function useEntries(): UseQueryResult<readonly LedgerEntry[], AppError> {
 }
 
 /**
- * The balance those entries add up to (FR-012).
+ * Something derived from the ledger, read from the one cache entry every ledger reader
+ * shares.
  *
- * Derived through `select` on the same query rather than by a query of its own, so both
- * read one cache entry. Two entries would be two things to invalidate and two moments at
- * which a screen could show a balance that disagreed with the history beside it.
+ * Through `select` on the same query rather than a query of its own, so the balance, the
+ * entry being corrected, and the statistics all read the rows the history shows. A second
+ * cache entry would be a second thing to invalidate, and a moment in which two screens
+ * disagree about the same fund — and a write refreshes every one of these by refreshing
+ * the rows.
+ *
+ * @param select Derives the value from the entries, oldest first. Called again whenever the
+ *   rows change, so it must be pure.
+ * @returns The query, resolving to the derived value.
+ */
+export function useLedgerView<T>(
+  select: (entries: readonly LedgerEntry[]) => T,
+): UseQueryResult<T, AppError> {
+  const { unitOfWork } = useServices()
+  return useQuery({ ...entriesQuery(unitOfWork), select })
+}
+
+/**
+ * The balance those entries add up to (FR-012).
  *
  * @returns The query, resolving to the balance as of today.
  */
 export function useBalance(): UseQueryResult<Money, AppError> {
-  const { unitOfWork, clock } = useServices()
-  return useQuery({
-    ...entriesQuery(unitOfWork),
-    select: (entries) => calculateBalance(entries, clock.today()),
-  })
+  const { clock } = useServices()
+  return useLedgerView((entries) => calculateBalance(entries, clock.today()))
 }
 
 /**
  * One entry, by its id — or null when the ledger has none by that id (FR-011).
  *
- * Found in the list every other reader shares rather than fetched on its own, for the
- * reason the balance is: the screen that corrects an entry is opened from the history, and
- * the two must not be able to disagree about what the entry says.
+ * Found in the list every other reader shares rather than fetched on its own: the screen
+ * that corrects an entry is opened from the history, and the two must not be able to
+ * disagree about what the entry says.
  *
  * @param id The entry to find.
  * @returns The query, resolving to the entry or to null.
  */
 export function useEntry(id: string): UseQueryResult<LedgerEntry | null, AppError> {
-  const { unitOfWork } = useServices()
-  return useQuery({
-    ...entriesQuery(unitOfWork),
-    select: (entries) => entries.find((entry) => entry.id === id) ?? null,
-  })
+  return useLedgerView((entries) => entries.find((entry) => entry.id === id) ?? null)
 }
 
 /**
@@ -104,18 +123,9 @@ export function useFutureDatedEntries(): UseQueryResult<readonly LedgerEntry[], 
  * @returns The mutation. A refused entry arrives as `error`, for the screen to render.
  */
 export function useAddEntry(): UseMutationResult<LedgerEntry, AppError, LedgerEntryInput> {
-  const { unitOfWork, clock } = useServices()
-  const refresh = useLedgerRefresh()
-
-  return useMutation<LedgerEntry, AppError, LedgerEntryInput>({
-    mutationFn: async (entry) =>
-      unwrap(
-        await unitOfWork.run(async (repositories) =>
-          recordEntry(repositories, entry, clock.today()),
-        ),
-      ),
-    onSuccess: refresh,
-  })
+  return useLedgerWrite((repositories, entry: LedgerEntryInput, today) =>
+    recordEntry(repositories, entry, today),
+  )
 }
 
 /**
@@ -127,18 +137,9 @@ export function useAddEntry(): UseMutationResult<LedgerEntry, AppError, LedgerEn
  *   missing entry as a not-found one.
  */
 export function useUpdateEntry(): UseMutationResult<LedgerEntry, AppError, EntryEdit> {
-  const { unitOfWork, clock } = useServices()
-  const refresh = useLedgerRefresh()
-
-  return useMutation<LedgerEntry, AppError, EntryEdit>({
-    mutationFn: async ({ id, patch }) =>
-      unwrap(
-        await unitOfWork.run(async (repositories) =>
-          reviseEntry(repositories, id, patch, clock.today()),
-        ),
-      ),
-    onSuccess: refresh,
-  })
+  return useLedgerWrite((repositories, { id, patch }: EntryEdit, today) =>
+    reviseEntry(repositories, id, patch, today),
+  )
 }
 
 /**
@@ -147,20 +148,121 @@ export function useUpdateEntry(): UseMutationResult<LedgerEntry, AppError, Entry
  * @returns The mutation.
  */
 export function useRemoveEntry(): UseMutationResult<void, AppError, string> {
-  const { unitOfWork } = useServices()
-  const refresh = useLedgerRefresh()
+  return useLedgerWrite((repositories, id: string) => repositories.ledger.remove(id))
+}
 
-  return useMutation<void, AppError, string>({
-    mutationFn: async (id) =>
-      unwrap(await unitOfWork.run(async (repositories) => repositories.ledger.remove(id))),
-    onSuccess: refresh,
+/** One write to the ledger, given the repositories of the transaction it runs in. */
+type LedgerWrite<TVariables, T> = (
+  repositories: Repositories,
+  variables: TVariables,
+  today: CalendarDate,
+) => Promise<Result<T>>
+
+/**
+ * A ledger write, and everything every ledger write does around it.
+ *
+ * In order: the fund's position is read, the write is made, the milestones it crossed are
+ * recorded (FR-024), the ledger readers are refreshed, and the new balance — then the
+ * milestone, if one was crossed — is announced. All of it inside the mutation, so a screen
+ * that navigates on success lands on a cache that already holds the write.
+ *
+ * Only the write can fail the mutation. A milestone that cannot be recorded, or a balance
+ * that cannot be read back, is logged or left unsaid instead: the write landed, and failing
+ * the save would ask the user to redo something already done.
+ *
+ * @param write The write itself.
+ * @returns The mutation.
+ */
+function useLedgerWrite<TVariables, T>(
+  write: LedgerWrite<TVariables, T>,
+): UseMutationResult<T, AppError, TVariables> {
+  const services = useServices()
+  const queryClient = useQueryClient()
+
+  return useMutation<T, AppError, TVariables>({
+    mutationFn: async (variables) => {
+      const { unitOfWork, clock } = services
+      const today = clock.today()
+      const before = await unitOfWork.run(async (repositories) => readProgress(repositories, today))
+      const written = unwrap(
+        await unitOfWork.run(async (repositories) => write(repositories, variables, today)),
+      )
+      const reached = await settleMilestones(services, before, today)
+      if (reached !== null) {
+        queryClient.setQueryData(queryKeys.milestoneReached(), reached)
+      }
+      await refreshLedger(queryClient)
+      await announce(queryClient, services, reached)
+      return written
+    },
+  })
+}
+
+/**
+ * Records the milestones a write crossed, and returns the highest — the one to tell the
+ * user about.
+ *
+ * Measured from the positions either side of the write, both read from storage. A failure
+ * anywhere along the way is logged and comes back as no milestone: the write has landed,
+ * and an acknowledgement that could not be recorded would otherwise repeat on the next
+ * save, which is worse than one not said (Principle II asks for the log, not for the
+ * save to fail).
+ *
+ * @param services The logger and the unit of work.
+ * @param before The position read before the write, or why it could not be read.
+ * @param today From the `Clock` port.
+ * @returns The highest milestone newly crossed, or null.
+ */
+async function settleMilestones(
+  { unitOfWork, logger }: Services,
+  before: Result<ProgressSummary | null>,
+  today: CalendarDate,
+): Promise<MilestoneThreshold | null> {
+  const settled = await recordCrossings(unitOfWork, before, today)
+  if (isErr(settled)) {
+    logger.warn('milestones.not-recorded', {
+      kind: settled.error.kind,
+      messageKey: 'messageKey' in settled.error ? settled.error.messageKey : null,
+    })
+    return null
+  }
+  return settled.value.at(-1) ?? null
+}
+
+/**
+ * The milestones crossed between the position before a write and the one after it.
+ *
+ * None without a goal on either side: before setup there is no target to cross. A
+ * position that could not be read is the failure, so the caller can log it rather than
+ * guess.
+ */
+async function recordCrossings(
+  unitOfWork: UnitOfWork,
+  before: Result<ProgressSummary | null>,
+  today: CalendarDate,
+): Promise<Result<readonly MilestoneThreshold[]>> {
+  if (isErr(before)) {
+    return before
+  }
+  const previous = before.value
+  if (previous === null) {
+    return ok([])
+  }
+  return unitOfWork.run(async (repositories) => {
+    const after = await readProgress(repositories, today)
+    if (isErr(after)) {
+      return after
+    }
+    return after.value === null
+      ? ok([])
+      : acknowledgeMilestones(repositories.milestones, previous, after.value)
   })
 }
 
 /**
  * The query every ledger read shares.
  *
- * One definition rather than one per hook, so `useEntries` and `useBalance` cannot drift
+ * One definition rather than one per hook, so `useEntries` and `useLedgerView` cannot drift
  * into fetching the same rows under different keys — which is how two screens come to
  * disagree about the same fund.
  */
@@ -176,66 +278,62 @@ function entriesQuery(unitOfWork: UnitOfWork): {
 }
 
 /**
- * What every ledger write does afterwards.
+ * Refreshes every ledger reader after a write.
  *
  * `entries` is the prefix of every other ledger key — the ranged history and the
- * future-dated warning both begin with it — so one invalidation covers all three. That is
- * why the registry gives them a shared prefix.
+ * future-dated warning both begin with it — so one invalidation covers all of them, and
+ * everything read through {@link useLedgerView} (the balance, the statistics) reads the
+ * entries query itself. That is why the registry gives them a shared prefix, and why there
+ * is no statistics key to invalidate. The forecast joins at T111.
  *
  * `refetchType: 'all'` rather than the default `active`, and awaited. A screen acts on
  * success by navigating, and the screen it lands on reads the cache on its first render, so
  * the readers that matter are precisely the ones with no observer. This is the defect User
  * Story 1 shipped and `useSubmitGoal` was fixed for; the balance would show the figure it
  * held before the contribution, which is indistinguishable on screen from the truth.
- *
- * The statistics and forecast keys are not here. Nothing computes them yet, and
- * invalidating a query that does not exist is a no-op dressed as correctness — they join
- * this list in the tasks that create them (T096, T111).
- *
- * Then the new balance is announced to a screen reader, so its user gets the confirmation
- * a sighted user gets from the figure on Home.
- *
- * @returns An `onSuccess` handler for every ledger mutation.
  */
-function useLedgerRefresh(): () => Promise<void> {
-  const queryClient = useQueryClient()
-  const services = useServices()
-  return async () => {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.entries(), refetchType: 'all' })
-    await announceBalance(queryClient, services)
-  }
+async function refreshLedger(queryClient: QueryClient): Promise<void> {
+  await queryClient.invalidateQueries({ queryKey: queryKeys.entries(), refetchType: 'all' })
 }
 
 /**
- * Says the balance a write left, through the screen reader (ui-contract, live regions).
+ * Says what a write changed, through the screen reader (ui-contract, live regions): the
+ * balance it left, then the milestone it crossed, if any.
  *
  * An announcement rather than a live region on a screen: every write is followed by the
  * screen leaving, and a region unmounted as it changes says nothing.
  *
- * Read with `staleTime: Infinity`, so the entries the refresh just fetched are used without
- * a second read. A refresh that failed is not taken as an answer: with the balance from
- * before the write still cached, a failed read announces nothing rather than that figure,
- * which is no longer true — `entry-hooks.test.tsx` holds exactly that cache. The failure is
- * not rethrown, because the write itself landed, and failing the save would ask the user to
- * redo something already done.
+ * The balance is read with `staleTime: Infinity`, so the entries the refresh just fetched
+ * are used without a second read. A refresh that failed is not taken as an answer: with the
+ * balance from before the write still cached, a failed read announces no balance rather
+ * than that figure, which is no longer true — `entry-hooks.test.tsx` holds exactly that
+ * cache. The milestone does not depend on that read: it is already recorded, and the
+ * banner already shows it.
  *
  * Queued, on iOS, behind whatever VoiceOver is saying, such as the button just pressed.
  */
-async function announceBalance(
+async function announce(
   queryClient: QueryClient,
   { unitOfWork, clock, format }: Services,
+  reached: MilestoneThreshold | null,
 ): Promise<void> {
-  let entries: readonly LedgerEntry[]
   try {
-    entries = await queryClient.fetchQuery({ ...entriesQuery(unitOfWork), staleTime: Infinity })
+    const entries = await queryClient.fetchQuery({
+      ...entriesQuery(unitOfWork),
+      staleTime: Infinity,
+    })
+    say(strings.entries.balanceAnnounced(format.money(calculateBalance(entries, clock.today()))))
   } catch {
-    return
+    // The balance is left unsaid; see above.
   }
-  const balance = calculateBalance(entries, clock.today())
-  AccessibilityInfo.announceForAccessibilityWithOptions(
-    strings.entries.balanceAnnounced(format.money(balance)),
-    { queue: true },
-  )
+  if (reached !== null) {
+    say(strings.milestones.title(reached, format.percent(reached)))
+  }
+}
+
+/** Hands a sentence to the screen reader, queued behind what it is already saying. */
+function say(sentence: string): void {
+  AccessibilityInfo.announceForAccessibilityWithOptions(sentence, { queue: true })
 }
 
 /**

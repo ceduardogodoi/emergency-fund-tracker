@@ -1,5 +1,6 @@
 import { createGoalRepository } from '@/data/sqlite/repositories/goal-repository'
 import { createLedgerRepository } from '@/data/sqlite/repositories/ledger-repository'
+import { createMilestoneRepository } from '@/data/sqlite/repositories/milestone-repository'
 import { createProfileRepository } from '@/data/sqlite/repositories/profile-repository'
 import { createStoreRepository } from '@/data/sqlite/repositories/store-repository'
 import { currencyCode } from '@/domain/money/currency'
@@ -46,8 +47,8 @@ describe('StoreRepository', () => {
   }
 
   /**
-   * A row in every table. Through the repositories where one exists; the reminder and
-   * milestone repositories are not built yet, so those two rows are written directly.
+   * A row in every table. Through the repositories where one exists; the reminder
+   * repository is not built yet, so its row is written directly.
    */
   async function fillEveryTable(): Promise<void> {
     expectOk(
@@ -88,9 +89,7 @@ describe('StoreRepository', () => {
     await db.run(
       "INSERT INTO reminder_setting (id, enabled, frequency, day_of_month, time_of_day) VALUES (1, 1, 'monthly', 5, '09:00')",
     )
-    await db.run(
-      "INSERT INTO milestone_ack (threshold, acknowledged_at) VALUES (25, '2026-08-22T12:00:00.000Z')",
-    )
+    expectOk(await createMilestoneRepository(db, clock).acknowledge(25))
   }
 
   it('leaves every table empty, as on first launch', async () => {

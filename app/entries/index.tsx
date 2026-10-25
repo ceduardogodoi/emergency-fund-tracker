@@ -7,6 +7,7 @@ import type { LedgerEntry } from '@/domain/ledger/types'
 import { EntryRow } from '@/features/entries/entry-row'
 import { FutureDatedBanner } from '@/features/entries/future-dated-banner'
 import { useEntries } from '@/features/entries/hooks'
+import { MilestoneBanner } from '@/features/progress/milestone-banner'
 import { Button, Card, Screen, StateView, Text } from '@/ui/primitives'
 import { strings } from '@/ui/strings'
 import { spacing } from '@/ui/tokens'
@@ -74,14 +75,18 @@ function HistoryList({ entries }: HistoryListProps): ReactNode {
 }
 
 /**
- * Above the rows: entries that need correcting, if any, then how to correct one.
+ * Above the rows: a milestone the last correction crossed, entries that need correcting, if
+ * any, then how to correct one.
  *
- * The warning first, because it is the one that asks something of the user. Both are the
- * list's header, so at the largest text size they scroll away with the rows.
+ * The milestone first, because a correction or deletion returns here rather than to Home,
+ * so this is where its news lands (FR-024). Then the warning, the one that asks something
+ * of the user. All are the list's header, so at the largest text size they scroll away
+ * with the rows.
  */
 function HistoryHeader(): ReactNode {
   return (
     <View style={styles.header}>
+      <MilestoneBanner />
       <FutureDatedBanner />
       <Text tone="secondary">{strings.entries.historyHint}</Text>
     </View>

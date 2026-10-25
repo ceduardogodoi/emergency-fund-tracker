@@ -5,6 +5,7 @@ import { toViewState } from '@/runtime/query'
 import { useServices } from '@/runtime/services-context'
 import type { Goal } from '@/domain/goal/types'
 import type { ProgressSummary } from '@/domain/ledger/types'
+import { MilestoneBanner } from '@/features/progress/milestone-banner'
 import { useStanding, type Standing } from '@/features/progress/use-standing'
 import {
   Button,
@@ -66,12 +67,15 @@ interface StandingViewProps {
  * The fund's position, the way in to change it, and the goal it is measured against.
  *
  * The balance leads because it is what moves: the target changes rarely and on purpose,
- * and the question a returning user opens the app with is how far along they are.
+ * and the question a returning user opens the app with is how far along they are. Above it,
+ * only a milestone the last contribution crossed (FR-024), since that is news about the
+ * figure below it.
  */
 function StandingView({ standing }: StandingViewProps): ReactNode {
   const router = useRouter()
   return (
     <>
+      <MilestoneBanner />
       <StandingCard progress={standing.progress} />
       <Button
         label={strings.home.contributeAction}
@@ -87,6 +91,14 @@ function StandingView({ standing }: StandingViewProps): ReactNode {
           router.push('/entries')
         }}
         testID="history"
+      />
+      <Button
+        label={strings.statistics.action}
+        variant="secondary"
+        onPress={() => {
+          router.push('/statistics')
+        }}
+        testID="statistics"
       />
       <GoalCard goal={standing.goal} monthsCovered={standing.monthsCovered} />
     </>

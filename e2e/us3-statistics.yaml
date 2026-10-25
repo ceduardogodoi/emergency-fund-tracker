@@ -1,0 +1,137 @@
+# User Story 3 — monitor progress with statistics.
+#
+# The story's Independent Test, on a device: a seeded history, every figure on the
+# statistics view against a hand calculation of it (FR-020, FR-021), the filter narrowing
+# all of them to the last three complete months (FR-023), and a contribution that crosses
+# 50% acknowledged once — on Home, until dismissed, and not again after a restart (FR-024).
+#
+# The fund comes from the development seed route (`npm run seed`, T087), opened as a link:
+# 8 complete months of R$ 500,00 on the 5th against a goal of R$ 12.000,00, and nothing in
+# the month in progress. Relative to the day the flow runs, so every figure below holds on
+# any date. Hand calculation:
+#
+#   all time      total 4.000,00 · 8 contributions · average 500,00 over 8 complete months ·
+#                 current and longest streak 8 months (the month in progress, still empty,
+#                 does not break it)
+#   last 3 months total 1.500,00 · average 500,00 over 3 complete months · streak 3 months
+#   balance       4.000,00, which is 33,33% — so R$ 2.000,00 more is exactly 50%
+#
+# Runs inside Expo Go; see `us1-set-target.yaml` for why, for why `APP_ID` and `DEV_URL` come
+# from the npm scripts, and for why amounts are matched by their digits alone. Figures are
+# matched by text with no id, for the reason `us2-record-progress.yaml` gives for history
+# rows: a month of the breakdown is one accessible element, a single node on iOS and its
+# texts on Android.
+appId: ${APP_ID}
+name: US3 — statistics
+---
+- clearState
+- runFlow: open-app.yaml
+# Opening a link reloads the app inside Expo Go, bundle check included, so this waits as
+# long as a restart does.
+- openLink: ${DEV_URL}/--/dev/seed?months=8&pattern=steady
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+- assertVisible:
+    id: 'balance-amount'
+    text: '.*4[.,]000[.,]00.*'
+
+# FR-020, FR-021 — all time, the period the screen opens on.
+- scrollUntilVisible:
+    element:
+      id: 'statistics'
+    direction: DOWN
+- tapOn:
+    id: 'statistics'
+- extendedWaitUntil:
+    visible:
+      id: 'period-all-time'
+    timeout: 20000
+- scrollUntilVisible:
+    element: 'Total contribuído'
+    direction: DOWN
+- assertVisible: '.*4[.,]000[.,]00.*'
+- scrollUntilVisible:
+    element: 'Em 8 meses completos'
+    direction: DOWN
+- assertVisible: '.*500[.,]00.*'
+- scrollUntilVisible:
+    element: 'Maior sequência'
+    direction: DOWN
+- assertVisible: '8 meses'
+
+# FR-023 — the last three complete months. Every figure recalculates, and the label says
+# which period it is.
+- scrollUntilVisible:
+    element:
+      id: 'period-recent-3'
+    direction: UP
+- tapOn:
+    id: 'period-recent-3'
+- scrollUntilVisible:
+    element: 'Total contribuído'
+    direction: DOWN
+- assertVisible: '.*1[.,]500[.,]00.*'
+- assertNotVisible: '.*4[.,]000[.,]00.*'
+- scrollUntilVisible:
+    element: 'Em 3 meses completos'
+    direction: DOWN
+- scrollUntilVisible:
+    element: 'Maior sequência'
+    direction: DOWN
+- assertVisible: '3 meses'
+
+# FR-024 — R$ 2.000,00 takes the fund from 33,33% to exactly 50%. Back to Home by a
+# restart, as `us2-record-progress.yaml` does: Maestro's `back` is Android's.
+- stopApp
+- runFlow: open-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+- tapOn:
+    id: 'contribute'
+- extendedWaitUntil:
+    visible:
+      id: 'amount-input'
+    timeout: 20000
+- tapOn:
+    id: 'amount-input'
+- inputText: '200000'
+- swipe:
+    start: 50%, 32%
+    end: 50%, 22%
+- scrollUntilVisible:
+    element:
+      id: 'save-entry'
+    direction: DOWN
+- tapOn:
+    id: 'save-entry'
+
+# Acknowledged on the screen the save returns to, above the balance it is news about.
+- extendedWaitUntil:
+    visible:
+      id: 'milestone-banner'
+    timeout: 20000
+- assertVisible: 'Você chegou a 50% da sua meta'
+- assertVisible:
+    id: 'balance-amount'
+    text: '.*6[.,]000[.,]00.*'
+- tapOn:
+    id: 'milestone-dismiss'
+- assertNotVisible:
+    id: 'milestone-banner'
+
+# Once. The crossing is on record, so a restart has nothing new to say.
+- stopApp
+- runFlow: open-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+- assertVisible:
+    id: 'balance-amount'
+    text: '.*6[.,]000[.,]00.*'
+- assertNotVisible:
+    id: 'milestone-banner'

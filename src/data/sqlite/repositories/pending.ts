@@ -1,12 +1,12 @@
 import { storageError } from '@/domain/errors/app-error'
-import type { MilestoneRepository, ReminderRepository } from '@/domain/ports/repositories'
+import type { ReminderRepository } from '@/domain/ports/repositories'
 import { err, type Result } from '@/domain/result'
 
 /**
- * Placeholders for the repositories whose user stories have not been built yet.
+ * A placeholder for the repository whose user story has not been built yet.
  *
- * `Repositories` names all five, and the unit of work cannot be assembled without them —
- * so the choice is between these and leaving the app unable to persist anything at all.
+ * `Repositories` names every repository, and the unit of work cannot be assembled without
+ * them — so the choice is between this and leaving the app unable to persist anything.
  *
  * Every method fails. That is the point: the failure mode worth designing against is not a
  * crash but a *plausible answer*. A ledger stub returning `ok([])` is indistinguishable
@@ -14,8 +14,8 @@ import { err, type Result } from '@/domain/result'
  * the truth — a wrong number a user would act on. A storage failure surfaces as the error
  * state every view already handles.
  *
- * Each of these is deleted by the task that implements it for real: milestones at T100,
- * reminders at T131. The ledger's went at T078, which is what these are waiting to become.
+ * It is deleted by the task that implements it for real: reminders at T131. The ledger's
+ * went at T078 and the milestones' at T100, which is what this is waiting to become.
  */
 
 /** The failure every pending method returns. */
@@ -28,14 +28,5 @@ export function createPendingReminderRepository(): ReminderRepository {
   return {
     get: pending,
     save: pending,
-  }
-}
-
-/** The milestone acknowledgements, until T100. */
-export function createPendingMilestoneRepository(): MilestoneRepository {
-  return {
-    listAcknowledged: pending,
-    acknowledge: pending,
-    clearAbove: pending,
   }
 }

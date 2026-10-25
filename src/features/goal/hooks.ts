@@ -5,6 +5,7 @@ import { combineQueries, queryKeys, type QueryLike } from '@/runtime/query'
 import { useServices } from '@/runtime/services-context'
 import type { AppError } from '@/domain/errors'
 import { submitGoal } from '@/domain/goal/submit-goal'
+import { forgetMilestonesAbove } from '@/domain/ledger/acknowledge-milestones'
 import type { Goal, GoalInput } from '@/domain/goal/types'
 import type { Money } from '@/domain/money/money'
 import type { Profile } from '@/domain/profile/types'
@@ -106,12 +107,26 @@ function pairOf(goal: Goal | null, profile: Profile | null): StoredGoal | null {
  * @returns The mutation. Failure arrives as `error`, for the screen to render.
  */
 export function useSubmitGoal(): UseMutationResult<Goal, AppError, GoalDraft> {
-  const { unitOfWork, currency } = useServices()
+  const { unitOfWork, currency, clock, logger } = useServices()
   const queryClient = useQueryClient()
 
   return useMutation<Goal, AppError, GoalDraft>({
-    mutationFn: async (draft) =>
-      unwrap(await unitOfWork.run(async (repos) => submitGoal(repos, { ...draft, currency }))),
+    mutationFn: async (draft) => {
+      const saved = unwrap(
+        await unitOfWork.run(async (repos) => submitGoal(repos, { ...draft, currency })),
+      )
+      // A raised target lowers the fund's percentage with no entry written, so the ledger's
+      // save path never sees it: the milestones now above the fund are forgotten here, or
+      // passing 50% again would be filtered out as already said (data-model, state
+      // transitions). Logged rather than failed, since the goal has been saved.
+      const forgotten = await unitOfWork.run(async (repos) =>
+        forgetMilestonesAbove(repos, clock.today()),
+      )
+      if (isErr(forgotten)) {
+        logger.warn('milestones.not-forgotten', { kind: forgotten.error.kind })
+      }
+      return saved
+    },
     onSuccess: async () => {
       // Both keys, because one submission writes both rows. FR-006 asks for the change to
       // be visible immediately; without this the write succeeds and every screen keeps
