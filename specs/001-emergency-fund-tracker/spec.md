@@ -20,6 +20,13 @@
 - Q: Should the app require a device passcode, fingerprint, or face unlock before showing the user's fund data? → A: No in-app lock. The device's own lock screen is the only protection in this release; the planned accounts and authentication release will address in-app access control.
 - Q: When a user reinstalls the app or moves to a new phone, should their fund history come back automatically? → A: No automatic restore. The user restores by importing a file they previously exported, which also works across a device or platform switch.
 
+### Session 2026-10-25
+
+- Q: What does a period such as "last 3 months" cover, and what does the average monthly contribution divide by? → A: Complete calendar months only, the way the forecast's pace window is: on 25 October, "last 3 months" is July, August, and September. The month in progress appears under "all time" alone. No period starts before the month of the first entry, so "last 12 months" over five months of history is those five. The average monthly contribution is the contributions in the period's complete months divided by their number.
+- Q: Do the streaks follow the period filter? → A: Yes, like every other statistic. Under "last 3 months" the longest streak is at most 3, counted inside the period.
+- Q: How is a milestone acknowledged, given that saving an entry leaves the screen it was saved on? → A: The save records the crossing, so it is acknowledged once and never again. The screen the user lands on shows a dismissable message naming the milestone, and a screen reader announces it with the new balance.
+- Q: Are statistics shown as charts? → A: No charts in this release. Balance growth and the month-by-month breakdown are lists of figures. A chart can return in a later release, with a charting library chosen then.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Set a personalized emergency fund target (Priority: P1)
@@ -71,8 +78,8 @@ The user opens a statistics view to understand their saving behavior over time: 
 
 1. **Given** at least two months of contribution history, **When** the user opens statistics, **Then** they see balance growth over time, total contributed, total withdrawn, net saved, number of contributions, and average monthly contribution.
 2. **Given** contributions in three consecutive calendar months and none in the month before those, **When** the user views statistics, **Then** the current streak shows 3 months and the longest streak shows at least 3 months.
-3. **Given** a user selects a time period filter such as last 3 months, last 12 months, or all time, **When** the filter is applied, **Then** every statistic and chart in the view recalculates to that period and the active period is clearly labeled.
-4. **Given** a user with no contributions yet, **When** they open statistics, **Then** they see a purposeful empty state explaining what will appear here and prompting the first contribution, not a blank screen or zeroed charts.
+3. **Given** a user selects a time period filter such as last 3 months, last 12 months, or all time, **When** the filter is applied, **Then** every statistic in the view recalculates to that period and the active period is clearly labeled.
+4. **Given** a user with no contributions yet, **When** they open statistics, **Then** they see a purposeful empty state explaining what will appear here and prompting the first contribution, not a blank screen or a list of zeroes.
 5. **Given** a user crosses 25%, 50%, 75%, or 100% of their target, **When** the contribution that crosses the threshold is saved, **Then** the app acknowledges the milestone.
 
 ---
@@ -142,7 +149,7 @@ The user chooses to be reminded to contribute — for example monthly on payday 
 - What happens when the user reinstalls the app or replaces their device? Because data is stored only on the device, it does not follow the user automatically; they recover it by importing a file they exported earlier, and the app must make that path discoverable before it is needed rather than after.
 - What happens when an import file is corrupt, truncated, hand-edited into an invalid state, or was produced by a newer version of the app? The import is refused with an explanation and existing data is left exactly as it was.
 - What happens when a user imports a file that overlaps with entries already in the app? The user is asked to replace or merge, and merging does not duplicate entries that are already present.
-- How does the system handle very large amounts (for example a target in the millions) in charts and layouts? Figures remain fully readable without truncation or overlap at every supported text size.
+- How does the system handle very large amounts (for example a target in the millions) in lists and layouts? Figures remain fully readable without truncation or overlap at every supported text size.
 - What happens on a device with the largest accessibility text size enabled? All screens remain usable with no clipped labels or unreachable controls.
 
 ## Requirements *(mandatory)*
@@ -176,13 +183,13 @@ The user chooses to be reminded to contribute — for example monthly on payday 
 
 ### Functional Requirements — Statistics and Monitoring
 
-- **FR-019**: System MUST display balance growth over time in a visual form covering the full recorded history.
+- **FR-019**: System MUST display balance growth over time, as the balance at the close of each month, covering the full recorded history.
 - **FR-020**: System MUST display total contributed, total withdrawn, net amount saved, number of contributions, largest single contribution, and average monthly contribution.
-- **FR-021**: System MUST display the current streak of consecutive calendar months containing at least one contribution, and the longest such streak achieved.
+- **FR-021**: System MUST display the current streak of consecutive calendar months containing at least one contribution, and the longest such streak achieved, both within the selected period.
 - **FR-022**: System MUST display a month-by-month breakdown of amounts contributed and withdrawn, including months with no activity.
-- **FR-023**: Users MUST be able to filter all statistics to a selected period — at minimum last 3 months, last 6 months, last 12 months, and all time — with the active period clearly labeled.
+- **FR-023**: Users MUST be able to filter all statistics to a selected period — at minimum last 3 months, last 6 months, last 12 months, and all time — with the active period clearly labeled. A recent period is made of complete calendar months only; the month in progress appears under all time alone.
 - **FR-024**: System MUST acknowledge to the user when their balance crosses 25%, 50%, 75%, and 100% of the target.
-- **FR-025**: System MUST present a purposeful empty state, explaining what the view will show and what action produces it, for every statistic or chart with insufficient data.
+- **FR-025**: System MUST present a purposeful empty state, explaining what the view will show and what action produces it, for every statistic with insufficient data.
 
 ### Functional Requirements — Forecasting
 
@@ -273,6 +280,7 @@ The user chooses to be reminded to contribute — for example monthly on payday 
 - In-app locking of any kind — app passcode, PIN, biometric gate, or encryption at rest behind a user secret. Deferred to the accounts and authentication release.
 - Automatic or silent restore through platform backup services such as iCloud or Android Auto Backup. Recovery is by explicit user-initiated import only.
 - Consistency or reliability scoring of saving behavior, confidence intervals or projection ranges, and what-if scenario simulation.
+- Charts and graphs of any kind. Statistics are figures and month-by-month lists in this release; a chart can return later with a charting library chosen then.
 - Budgeting, expense tracking, debt payoff planning, and retirement or investment planning.
 - Holding, transferring, or investing user funds, and any interest or return modeling.
 - Multiple concurrent savings goals, shared or joint funds, and household or family accounts.

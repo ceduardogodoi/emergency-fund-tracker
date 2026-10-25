@@ -90,12 +90,12 @@ One per user story, in priority order. Each is independently verifiable — a st
 ### Story 3 — Statistics (P3)
 
 1. `npm run seed -- --months 8 --pattern steady`, open Statistics.
-2. **Expect** balance growth over time, totals, contribution count, largest contribution, and average monthly contribution — each matching a hand calculation of the seed.
+2. **Expect** the balance at the close of each month, totals, contribution count, largest contribution, and average monthly contribution — each matching a hand calculation of the seed.
 3. **Expect** the current streak to equal the run of consecutive months with a contribution, and the opening balance to be excluded from the contribution count and total contributed.
-4. Filter to last 3 months. **Expect** every figure and both charts to recalculate, with the active period labelled.
+4. Filter to last 3 months. **Expect** every figure and the month-by-month list to recalculate to the last three complete months, the current month left out, with the active period labelled.
 5. Cross 50% with a contribution. **Expect** the milestone acknowledged once, and not again on the next launch.
-6. With `--reset`, open Statistics. **Expect** a purposeful empty state, not zeroed charts.
-7. Enable a screen reader. **Expect** each chart's summary and data table to convey the same information as the visual.
+6. With `--reset`, open Statistics. **Expect** a purposeful empty state, not a list of zeroes.
+7. Enable a screen reader. **Expect** each month of the breakdown read as one sentence: the month, what went in, what went out, and the closing balance.
 
 ### Story 4 — Forecast (P4)
 

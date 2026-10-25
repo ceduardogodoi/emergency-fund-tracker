@@ -16,7 +16,7 @@ All six user stories are in scope. They remain independently shippable in priori
 
 **Language/Version**: TypeScript **5.9.3** in `strict` mode, with `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `noUnusedLocals`, and `noUnusedParameters` enabled. Pinned to 5.x deliberately: TypeScript 7 is released, but `typescript-eslint` requires `<6.1.0`, so adopting it would mean dropping the lint gate that Principle I requires.
 
-**Primary Dependencies** *(installed — R-001 resolved 2026-08-15)*: Expo SDK **57.0.13**, React Native **0.86.2**, React **19.2.3**, Expo Router 57.0.13, `expo-sqlite` 57.0.1, TanStack Query 5.101.4, `zod` 4.4.3, `uuid` 14.0.1. Deferred to the phases that introduce them: a charting library (Phase 5), `expo-notifications` (Phase 8), `expo-file-system`/`expo-sharing`/`expo-document-picker` (Phase 9). `date-fns` was planned but proved unnecessary and was removed — see the D-004 amendment in research.md.
+**Primary Dependencies** *(installed — R-001 resolved 2026-08-15)*: Expo SDK **57.0.13**, React Native **0.86.2**, React **19.2.3**, Expo Router 57.0.13, `expo-sqlite` 57.0.1, TanStack Query 5.101.4, `zod` 4.4.3, `uuid` 14.0.1. Deferred to the phases that introduce them: `expo-notifications` (Phase 8), `expo-file-system`/`expo-sharing`/`expo-document-picker` (Phase 9). `date-fns` was planned but proved unnecessary and was removed — see the D-004 amendment in research.md. A charting library was planned for Phase 5 and dropped with charts themselves — see the D-011 amendment.
 
 **Storage**: `expo-sqlite` on device, accessed only through repository modules implementing domain-owned ports; schema versioned by the `user_version` pragma with forward-only migrations
 
@@ -45,7 +45,7 @@ Constitution version at time of planning: **1.0.1**.
 | III. SOLID Design | `src/domain` imports nothing from React, Expo, or SQLite. Persistence, clock, notifications, and file access are domain-owned port interfaces implemented in `src/data` and `src/platform` and wired in one composition root. No module constructs its own I/O collaborator or reads a global | **PASS** |
 | IV. Test-First & Testing Standards | Red-Green-Refactor with the pyramid from D-006; coverage thresholds set in Jest at 80% global and 95% on `domain/money`, `domain/dates`, `domain/statistics`, `domain/forecast`; every clock reads through the injected `Clock` port so no test depends on wall-clock time, timezone, or ordering | **PASS** |
 | V. Consistent Code Patterns | One data-access pattern (repository over hand-written SQL), one async-state pattern (TanStack Query over the repositories), one error strategy (`Result`), one logging interface, one money type (branded integer minor units), one date representation (`YYYY-MM-DD`) | **PASS** |
-| VI. UI & UX Consistency | A single token module is the only source of style values, enforced by a lint rule banning color and spacing literals outside it; the `StateView` primitive makes loading, empty, error, and populated exhaustive at the type level; every chart ships a screen-reader-equivalent table; destructive actions confirm | **PASS** |
+| VI. UI & UX Consistency | A single token module is the only source of style values, enforced by a lint rule banning color and spacing literals outside it; the `StateView` primitive makes loading, empty, error, and populated exhaustive at the type level; destructive actions confirm | **PASS** |
 
 **Quality Standards check**: Money is integer minor units with all rounding funnelled through one module (D-003). Strict type checking is on and is not relaxed globally. Every dependency is justified in the table below. No secrets or real financial data exist in the repository — all fixtures are synthetic. Logging goes through one port that cannot accept money or ledger fields by type (D-015). The simplicity rule was applied explicitly in D-005 and D-016, where an ORM and an i18n framework were both rejected as unjustified for current requirements.
 
@@ -59,7 +59,6 @@ The constitution requires each third-party dependency to be justified by the pla
 | TanStack Query | Per-screen `useEffect` state machines | FR-051's four states and FR-032's recalculate-on-change would otherwise be rewritten on ~11 screens (D-008) |
 | `zod` | Hand-written import validators | FR-046 requires rejecting a malformed file *with an explanation of what was wrong*; hand-rolled nested validation either loses that detail or reimplements a schema library (D-012) |
 | `date-fns` | Hand-rolled month arithmetic | Month bucketing, streak boundaries, and month-offset projection are easy to get subtly wrong; tree-shakeable so only the used functions ship |
-| `react-native-gifted-charts` | Hand-built SVG charts | FR-019 requires a visual form; reimplementing axes and scales costs more than the library, and it needs no Skia native dependency (D-011) |
 | `expo-notifications` | — | Only way to deliver the local reminders in FR-034 |
 | `expo-file-system`, `expo-sharing`, `expo-document-picker` | — | Only way to write, hand off, and select the export/import files in FR-044 and FR-045 |
 | `better-sqlite3` (dev only) | On-device-only repository tests | Principle IV requires a fast integration test at the persistence boundary; on-device-only runs are slow enough that they stop being run (D-006) |
@@ -145,7 +144,7 @@ src/
 ├── ui/                          # Design system
 │   ├── tokens/                  # The only place style values exist
 │   ├── primitives/              # Screen, Text, Button, Card, Field, StateView
-│   └── components/              # Shared composites, incl. accessible chart wrapper
+│   └── components/              # Shared composites
 └── runtime/                     # Composition root: providers, DI wiring, query client.
                                  # Not `app/`: Expo Router claims `src/app` as its routes
                                  # directory whenever it exists, and these are not routes

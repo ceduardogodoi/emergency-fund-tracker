@@ -24,8 +24,8 @@ export interface CoverageMeterProps {
  *
  * Decorative, and hidden from assistive technology on purpose. It depicts a count that is
  * always stated in words beside it, so exposing it would make a screen reader announce the
- * same fact twice — once as prose and once as a run of empty views. This is the same
- * division `ChartFrame` makes: the picture is for the eye, the sentence is the content.
+ * same fact twice — once as prose and once as a run of empty views. The picture is for the
+ * eye, the sentence is the content.
  *
  * Caps at whatever `total` it is handed. FR-002 bounds coverage at 24 months and
  * `validateCoverageMonths` enforces it before any figure reaches a screen, so the guard

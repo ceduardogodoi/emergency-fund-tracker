@@ -7,7 +7,7 @@ import type { Money } from '../money/money'
  *
  * `opening` is the money already set aside before the app was installed (FR-010). It is
  * an entry rather than a column on the profile so that the ledger stays the single source
- * of truth for the balance, and so the balance-over-time chart starts at the right place.
+ * of truth for the balance, and so the month-by-month balance starts at the right place.
  * At most one may exist. Its cost is one exclusion rule: it counts toward the balance but
  * never toward "total contributed" or the contribution count.
  */

@@ -191,7 +191,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ## Phase 5: User Story 3 - Monitor progress with statistics (Priority: P3)
 
-**Goal**: The user sees balance growth, totals, averages, streaks, and a month-by-month breakdown, filterable by period, with milestones acknowledged as they are crossed.
+**Goal**: The user sees balance growth, totals, averages, streaks, and a month-by-month breakdown, filterable by period, with milestones acknowledged as they are crossed. No charts: balance growth and the breakdown are one list of months (research D-011, amended 2026-10-25).
 
 **Independent Test**: Seed several months of history, open Statistics, and verify every figure against a hand calculation of the same data; then filter to a shorter period and verify everything recalculates.
 
@@ -203,7 +203,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [ ] T091 [P] [US3] Unit tests for milestone crossing and re-crossing after a withdrawal or a raised target in `tests/unit/domain/ledger/milestones.test.ts`
 - [ ] T092 [P] [US3] Integration tests for `MilestoneRepository` including `clearAbove` in `tests/integration/data/milestone-repository.test.ts`
 - [ ] T093 [P] [US3] Component tests for the statistics screen states and the period filter in `tests/component/statistics.test.tsx`
-- [ ] T094 [P] [US3] Accessibility test asserting every chart exposes an equivalent text summary and data table in `tests/component/chart-frame.test.tsx`
+- [ ] T094 [P] [US3] Accessibility test asserting each month of the breakdown is one accessible element read as a sentence — month, contributed, withdrawn, closing balance — and that the list holds at the largest text size, in `tests/component/statistics-a11y.test.tsx` — reworded 2026-10-25 when charts were dropped; it asserted a chart's text equivalent, and with no chart the list is the content itself
 - [ ] T095 [P] [US3] Maestro flow covering the Story 3 journey in `e2e/us3-statistics.yaml`
 
 ### Implementation for User Story 3
@@ -213,9 +213,9 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - [ ] T098 [US3] Implement the per-month breakdown in `src/domain/statistics/breakdown.ts`
 - [ ] T099 [P] [US3] Implement `crossedMilestones` in `src/domain/ledger/milestones.ts`
 - [ ] T100 [US3] Implement `MilestoneRepository` in `src/data/sqlite/repositories/milestone-repository.ts` — and delete its placeholder from `src/data/sqlite/repositories/pending.ts`, which fails every call so an unimplemented repository can never be mistaken for an empty fund
-- [ ] T101 [US3] Implement `ChartFrame` rendering the chart, a text summary, and a screen-reader data table from the same data in `src/ui/components/chart-frame.tsx`
-- [ ] T102 [P] [US3] Build the balance-over-time chart in `src/features/statistics/balance-chart.tsx`
-- [ ] T103 [P] [US3] Build the month-by-month bar chart in `src/features/statistics/month-chart.tsx`
+- [X] T101 [US3] ~~Implement `ChartFrame` rendering the chart, a text summary, and a screen-reader data table from the same data in `src/ui/components/chart-frame.tsx`~~ — **dropped 2026-10-25**, with charts (research D-011 amendment). Nothing was built; the id stays so references to it still resolve
+- [ ] T102 [P] [US3] Build the month-by-month list — contributed, withdrawn, and closing balance per month, months with no activity included — in `src/features/statistics/month-breakdown.tsx` — reworded 2026-10-25: it was the balance-over-time chart, and the list now carries both FR-019 and FR-022
+- [X] T103 [P] [US3] ~~Build the month-by-month bar chart in `src/features/statistics/month-chart.tsx`~~ — **dropped 2026-10-25**, with charts; T102's list covers what it would have drawn
 - [ ] T104 [US3] Build the statistics screen with the period filter and a purposeful empty state per card in `app/statistics.tsx`
 - [ ] T105 [US3] Wire milestone acknowledgement into the entry save path in `src/features/entries/hooks.ts`
 

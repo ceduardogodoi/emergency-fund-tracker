@@ -69,10 +69,9 @@ Centred text is set through `Text`'s `align` prop, never by centring it from its
 | `Field` | Label, input, help text, error text, and the accessible wiring between them |
 | `MoneyInput` | Currency-aware entry that emits `Money` in minor units — never a float, never a raw string |
 | `Choice` | One option in a group where exactly one is chosen; announced as a radio, carrying its own name, explanation, and selected state. Takes an optional visual as children, decorative by contract |
-| `CoverageMeter` | Months of coverage as countable units. Decorative and hidden from assistive technology — the count it depicts is always stated in words beside it, the same division `ChartFrame` makes |
+| `CoverageMeter` | Months of coverage as countable units. Decorative and hidden from assistive technology — the count it depicts is always stated in words beside it |
 | `Card` | The single grouped-surface treatment: a white slab, no shadow |
 | `StateView` | The four-state contract above |
-| `ChartFrame` | Wraps every chart with its accessible equivalent — see below |
 | `ConfirmSheet` | The one confirmation pattern for destructive actions |
 
 ## Accessibility obligations
@@ -87,15 +86,16 @@ FR-049 requires WCAG 2.1 AA and FR-050 requires usability at the largest support
 - Focus order follows visual order; modals trap focus and return it on dismiss.
 - Live regions announce balance changes after an entry is saved, so a screen-reader user gets the same confirmation a sighted user gets.
 
-### Charts
+### Statistics without charts
 
-FR-019 requires a visual form, and no charting library is accessible on its own. `ChartFrame` therefore renders three things from the same data: the chart, a one-sentence text summary of the trend, and a data table reachable by screen reader. The chart itself is marked decorative — the summary and table are the accessible content, not an afterthought bolted beside it.
+This release draws no charts (research D-011, amended). Balance growth (FR-019) and the month-by-month breakdown (FR-022) are lists of figures, one row per month, each row a single accessible element that reads as a sentence — the month, what went in, what went out, and where the balance closed. A list is already what a screen reader needs, so there is no picture to pair with an equivalent and nothing that depends on colour to be read.
 
 ## Feedback and confirmation
 
 - Every action produces visible feedback within 100ms (FR-052). Any action that could exceed that shows a pending state on the control itself, never a full-screen blocking spinner.
 - Destructive actions — deleting an entry, replacing data on import, erasing everything — go through `ConfirmSheet`, which states what will happen and what is lost, and labels its action with the verb rather than "OK".
 - Saving an entry returns the user to where they were and announces the new balance. No success dialog to dismiss.
+- A save that carries the fund past 25%, 50%, 75%, or 100% of the target (FR-024) is acknowledged on the screen the user lands on, as a message they dismiss, and announced after the balance. The crossing is recorded as it is saved, so it is acknowledged once — a restart never repeats it.
 - Validation errors appear inline on the field, in words that say how to fix it, never as a modal.
 
 ## Screen inventory

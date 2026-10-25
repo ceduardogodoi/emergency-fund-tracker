@@ -78,7 +78,7 @@ Every movement of money. This table is the fund.
 - `CHECK ((type = 'withdrawal') = (withdrawal_reason IS NOT NULL))`
 - Indexed on `entry_date` — every statistic and the pace window scan by date.
 
-**Why `opening` is an entry and not a column**: FR-012 defines the balance as opening plus contributions minus withdrawals, and the plan holds that the entry set is the only truth. Modelling the opening balance as a column would put one term of the balance outside the ledger. As an entry it also anchors the left edge of the balance-over-time chart correctly. Its cost is one exclusion rule, stated once below and tested.
+**Why `opening` is an entry and not a column**: FR-012 defines the balance as opening plus contributions minus withdrawals, and the plan holds that the entry set is the only truth. Modelling the opening balance as a column would put one term of the balance outside the ledger. As an entry it also gives the month-by-month balance (FR-019) the right starting point. Its cost is one exclusion rule, stated once below and tested.
 
 ### `reminder_setting` — single row
 
@@ -123,7 +123,7 @@ Exactly one of `remaining` and `surplus` is non-zero — never a negative remain
 
 ### Saving statistics (FR-020 – FR-023)
 
-All scoped to the selected period, defaulting to all time.
+All scoped to the selected period, defaulting to all time. A recent period (last 3, 6, or 12 months) is made of **complete** calendar months only, the way the pace window is — the month in progress appears under all time alone. No period starts before the month of the first entry: months before the fund existed are not months the user saved nothing in.
 
 | Value | Definition |
 |-------|------------|
@@ -132,10 +132,10 @@ All scoped to the selected period, defaulting to all time.
 | Net saved | Total contributed − total withdrawn |
 | Contribution count | Count of `contribution` rows. **Excludes `opening`.** |
 | Largest contribution | Max `contribution` amount |
-| Average monthly contribution | Total contributed ÷ number of complete calendar months in the period, rounded down to the minor unit |
-| Per-month breakdown | One bucket per calendar month in range, including months with zero activity (FR-022) |
+| Average monthly contribution | Contributions in the period's complete months ÷ the number of those months, rounded down to the minor unit. None while the period holds no complete month |
+| Per-month breakdown | One bucket per calendar month in range, including months with zero activity (FR-022): contributed, withdrawn, and the balance at the month's close (FR-019), carried in from before the period |
 
-**Streaks (FR-021)**: a month counts as active if it holds at least one `contribution`. The current streak counts back from the current month; if the current month has no contribution yet, counting starts from the previous month, so a streak is not reported as broken partway through a month that has not ended. The longest streak is the longest run of active months anywhere in history.
+**Streaks (FR-021)**: a month counts as active if it holds at least one `contribution`. The current streak counts back from the current month; if the current month has no contribution yet, counting starts from the previous month, so a streak is not reported as broken partway through a month that has not ended. The longest streak is the longest run of active months in the selected period. Both streaks follow the period filter like every other statistic, and a run that began before the period is cut at its start.
 
 ### Forecast (FR-026 – FR-032)
 
