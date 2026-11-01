@@ -231,20 +231,20 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Tests for User Story 4
 
-- [ ] T106 [P] [US4] Unit tests for `calculatePace` over complete calendar months only, asserting the in-progress month is excluded, in `tests/unit/domain/forecast/pace.test.ts`
-- [ ] T107 [P] [US4] Unit tests for `project` covering all four `ForecastState` cases in `tests/unit/domain/forecast/project.test.ts`
-- [ ] T108 [P] [US4] Unit tests for `requiredMonthly` and the exceeds-pace indication in `tests/unit/domain/forecast/required.test.ts`
-- [ ] T109 [P] [US4] Component tests rendering the forecast screen in all four states in `tests/component/forecast.test.tsx`
-- [ ] T110 [P] [US4] Maestro flow covering the Story 4 journey in `e2e/us4-forecast.yaml`
+- [X] T106 [P] [US4] Unit tests for `calculatePace` over complete calendar months only, asserting the in-progress month is excluded, in `tests/unit/domain/forecast/pace.test.ts` — the window starts no earlier than the month of the first entry, through `periodMonths`, so the forecast and the statistics agree about when the fund began; the opening balance's month is history but its amount is not saving
+- [X] T107 [P] [US4] Unit tests for `project` covering all four `ForecastState` cases in `tests/unit/domain/forecast/project.test.ts` — a reached fund is `reached` even before three months of history, ahead of the data model's former order (amended there)
+- [X] T108 [P] [US4] Unit tests for `requiredMonthly` and the exceeds-pace indication in `tests/unit/domain/forecast/required.test.ts` — the exceeds-pace indication became `desiredContribution`, which also says when the date has passed or the fund needs nothing, and quotes the pace it compares with; `unmeasured` while there is no pace. The required amount rounds up, a fourth rule in `src/domain/money/rounding.ts` (`divideToRequiredAmount`)
+- [X] T109 [P] [US4] Component tests rendering the forecast screen in all four states in `tests/component/forecast.test.tsx` — also the recalculation after an entry or a target change (Story 4 scenarios 2 and 6), and the desired-date card in each of its states
+- [X] T110 [P] [US4] Maestro flow covering the Story 4 journey in `e2e/us4-forecast.yaml` — seeded through the development route as a link: two months for the insufficient state, six for a projection of 18 months, then a contribution today that moves it to 16 without moving the pace, and a desired date set on the goal screen and read back on the forecast. The zero-pace state needs a withdrawal and waits for Story 5; it is covered by the component suite. Passes on both, alongside every earlier flow
 
 ### Implementation for User Story 4
 
-- [ ] T111 [US4] Implement `calculatePace` in `src/domain/forecast/pace.ts` — also re-enable the commented-out 95% coverage threshold for `./src/domain/forecast/` in `jest.config.mjs`
-- [ ] T112 [US4] Implement `project` and the `ForecastState` union in `src/domain/forecast/project.ts`
-- [ ] T113 [US4] Implement `requiredMonthly` in `src/domain/forecast/required.ts`
-- [ ] T114 [US4] Implement forecast hooks invalidating on any ledger or goal change in `src/features/forecast/hooks.ts`
-- [ ] T115 [US4] Build the forecast screen rendering all four states, always stating the assumed pace alongside the date, in `app/forecast.tsx`
-- [ ] T116 [US4] Add the desired completion date setting and its required-contribution readout to `app/settings/goal.tsx`
+- [X] T111 [US4] Implement `calculatePace` in `src/domain/forecast/pace.ts` — also re-enable the commented-out 95% coverage threshold for `./src/domain/forecast/` in `jest.config.mjs`
+- [X] T112 [US4] Implement `project` and the `ForecastState` union in `src/domain/forecast/project.ts` — `projected` also carries `paceMonths`, the window FR-028's assumption names
+- [X] T113 [US4] Implement `requiredMonthly` in `src/domain/forecast/required.ts` — `requiredMonthly` refuses a date that is not ahead through `validateDesiredCompletionDate`, the same rule the goal form applies on save
+- [X] T114 [US4] Implement forecast hooks invalidating on any ledger or goal change in `src/features/forecast/hooks.ts` — no query key of its own: the forecast is derived from the goal query and the entries every ledger reader shares, so the unused `queryKeys.forecast` left the registry, as `statistics` did in T096. `useSavingPosition` gives the goal screen the same balance and pace
+- [X] T115 [US4] Build the forecast screen rendering all four states, always stating the assumed pace alongside the date, in `app/forecast.tsx` — the cards are `src/features/forecast/forecast-cards.tsx`, the desired-date readout `desired-readout.tsx`, shared with the goal screen; Home gains the way in
+- [X] T116 [US4] Add the desired completion date setting and its required-contribution readout to `app/settings/goal.tsx` — chosen a month at a time with a stepper (`src/features/goal/desired-date-field.tsx`) and stored as the month's last day, decided with the user on 2026-11-01: the figure counts whole months, and the iOS calendar does not take Maestro's taps after a scroll. Earliest month offered is the next one; a stored date that has passed is refused on save. The readout follows the target being drafted. Fixes a bug the field would have exposed: the goal draft built every goal with no date, so any revision erased one
 
 **Checkpoint**: Stories 1–4 all work independently
 

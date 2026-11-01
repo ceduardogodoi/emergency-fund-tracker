@@ -508,6 +508,122 @@ export const strings = {
   },
 
   /**
+   * The forecast (FR-026 – FR-032).
+   *
+   * The pace is always stated beside the date it produces (FR-028): a date the user cannot
+   * trace back to what they save each month is a number they cannot evaluate. "Ritmo",
+   * never "taxa" — one word per concept, as the ui-contract asks.
+   */
+  forecast: {
+    title: 'Previsão',
+    /** The way in, from Home. */
+    action: 'Ver previsão',
+    /** Above the projected date (FR-027). */
+    projectedLabel: 'Você deve alcançar a meta em',
+    /**
+     * How far away the projected date is, in months (FR-027).
+     *
+     * @param months Whole months, at least one.
+     * @returns The line under the date.
+     */
+    monthsAway: (months: number): string =>
+      months === 1 ? 'Daqui a 1 mês' : `Daqui a ${months} meses`,
+    /**
+     * The assumption the date rests on (FR-028), with what the pace was measured over.
+     *
+     * @param pace The formatted pace per month.
+     * @param months How many complete months it was measured over — three to six.
+     * @returns The sentence under the date.
+     */
+    assumption: (pace: string, months: number): string =>
+      `Supondo que você continue guardando ${pace} por mês, a sua média nos últimos ${months} meses completos.`,
+    /** Too little history for a pace (FR-029). */
+    insufficientTitle: 'Ainda é cedo para uma previsão',
+    /**
+     * How much more history the forecast needs.
+     *
+     * @param needed Complete months still to come, at least one.
+     * @returns The sentence that leads the card.
+     */
+    insufficientBody: (needed: number): string =>
+      needed === 1
+        ? 'Falta 1 mês completo de histórico para calcular o seu ritmo.'
+        : `Faltam ${needed} meses completos de histórico para calcular o seu ritmo.`,
+    /**
+     * Why the history is needed, and how much there is.
+     *
+     * @param minimum The months the pace needs.
+     * @param available Complete months so far, possibly none.
+     * @returns The explanation under it.
+     */
+    insufficientHelp: (minimum: number, available: number): string =>
+      `A previsão parte da média que você guarda por mês e precisa de pelo menos ${minimum} meses completos. ${
+        available === 0
+          ? 'Ainda não há nenhum.'
+          : available === 1
+            ? 'Até agora há 1.'
+            : `Até agora há ${available}.`
+      }`,
+    /** A pace of zero or less (FR-030): why there is no date, and what brings one back. */
+    noPaceTitle: 'Não há como prever uma data',
+    noPaceBody:
+      'Nos últimos meses completos, o que você retirou igualou ou superou o que contribuiu. Nesse ritmo a meta não chega, então não há data a mostrar. Uma nova contribuição retoma a previsão.',
+    /** Nothing left to save. */
+    reachedBody: 'Sua reserva já chegou à meta, então não há data a prever.',
+    /** The desired completion date (FR-031), read back on the forecast and the goal screen. */
+    desiredHeading: 'Data desejada',
+    /**
+     * @param month The desired month, formatted.
+     * @returns The line naming it.
+     */
+    desiredTarget: (month: string): string => `Concluir até ${month}`,
+    /**
+     * @param amount The formatted contribution per month.
+     * @returns The required contribution.
+     */
+    desiredRequired: (amount: string): string => `Para chegar lá: ${amount} por mês`,
+    /**
+     * @param pace The formatted pace per month.
+     * @returns The comparison, when the required amount is more.
+     */
+    desiredExceeds: (pace: string): string => `Acima do seu ritmo de ${pace} por mês`,
+    /** The comparison against a pace of zero or less, which is not worth quoting as money. */
+    desiredExceedsNoPace: 'Acima do seu ritmo, que nos últimos meses completos não passou de zero',
+    /**
+     * @param pace The formatted pace per month.
+     * @returns The comparison, when the pace already covers it.
+     */
+    desiredWithin: (pace: string): string => `Dentro do seu ritmo de ${pace} por mês`,
+    desiredUnmeasured: 'Ainda não há histórico suficiente para comparar com o seu ritmo.',
+    desiredCovered: 'Seu saldo já cobre esta meta.',
+    desiredPassed: 'Essa data já passou. Escolha outra para ver quanto guardar por mês.',
+    /** When the ledger cannot be read. Never an amount computed from nothing. */
+    desiredUnavailable: 'Não foi possível calcular quanto guardar por mês.',
+    /** The way to the goal screen, where the date is set. */
+    desiredSetAction: 'Definir data desejada',
+    desiredChangeAction: 'Alterar data desejada',
+  },
+
+  /**
+   * Choosing the desired completion date on the goal screen (FR-031).
+   *
+   * A month rather than a day: the required contribution counts whole months, and a date is
+   * reached "by the end of" its month, so the day would be a choice that changes nothing.
+   * The buttons say in words which way they move, because "−1" is read aloud as a symbol.
+   */
+  desiredDate: {
+    label: 'Data desejada',
+    help: 'Opcional. Diga até quando quer completar a reserva e veja quanto guardar por mês.',
+    none: 'Nenhuma data definida.',
+    add: 'Definir uma data',
+    remove: 'Remover a data',
+    previousYear: 'Ano anterior',
+    previousMonth: 'Mês anterior',
+    nextMonth: 'Próximo mês',
+    nextYear: 'Próximo ano',
+  },
+
+  /**
    * What a rejected value means, keyed the way the domain reports it.
    *
    * Two of the entries are shared, because "not a number" is the same problem whichever
@@ -525,6 +641,7 @@ export const strings = {
     entryDateInFuture: 'A data não pode ser no futuro.',
     entryNoteTooLong: 'A observação ficou longa demais.',
     entryOpeningAlreadyExists: 'Você já registrou um saldo inicial.',
+    desiredDateNotAhead: 'Escolha uma data depois de hoje.',
     /** For a key no screen knows about — an older stored value, or a new rule. */
     unknown: 'Confira este valor.',
   },

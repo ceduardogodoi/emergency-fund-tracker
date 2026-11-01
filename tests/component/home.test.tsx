@@ -156,6 +156,17 @@ describe('Home', () => {
     expect(mockPush).toHaveBeenCalledWith('/statistics')
   })
 
+  // FR-026 – FR-032 live on their own screen too, beside the statistics.
+  it('offers a way to the forecast', async () => {
+    await storeGoal()
+    await harness.render(<HomeScreen />)
+    await screen.findByTestId('standing-card')
+
+    await userEvent.press(screen.getByRole('button', { name: strings.forecast.action }))
+
+    expect(mockPush).toHaveBeenCalledWith('/forecast')
+  })
+
   // FR-024. A contribution returns here, so this is where the milestone it crossed is
   // shown. 50 rather than 25, so a banner that named the first threshold whatever it was
   // told would fail.

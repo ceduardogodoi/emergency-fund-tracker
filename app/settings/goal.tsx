@@ -3,6 +3,11 @@ import type { ReactNode } from 'react'
 
 import { toViewState } from '@/runtime/query'
 import { useServices } from '@/runtime/services-context'
+import type { CalendarDate } from '@/domain/dates/calendar-date'
+import type { Money } from '@/domain/money/money'
+import { DesiredContributionLines } from '@/features/forecast/desired-readout'
+import { desiredDateFor, useSavingPosition } from '@/features/forecast/hooks'
+import { DesiredDateField } from '@/features/goal/desired-date-field'
 import { GoalImpact } from '@/features/goal/goal-impact'
 import { useStoredGoal, type StoredGoal } from '@/features/goal/hooks'
 import { LevelOptions } from '@/features/goal/level-options'
@@ -96,6 +101,7 @@ function RevisionForm({ stored }: RevisionFormProps): ReactNode {
         error={draft.coverageError}
       />
       {draft.target === null ? null : <RevisedTarget stored={stored} draft={draft} />}
+      <DesiredDate draft={draft} />
       <Button
         label={strings.action.save}
         onPress={draft.save}
@@ -135,5 +141,54 @@ function RevisedTarget({ stored, draft }: RevisedTargetProps): ReactNode {
       />
       <GoalImpact current={stored.goal.target} next={draft.target} />
     </>
+  )
+}
+
+/** Props for {@link DesiredDate}. */
+interface DesiredDateProps {
+  readonly draft: GoalDraftState
+}
+
+/** The desired completion date, and what it asks against the target as drafted (FR-031). */
+function DesiredDate({ draft }: DesiredDateProps): ReactNode {
+  return (
+    <DesiredDateField
+      value={draft.desiredCompletionDate}
+      onChange={draft.changeDesiredDate}
+      error={draft.desiredDateError}
+    >
+      {draft.target === null || draft.desiredCompletionDate === null ? null : (
+        <RequiredContribution target={draft.target} date={draft.desiredCompletionDate} />
+      )}
+    </DesiredDateField>
+  )
+}
+
+/** Props for {@link RequiredContribution}. */
+interface RequiredContributionProps {
+  /** The target being drafted, which the remaining amount is measured against. */
+  readonly target: Money
+  readonly date: CalendarDate
+}
+
+/**
+ * What the desired date asks, against the target as drafted (FR-031).
+ *
+ * The draft's target rather than the stored one, so the figure follows the form: choosing a
+ * larger level shows what the date would then ask before anything is saved. A ledger that
+ * cannot be read says so, rather than asking for a contribution worked out from nothing.
+ */
+function RequiredContribution({ target, date }: RequiredContributionProps): ReactNode {
+  const position = useSavingPosition()
+  if (position.isError) {
+    return <Text tone="secondary">{strings.forecast.desiredUnavailable}</Text>
+  }
+  if (position.data === undefined) {
+    return null
+  }
+  return (
+    <DesiredContributionLines
+      contribution={desiredDateFor(position.data, target, date).contribution}
+    />
   )
 }

@@ -1,0 +1,169 @@
+# User Story 4 — forecast when the goal will be reached.
+#
+# The story's Independent Test, on a device: a history too short for a pace (FR-029), then
+# one long enough, with the projection and the pace it assumes checked against a hand
+# calculation (FR-027, FR-028), recalculated after a contribution (FR-032), and a desired
+# completion date set on the goal screen with the contribution it requires (FR-031).
+#
+# The funds come from the development seed route (`npm run seed`, T087), opened as a link:
+# R$ 500,00 on the 5th of each complete month before today, against a goal of R$ 12.000,00,
+# and nothing in the month in progress. Relative to the day the flow runs, so every figure
+# below holds on any date — which is why the projected date itself is not asserted, only the
+# months to it. Hand calculation:
+#
+#   2 months   2 complete months of the 3 a pace needs, so 1 more
+#   6 months   balance 3.000,00, so 9.000,00 remains · pace 500,00 over 6 months ·
+#              9.000 ÷ 500 = 18 months
+#   + 1.000,00 today, in the balance but not the pace: 8.000,00 remains, 16 months
+#   desired    a year on, the field's starting point: the 12 months after this one, so
+#              8.000,00 ÷ 12 = 666,67 a month, above the pace. A year later, 24 months:
+#              333,34 a month (rounded up), within it
+#
+# The zero-pace state (FR-030) needs a withdrawal, which arrives with Story 5; until then it
+# is covered by `tests/component/forecast.test.tsx` alone.
+#
+# Runs inside Expo Go; see `us1-set-target.yaml` for why, for why `APP_ID` and `DEV_URL` come
+# from the npm scripts, and for why amounts are matched by their digits alone.
+appId: ${APP_ID}
+name: US4 — forecast
+---
+- clearState
+- runFlow: open-app.yaml
+
+# FR-029 — two complete months is not enough, and the screen says how much more is needed.
+# Opening a link reloads the app inside Expo Go, bundle check included, so this waits as
+# long as a restart does.
+- openLink: ${DEV_URL}/--/dev/seed?months=2&pattern=steady
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: 'forecast'
+    direction: DOWN
+- tapOn:
+    id: 'forecast'
+- extendedWaitUntil:
+    visible:
+      id: 'forecast-insufficient'
+    timeout: 20000
+- assertVisible: 'Falta 1 mês completo de histórico para calcular o seu ritmo.'
+- assertNotVisible:
+    id: 'projected-date'
+
+# FR-027, FR-028 — six months: a date, the months to it, and the pace it assumes.
+- openLink: ${DEV_URL}/--/dev/seed?months=6&pattern=steady
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+- assertVisible:
+    id: 'balance-amount'
+    text: '.*3[.,]000[.,]00.*'
+- scrollUntilVisible:
+    element:
+      id: 'forecast'
+    direction: DOWN
+- tapOn:
+    id: 'forecast'
+- extendedWaitUntil:
+    visible:
+      id: 'projected-date'
+    timeout: 20000
+- assertVisible: 'Daqui a 18 meses'
+- assertVisible: '.*500[.,]00 por mês, a sua média nos últimos 6 meses completos.*'
+- assertVisible: '.*Faltam .*9[.,]000[.,]00.*'
+
+# FR-032 — a contribution today moves the date, not the pace. Back to Home by a restart, as
+# `us2-record-progress.yaml` does: Maestro's `back` is Android's.
+- stopApp
+- runFlow: open-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+- tapOn:
+    id: 'contribute'
+- extendedWaitUntil:
+    visible:
+      id: 'amount-input'
+    timeout: 20000
+- tapOn:
+    id: 'amount-input'
+- inputText: '100000'
+- swipe:
+    start: 50%, 32%
+    end: 50%, 22%
+- scrollUntilVisible:
+    element:
+      id: 'save-entry'
+    direction: DOWN
+- tapOn:
+    id: 'save-entry'
+- extendedWaitUntil:
+    visible:
+      id: 'balance-amount'
+      text: '.*4[.,]000[.,]00.*'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: 'forecast'
+    direction: DOWN
+- tapOn:
+    id: 'forecast'
+- extendedWaitUntil:
+    visible:
+      id: 'projected-date'
+    timeout: 20000
+- assertVisible: 'Daqui a 16 meses'
+- assertVisible: '.*500[.,]00 por mês, a sua média nos últimos 6 meses completos.*'
+
+# FR-031 — a desired date, set a month at a time on the goal screen, and what it asks.
+- scrollUntilVisible:
+    element:
+      id: 'desired-date-action'
+    direction: DOWN
+- tapOn:
+    id: 'desired-date-action'
+- extendedWaitUntil:
+    visible:
+      id: 'expenses-input'
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: 'desired-date-add'
+    direction: DOWN
+- tapOn:
+    id: 'desired-date-add'
+- scrollUntilVisible:
+    element: '.*Para chegar lá: .*666[.,]67 por mês.*'
+    direction: DOWN
+- assertVisible: '.*Acima do seu ritmo de .*500[.,]00 por mês.*'
+- scrollUntilVisible:
+    element:
+      id: 'desired-date-next-year'
+    direction: DOWN
+- tapOn:
+    id: 'desired-date-next-year'
+- scrollUntilVisible:
+    element: '.*Para chegar lá: .*333[.,]34 por mês.*'
+    direction: DOWN
+- assertVisible: '.*Dentro do seu ritmo de .*500[.,]00 por mês.*'
+- scrollUntilVisible:
+    element:
+      id: 'save-goal'
+    direction: DOWN
+- tapOn:
+    id: 'save-goal'
+
+# Saved, the forecast reads it back in the same words.
+- extendedWaitUntil:
+    visible:
+      id: 'forecast-desired'
+    timeout: 20000
+- scrollUntilVisible:
+    element: '.*Para chegar lá: .*333[.,]34 por mês.*'
+    direction: DOWN
+- assertVisible: '.*Dentro do seu ritmo de .*500[.,]00 por mês.*'
+- assertVisible: 'Alterar data desejada'

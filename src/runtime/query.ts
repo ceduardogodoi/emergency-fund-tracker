@@ -63,8 +63,6 @@ export const queryKeys = {
   entriesInRange: (range: DateRange) => ['entries', 'range', range.from, range.to] as const,
   /** Entries dated after today, which several calculations exclude (FR-033). */
   futureDatedEntries: (today: CalendarDate) => ['entries', 'future', today] as const,
-  /** The computed forecast (FR-028). */
-  forecast: () => ['forecast'] as const,
   /** The reminder setting. */
   reminder: () => ['reminder'] as const,
   /** The milestones already acknowledged. */

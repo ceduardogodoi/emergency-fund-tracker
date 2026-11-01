@@ -149,22 +149,28 @@ monthsToTarget= ceil(remaining ÷ pace)
 projectedDate = last day of (current month + monthsToTarget)
 ```
 
-State machine for what the forecast screen shows:
+The window starts no earlier than the month of the first entry, the rule a statistics period follows: months before the fund existed are not months the user saved nothing in. The opening balance's month counts as history, but the opening amount is not saving and is left out of the net.
+
+State machine for what the forecast screen shows, checked in this order:
 
 | Condition | Result |
 |-----------|--------|
+| `isReached` | `reached` — no projection needed |
 | `monthsInWindow < 3` | `insufficient-history`, stating how many more months are needed (FR-029) |
 | `pace ≤ 0` | `no-pace`, explaining that a date cannot be projected at a pace of zero and prompting a contribution (FR-030) |
-| `isReached` | `reached` — no projection needed |
-| otherwise | `projected` with `pace`, `monthsToTarget`, and `projectedDate` (FR-027, FR-028) |
+| otherwise | `projected` with `pace`, the months it was measured over, `monthsToTarget`, and `projectedDate` (FR-027, FR-028) |
+
+`reached` comes first, amended 2026-11-01 (T112): it was listed third, which would tell a fund that opened at its target to wait three months for a pace it does not need.
 
 **Required monthly contribution (FR-031)**, when a desired completion date is set:
 
 ```
-monthsAvailable = whole calendar months between now and desiredCompletionDate  (≥ 1)
+monthsAvailable = calendar months after the current one, up to and including the desired date's month  (≥ 1)
 requiredMonthly = ceil(remaining ÷ monthsAvailable)
 exceedsPace     = requiredMonthly > pace
 ```
+
+The months available are the ones a projection counts — whole months from the end of the current one — so saving `requiredMonthly` projects onto the desired month and not after it. With fewer than three months of history there is no pace to compare with, and the screen says so rather than calling the amount within or above it. The date is chosen a month at a time and stored as that month's last day (T116).
 
 **Recovery estimate after a withdrawal (FR-018)**: the same projection applied to the shortfall rather than the full remaining amount.
 
@@ -172,7 +178,7 @@ exceedsPace     = requiredMonthly > pace
 
 Division appears in exactly four places: average monthly contribution, pace, months-to-target, and required monthly contribution. One module owns all of it.
 
-- Amounts derived by division round **down** to the minor unit, so the app never overstates what the user has been saving.
+- Amounts derived by division round **down** to the minor unit, so the app never overstates what the user has been saving — except the required monthly contribution, which rounds **up**: rounded down, saving it every month would arrive a few centavos short of the date it was asked for.
 - Month counts derived by division round **up**, so the app never promises an earlier date than the arithmetic supports.
 - Display rounding is presentation only and never feeds another calculation.
 

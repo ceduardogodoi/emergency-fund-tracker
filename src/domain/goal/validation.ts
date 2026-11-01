@@ -1,3 +1,4 @@
+import { isAfter, type CalendarDate } from '../dates/calendar-date'
 import { validationError, type ValidationError } from '../errors/app-error'
 import { money, type Money } from '../money/money'
 import { err, ok, type Result } from '../result'
@@ -77,6 +78,29 @@ export function validateTarget(minorUnits: number): Result<Money, ValidationErro
     return err(validationError('target', 'goal.target-must-be-positive'))
   }
   return ok(money(minorUnits))
+}
+
+/**
+ * Checks a desired completion date (FR-031): optional, and when set, later than today.
+ *
+ * Today itself is refused: a fund cannot be completed by a date that is already here, and
+ * the required contribution it would ask is everything at once. A date that has passed is
+ * refused too, which a stored one does as time goes by — so re-saving a goal whose date
+ * has passed asks the user to move it or remove it, rather than storing a date the forecast
+ * can only call passed.
+ *
+ * @param date The chosen date, or null for none.
+ * @param today From the `Clock` port.
+ * @returns The date, or a validation failure naming the field.
+ */
+export function validateDesiredCompletionDate(
+  date: CalendarDate | null,
+  today: CalendarDate,
+): Result<CalendarDate | null, ValidationError> {
+  if (date !== null && !isAfter(date, today)) {
+    return err(validationError('desiredCompletionDate', 'goal.desired-date-not-ahead'))
+  }
+  return ok(date)
 }
 
 /**

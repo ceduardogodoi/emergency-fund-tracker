@@ -1,4 +1,4 @@
-import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import type { RedirectProps } from 'expo-router'
 
 import { storageError } from '@/domain/errors/app-error'
@@ -385,6 +385,201 @@ describe('the goal revision screen', () => {
 
     await waitFor(() => {
       expect(mockRedirect).toHaveBeenCalledWith('/onboarding/expenses')
+    })
+  })
+})
+
+/**
+ * The desired completion date (FR-031), chosen a month at a time and stored as the last day
+ * of that month — the day a projection resolves to, since a target is reached "by the end
+ * of" a month.
+ *
+ * The harness's today is the 22nd of August 2026, so the earliest month on offer is
+ * September. The fund behind the readout saves 500,00 on the 5th of each month from
+ * February to July: six complete months, a pace of 500,00, and a balance of 3 000,00.
+ */
+describe('the desired completion date (FR-031)', () => {
+  /** Six months of 500,00, February to July. */
+  async function storePace(): Promise<void> {
+    for (const month of ['02', '03', '04', '05', '06', '07']) {
+      expectOk(
+        await harness.repositories.ledger.add({
+          type: 'contribution',
+          amount: money(50_000),
+          date: calendarDate(`2026-${month}-05`),
+          note: null,
+          withdrawalReason: null,
+        }),
+      )
+    }
+  }
+
+  /** The month the field shows, as the screen words it. */
+  function chosen(month: string): string {
+    return strings.forecast.desiredTarget(harness.services.format.month(month))
+  }
+
+  /** Presses one of the field's buttons by its name. */
+  async function press(name: string): Promise<void> {
+    await userEvent.press(screen.getByRole('button', { name }))
+  }
+
+  /** Saves, and waits for the screen to leave. */
+  async function saveAndLeave(): Promise<void> {
+    await press(strings.action.save)
+    await waitFor(() => {
+      expect(mockBack).toHaveBeenCalled()
+    })
+  }
+
+  it('opens on the stored date', async () => {
+    await storeGoal({ desiredCompletionDate: calendarDate('2027-06-30') })
+    await openRevision()
+
+    expect(screen.getByText(chosen('2027-06'))).toBeTruthy()
+  })
+
+  // Twelve months on is where the field starts; each button then moves it, and what is
+  // saved is the last day of the month shown.
+  it('sets a date a month or a year at a time, and saves it', async () => {
+    await storeGoal()
+    await openRevision()
+    expect(screen.getByText(strings.desiredDate.none)).toBeTruthy()
+
+    await press(strings.desiredDate.add)
+    expect(screen.getByText(chosen('2027-08'))).toBeTruthy()
+    await press(strings.desiredDate.nextMonth)
+    await press(strings.desiredDate.nextYear)
+    await press(strings.desiredDate.previousMonth)
+    expect(screen.getByText(chosen('2028-08'))).toBeTruthy()
+    await press(strings.desiredDate.previousYear)
+    await press(strings.desiredDate.nextMonth)
+    expect(screen.getByText(chosen('2027-09'))).toBeTruthy()
+
+    await saveAndLeave()
+    expect(expectOk(await harness.repositories.goal.get())).toMatchObject({
+      desiredCompletionDate: '2027-09-30',
+    })
+  })
+
+  // September 2026 to August 2027 is twelve months: 9 000,00 remaining is 750,00 a month,
+  // more than the 500,00 pace. The figure follows the target being drafted — the cautious
+  // level's 18 000,00 leaves 15 000,00, which is 1 250,00 a month — before anything is saved.
+  it('states the contribution the date requires, following the target being drafted', async () => {
+    await storeGoal({ desiredCompletionDate: calendarDate('2027-08-31') })
+    await storePace()
+    await openRevision()
+
+    const field = within(await screen.findByTestId('desired-date-field'))
+    expect(await field.findByText(strings.forecast.desiredRequired(formatted(75_000)))).toBeTruthy()
+    expect(field.getByText(strings.forecast.desiredExceeds(formatted(50_000)))).toBeTruthy()
+
+    await userEvent.press(screen.getByLabelText(strings.levels.cautious.name))
+
+    expect(
+      await field.findByText(strings.forecast.desiredRequired(formatted(125_000))),
+    ).toBeTruthy()
+  })
+
+  it('removes the date', async () => {
+    await storeGoal({ desiredCompletionDate: calendarDate('2027-06-30') })
+    await openRevision()
+
+    await press(strings.desiredDate.remove)
+    expect(screen.getByText(strings.desiredDate.none)).toBeTruthy()
+
+    await saveAndLeave()
+    expect(expectOk(await harness.repositories.goal.get())).toMatchObject({
+      desiredCompletionDate: null,
+    })
+  })
+
+  // Next month is the earliest the field offers. From March 2027 a year back is March 2026,
+  // which has passed; a month back is February 2027, which has not.
+  it('offers no month earlier than the next one', async () => {
+    await storeGoal({ desiredCompletionDate: calendarDate('2027-03-31') })
+    await openRevision()
+
+    expect(screen.getByRole('button', { name: strings.desiredDate.previousYear })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: strings.desiredDate.previousMonth }),
+    ).not.toBeDisabled()
+  })
+
+  it('offers no month back from the next one', async () => {
+    await storeGoal({ desiredCompletionDate: calendarDate('2026-09-30') })
+    await openRevision()
+
+    expect(screen.getByRole('button', { name: strings.desiredDate.previousMonth })).toBeDisabled()
+    expect(screen.getByRole('button', { name: strings.desiredDate.nextMonth })).not.toBeDisabled()
+  })
+
+  // Revising anything else keeps the date. The draft used to build every goal with no date,
+  // so any revision would have erased one the user had set.
+  it('keeps the stored date when other figures change', async () => {
+    await storeGoal({ desiredCompletionDate: calendarDate('2027-06-30') })
+    await openRevision()
+
+    await userEvent.press(screen.getByLabelText(strings.levels.cautious.name))
+    await saveAndLeave()
+
+    expect(expectOk(await harness.repositories.goal.get())).toMatchObject({
+      levelKey: 'cautious',
+      desiredCompletionDate: '2027-06-30',
+    })
+  })
+
+  // A date is not one of the figures the revision log records (FR-035), so moving it alone
+  // adds no row the user would read as a change of target.
+  it('records no revision when only the date changes', async () => {
+    await storeGoal({ desiredCompletionDate: calendarDate('2027-06-30') })
+    await openRevision()
+
+    await press(strings.desiredDate.nextMonth)
+    await saveAndLeave()
+
+    expect(expectOk(await harness.repositories.goal.get())).toMatchObject({
+      desiredCompletionDate: '2027-07-31',
+    })
+    expect(expectOk(await harness.repositories.goal.listChanges())).toHaveLength(0)
+  })
+
+  // A ledger that cannot be read says so, rather than asking for an amount worked out
+  // against a balance of nothing.
+  it('says the contribution cannot be worked out when the ledger cannot be read', async () => {
+    await storeGoal({ desiredCompletionDate: calendarDate('2027-08-31') })
+    await storePace()
+    jest
+      .spyOn(harness.repositories.ledger, 'list')
+      .mockResolvedValue(err(storageError('ledger.list-failed')))
+    await openRevision()
+
+    const field = within(screen.getByTestId('desired-date-field'))
+    expect(await field.findByText(strings.forecast.desiredUnavailable)).toBeTruthy()
+    // Built from the copy itself, so the check cannot drift from the sentence it rules out.
+    const required = strings.forecast.desiredRequired('VALUE').split('VALUE')[0] ?? ''
+    expect(field.queryByText(new RegExp(`^${required}`))).toBeNull()
+  })
+
+  // A stored date passes as time does. The field says so, and saving asks for it to be moved
+  // or removed rather than storing it again.
+  it('refuses to save a date that has passed', async () => {
+    await storeGoal({ desiredCompletionDate: calendarDate('2026-07-31') })
+    await openRevision()
+
+    expect(
+      await within(screen.getByTestId('desired-date-field')).findByText(
+        strings.forecast.desiredPassed,
+      ),
+    ).toBeTruthy()
+
+    await userEvent.press(screen.getByLabelText(strings.levels.cautious.name))
+    await press(strings.action.save)
+
+    expect(await screen.findByText(strings.validation.desiredDateNotAhead)).toBeTruthy()
+    expect(mockBack).not.toHaveBeenCalled()
+    expect(expectOk(await harness.repositories.goal.get())).toMatchObject({
+      levelKey: 'balanced',
     })
   })
 })

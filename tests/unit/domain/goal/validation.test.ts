@@ -1,5 +1,7 @@
+import { calendarDate } from '@/domain/dates/calendar-date'
 import {
   validateCoverageMonths,
+  validateDesiredCompletionDate,
   validateMonthlyExpenses,
   validateTarget,
 } from '@/domain/goal/validation'
@@ -149,6 +151,49 @@ describe('validateTarget', () => {
     expect(validateTarget(1.5)).toMatchObject({
       ok: false,
       error: { messageKey: 'goal.target-not-a-number' },
+    })
+  })
+})
+
+// FR-031 and the data model: a desired completion date, when set, is later than today.
+describe('validateDesiredCompletionDate', () => {
+  const TODAY = calendarDate('2026-08-22')
+
+  it('accepts a date after today', () => {
+    expect(validateDesiredCompletionDate(calendarDate('2027-03-31'), TODAY)).toEqual({
+      ok: true,
+      value: '2027-03-31',
+    })
+  })
+
+  it('accepts the day after today', () => {
+    expect(validateDesiredCompletionDate(calendarDate('2026-08-23'), TODAY)).toEqual({
+      ok: true,
+      value: '2026-08-23',
+    })
+  })
+
+  // No date is a choice the user may make — the field is optional.
+  it('accepts no date', () => {
+    expect(validateDesiredCompletionDate(null, TODAY)).toEqual({ ok: true, value: null })
+  })
+
+  it('rejects today', () => {
+    expect(validateDesiredCompletionDate(TODAY, TODAY)).toEqual({
+      ok: false,
+      error: {
+        kind: 'validation',
+        field: 'desiredCompletionDate',
+        messageKey: 'goal.desired-date-not-ahead',
+      },
+    })
+  })
+
+  // A stored date passes as time does, and saving it again would store a date the forecast
+  // can only call passed.
+  it('rejects a date that has passed', () => {
+    expect(validateDesiredCompletionDate(calendarDate('2026-07-31'), TODAY)).toMatchObject({
+      ok: false,
     })
   })
 })

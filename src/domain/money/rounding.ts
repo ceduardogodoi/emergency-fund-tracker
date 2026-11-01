@@ -4,8 +4,9 @@ import { money, type Money } from './money'
  * The single home for every division in this codebase. The constitution requires the
  * rounding policy to be defined once, centrally, and covered by tests.
  *
- * Three rules, chosen so the app is never optimistic about the user's position:
+ * Four rules, chosen so the app is never optimistic about the user's position:
  *   - amounts derived by division round DOWN, so it never overstates saving
+ *   - an amount the user must still save each month rounds UP, so saving it is enough
  *   - month counts still to save round UP, so it never promises an early date
  *   - month counts already saved round DOWN, so it never claims cover the fund lacks
  *
@@ -16,13 +17,37 @@ import { money, type Money } from './money'
 
 /** Divides an amount, rounding down. Floor, not truncation: -999.5 becomes -1_000. */
 export function divideToAmount(total: Money, divisor: number): Money {
+  assertWholeDivisor(divisor)
+  return money(Math.floor(total / divisor))
+}
+
+/**
+ * Divides an amount the user must save, rounding up — the required monthly contribution
+ * (FR-031). Rounded down, saving it for every month would arrive a few centavos short of
+ * the date it was asked for, which is a promise the arithmetic does not keep.
+ *
+ * @param total What remains to be saved, in minor units.
+ * @param divisor The months available, a whole number above zero.
+ * @returns The amount per month, rounded up to the minor unit.
+ * @throws {RangeError} If `divisor` is zero or not a whole number.
+ */
+export function divideToRequiredAmount(total: Money, divisor: number): Money {
+  assertWholeDivisor(divisor)
+  return money(Math.ceil(total / divisor))
+}
+
+/**
+ * Refuses a divisor no count of months or entries can be.
+ *
+ * @throws {RangeError} If `divisor` is zero or not a whole number.
+ */
+function assertWholeDivisor(divisor: number): void {
   if (divisor === 0) {
     throw new RangeError('Cannot divide an amount by zero')
   }
   if (!Number.isInteger(divisor)) {
     throw new RangeError(`Divisor must be a whole number, received ${divisor}`)
   }
-  return money(Math.floor(total / divisor))
 }
 
 /**

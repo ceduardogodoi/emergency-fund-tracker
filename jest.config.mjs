@@ -71,10 +71,6 @@ export default {
     './src/domain/money/': { statements: 95, branches: 95, functions: 95, lines: 95 },
     './src/domain/dates/': { statements: 95, branches: 95, functions: 95, lines: 95 },
     './src/domain/statistics/': { statements: 95, branches: 95, functions: 95, lines: 95 },
-    // The constitution names four modules for the 95% floor. Forecast does not exist yet,
-    // and Jest treats a threshold whose path matches no file as a hard failure rather than
-    // a no-op — which would leave CI red for every commit until Phase 6. Re-enable it with
-    // the task that creates it, T111, which carries a reminder.
-    // './src/domain/forecast/': { statements: 95, branches: 95, functions: 95, lines: 95 },
+    './src/domain/forecast/': { statements: 95, branches: 95, functions: 95, lines: 95 },
   },
 }

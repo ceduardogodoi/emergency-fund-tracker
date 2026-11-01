@@ -1,6 +1,7 @@
 import { money } from '@/domain/money/money'
 import {
   divideToAmount,
+  divideToRequiredAmount,
   divideToWholeMonths,
   percentOf,
   wholeMonthsCovered,
@@ -10,6 +11,7 @@ import {
  * The constitution requires one rounding policy with one home. These tests are that
  * policy's specification:
  *   - amounts derived by division round DOWN, so the app never overstates saving
+ *   - an amount the user must still save each month rounds UP, so it never falls short
  *   - month counts still to save round UP, so it never promises an early date
  *   - month counts already saved round DOWN, so it never claims cover the fund lacks
  */
@@ -38,6 +40,30 @@ describe('rounding policy', () => {
 
     it('rejects a fractional divisor, which no count of months or entries can be', () => {
       expect(() => divideToAmount(money(100), 2.5)).toThrow(RangeError)
+    })
+  })
+
+  describe('divideToRequiredAmount — rounds up', () => {
+    it('divides evenly when it can', () => {
+      expect(divideToRequiredAmount(money(60_000), 6)).toBe(10_000)
+    })
+
+    // Saving 33_333 a month for 3 months reaches 99_999, a centavo short of the date the
+    // user asked for. The figure to save has to be enough.
+    it('rounds up on any remainder, so the amount asked for is enough', () => {
+      expect(divideToRequiredAmount(money(100_000), 3)).toBe(33_334)
+    })
+
+    it('returns zero when nothing remains', () => {
+      expect(divideToRequiredAmount(money(0), 6)).toBe(0)
+    })
+
+    it('rejects division by zero', () => {
+      expect(() => divideToRequiredAmount(money(100), 0)).toThrow(RangeError)
+    })
+
+    it('rejects a fractional divisor', () => {
+      expect(() => divideToRequiredAmount(money(100), 2.5)).toThrow(RangeError)
     })
   })
 

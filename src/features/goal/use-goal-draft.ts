@@ -1,11 +1,15 @@
 import { useReducer, type Dispatch } from 'react'
 
+import { useServices } from '@/runtime/services-context'
+import type { CalendarDate } from '@/domain/dates/calendar-date'
+
 import type { ValidationError } from '@/domain/errors'
 import { COVERAGE_MONTHS } from '@/domain/goal/levels'
 import { calculateTarget } from '@/domain/goal/target'
 import type { Goal, GoalInput, LevelKey } from '@/domain/goal/types'
 import {
   validateCoverageMonths,
+  validateDesiredCompletionDate,
   validateMonthlyExpenses,
   validateTarget,
 } from '@/domain/goal/validation'
@@ -20,10 +24,10 @@ export const DEFAULT_LEVEL = 'balanced'
 /**
  * Everything the user has decided so far, as one value.
  *
- * One state rather than five, because the five are not independent: every edit to any of
- * the four figures also clears the refusal message, and that is a rule about the draft
+ * One state rather than six, because the six are not independent: every edit to any of
+ * the five figures also clears the refusal message, and that is a rule about the draft
  * rather than about any one field. Split across separate `useState` calls it has to be
- * stapled onto each setter, which is four places for one rule to be forgotten from.
+ * stapled onto each setter, which is five places for one rule to be forgotten from.
  */
 interface GoalDraft {
   readonly monthlyExpenses: Money
@@ -31,6 +35,8 @@ interface GoalDraft {
   /** The duration being typed, as text — an empty field is not a number. */
   readonly customMonths: string
   readonly override: Money | null
+  /** The date the user wants to finish by, or null for none (FR-031). */
+  readonly desiredCompletionDate: CalendarDate | null
   /** The figure the last submission refused, or null when nothing was refused. */
   readonly rejected: ValidationError | null
 }
@@ -41,6 +47,7 @@ type GoalDraftAction =
   | { readonly kind: 'level-chosen'; readonly levelKey: LevelKey }
   | { readonly kind: 'duration-typed'; readonly customMonths: string }
   | { readonly kind: 'target-overridden'; readonly override: Money | null }
+  | { readonly kind: 'desired-date-chosen'; readonly date: CalendarDate | null }
   | { readonly kind: 'submission-refused'; readonly rejected: ValidationError }
 
 /** An action that changes a figure, as opposed to reporting on one. */
@@ -56,6 +63,8 @@ export interface GoalDraftStart {
   readonly coverageMonths: number
   /** The user's own target, or null when the calculated one is in force (FR-005). */
   readonly override: Money | null
+  /** The desired completion date, or null for none (FR-031). */
+  readonly desiredCompletionDate: CalendarDate | null
 }
 
 /**
@@ -70,6 +79,7 @@ export function firstGoalDraft(monthlyExpenses: Money): GoalDraftStart {
     levelKey: DEFAULT_LEVEL,
     coverageMonths: COVERAGE_MONTHS[DEFAULT_LEVEL],
     override: null,
+    desiredCompletionDate: null,
   }
 }
 
@@ -84,6 +94,9 @@ export function firstGoalDraft(monthlyExpenses: Money): GoalDraftStart {
  * reopens in the override field, a calculated one reopens as the product of the two figures
  * above it, so reopening the screen proposes nothing the user did not choose.
  *
+ * The desired date is carried through as stored. Left out, every revision would save the
+ * goal without it, and changing the expenses would quietly erase a date the user had set.
+ *
  * @param goal The stored goal.
  * @param monthlyExpenses The stored expenses the target was derived from.
  * @returns The starting point for revising it.
@@ -94,6 +107,7 @@ export function storedGoalDraft(goal: Goal, monthlyExpenses: Money): GoalDraftSt
     levelKey: goal.levelKey,
     coverageMonths: goal.coverageMonths,
     override: goal.source === 'user_defined' ? goal.target : null,
+    desiredCompletionDate: goal.desiredCompletionDate,
   }
 }
 
@@ -111,12 +125,16 @@ export interface GoalDraftState {
   readonly override: Money | null
   /** The target as it stands, or null while the duration is not a usable number. */
   readonly target: Money | null
+  /** The desired completion date as it stands, or null for none. */
+  readonly desiredCompletionDate: CalendarDate | null
   /** The message under the expenses field, when that is what was refused. */
   readonly expensesError: string | undefined
   /** The message under the duration field, when that is what was refused. */
   readonly coverageError: string | undefined
   /** The message under the target field, when that is what was refused. */
   readonly targetError: string | undefined
+  /** The message under the desired date, when that is what was refused. */
+  readonly desiredDateError: string | undefined
   /** Whether the submission is in flight, for the save control's own pending state. */
   readonly isSaving: boolean
   /** Whether the last submission failed in storage, as opposed to in validation. */
@@ -125,6 +143,7 @@ export interface GoalDraftState {
   readonly selectLevel: (key: LevelKey) => void
   readonly changeCustomMonths: (value: string) => void
   readonly changeOverride: (value: Money | null) => void
+  readonly changeDesiredDate: (value: CalendarDate | null) => void
   /** Validates and submits. Does nothing when a figure is refused, beyond saying so. */
   readonly save: () => void
 }
@@ -148,10 +167,11 @@ export interface GoalDraftState {
  */
 export function useGoalDraft(start: GoalDraftStart, onSaved: () => void): GoalDraftState {
   const submit = useSubmitGoal()
+  const { clock } = useServices()
   const [draft, dispatch] = useReducer(reduce, start, openDraft)
 
   const coverageMonths = chosenMonths(draft)
-  const goal = buildGoal(draft, coverageMonths)
+  const goal = buildGoal(draft, coverageMonths, clock.today())
 
   return {
     monthlyExpenses: draft.monthlyExpenses,
@@ -160,9 +180,11 @@ export function useGoalDraft(start: GoalDraftStart, onSaved: () => void): GoalDr
     coverageMonths,
     override: draft.override,
     target: previewTarget(draft, coverageMonths),
+    desiredCompletionDate: draft.desiredCompletionDate,
     expensesError: fieldMessage(draft.rejected, 'monthlyExpenses'),
     coverageError: fieldMessage(draft.rejected, 'coverageMonths'),
     targetError: fieldMessage(draft.rejected, 'target'),
+    desiredDateError: fieldMessage(draft.rejected, 'desiredCompletionDate'),
     isSaving: submit.isPending,
     hasFailed: submit.isError,
     ...editors(dispatch),
@@ -180,7 +202,7 @@ export function useGoalDraft(start: GoalDraftStart, onSaved: () => void): GoalDr
 }
 
 /**
- * The four operations that change a figure, each wrapping one action.
+ * The operations that change a figure, each wrapping one action.
  *
  * Apart from the hook so that what it returns stays readable as a list of what a screen
  * gets, rather than as a wall of dispatch calls with the interesting values buried in them.
@@ -192,7 +214,11 @@ function editors(
   dispatch: Dispatch<GoalDraftAction>,
 ): Pick<
   GoalDraftState,
-  'changeMonthlyExpenses' | 'selectLevel' | 'changeCustomMonths' | 'changeOverride'
+  | 'changeMonthlyExpenses'
+  | 'selectLevel'
+  | 'changeCustomMonths'
+  | 'changeOverride'
+  | 'changeDesiredDate'
 > {
   return {
     changeMonthlyExpenses: (monthlyExpenses) => {
@@ -207,6 +233,9 @@ function editors(
     changeOverride: (override) => {
       dispatch({ kind: 'target-overridden', override })
     },
+    changeDesiredDate: (date) => {
+      dispatch({ kind: 'desired-date-chosen', date })
+    },
   }
 }
 
@@ -217,6 +246,7 @@ function openDraft(start: GoalDraftStart): GoalDraft {
     levelKey: start.levelKey,
     customMonths: String(start.coverageMonths),
     override: start.override,
+    desiredCompletionDate: start.desiredCompletionDate,
     rejected: null,
   }
 }
@@ -251,6 +281,8 @@ function applyEdit(draft: GoalDraft, action: GoalDraftEdit): GoalDraft {
       return { ...draft, customMonths: action.customMonths }
     case 'target-overridden':
       return { ...draft, override: action.override }
+    case 'desired-date-chosen':
+      return { ...draft, desiredCompletionDate: action.date }
   }
 }
 
@@ -291,7 +323,11 @@ function previewTarget(draft: GoalDraft, coverageMonths: number): Money | null {
  * from an expense figure the app is about to refuse is a number with nothing behind it, and
  * naming the duration as the problem would send the user to correct the wrong field.
  */
-function buildGoal(draft: GoalDraft, coverageMonths: number): Result<GoalInput, ValidationError> {
+function buildGoal(
+  draft: GoalDraft,
+  coverageMonths: number,
+  today: CalendarDate,
+): Result<GoalInput, ValidationError> {
   const expenses = validateMonthlyExpenses(draft.monthlyExpenses)
   if (isErr(expenses)) {
     return expenses
@@ -304,11 +340,15 @@ function buildGoal(draft: GoalDraft, coverageMonths: number): Result<GoalInput, 
   if (isErr(target)) {
     return target
   }
+  const desiredCompletionDate = validateDesiredCompletionDate(draft.desiredCompletionDate, today)
+  if (isErr(desiredCompletionDate)) {
+    return desiredCompletionDate
+  }
   return ok({
     target: target.value,
     source: draft.override === null ? 'calculated' : 'user_defined',
     levelKey: draft.levelKey,
     coverageMonths: coverage.value,
-    desiredCompletionDate: null,
+    desiredCompletionDate: desiredCompletionDate.value,
   })
 }

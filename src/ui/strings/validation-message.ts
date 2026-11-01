@@ -22,6 +22,7 @@ const MESSAGES: Readonly<Record<string, string>> = {
   'goal.target-not-a-number': strings.validation.amountNotANumber,
   'goal.target-must-be-positive': strings.validation.targetMustBePositive,
   'goal.target-does-not-match': strings.validation.targetDoesNotMatch,
+  'goal.desired-date-not-ahead': strings.validation.desiredDateNotAhead,
   'entry.amount-must-be-positive': strings.validation.entryAmountMustBePositive,
   'entry.date-in-future': strings.validation.entryDateInFuture,
   'entry.note-too-long': strings.validation.entryNoteTooLong,

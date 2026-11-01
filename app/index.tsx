@@ -84,6 +84,17 @@ function StandingView({ standing }: StandingViewProps): ReactNode {
         }}
         testID="contribute"
       />
+      <Destinations />
+      <GoalCard goal={standing.goal} monthsCovered={standing.monthsCovered} />
+    </>
+  )
+}
+
+/** The screens that read the same fund from other angles: its history, its statistics, and its forecast. */
+function Destinations(): ReactNode {
+  const router = useRouter()
+  return (
+    <>
       <Button
         label={strings.home.historyAction}
         variant="secondary"
@@ -100,7 +111,14 @@ function StandingView({ standing }: StandingViewProps): ReactNode {
         }}
         testID="statistics"
       />
-      <GoalCard goal={standing.goal} monthsCovered={standing.monthsCovered} />
+      <Button
+        label={strings.forecast.action}
+        variant="secondary"
+        onPress={() => {
+          router.push('/forecast')
+        }}
+        testID="forecast"
+      />
     </>
   )
 }

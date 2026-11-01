@@ -181,14 +181,30 @@ longestStreak(entries: readonly LedgerEntry[]): number
 // forecast
 calculatePace(entries: readonly LedgerEntry[], today: CalendarDate): PaceResult
 project(remaining: Money, pace: PaceResult, today: CalendarDate): ForecastState
-requiredMonthly(remaining: Money, desired: CalendarDate, today: CalendarDate): Result<Money>
+requiredMonthly(remaining: Money, desired: CalendarDate, today: CalendarDate): Result<Money, ValidationError>
+desiredContribution(remaining: Money, desired: CalendarDate, pace: PaceResult, today: CalendarDate): DesiredContribution
+
+export type PaceResult =
+  | { readonly kind: 'insufficient-history'; readonly monthsAvailable: number; readonly monthsNeeded: number }
+  | { readonly kind: 'measured'; readonly pace: Money; readonly months: readonly MonthKey[] }
 
 export type ForecastState =
   | { readonly kind: 'insufficient-history'; readonly monthsAvailable: number; readonly monthsNeeded: number }
   | { readonly kind: 'no-pace' }
   | { readonly kind: 'reached' }
-  | { readonly kind: 'projected'; readonly pace: Money; readonly monthsToTarget: number; readonly projectedDate: CalendarDate }
+  | { readonly kind: 'projected'; readonly pace: Money; readonly paceMonths: number; readonly monthsToTarget: number; readonly projectedDate: CalendarDate }
+
+export type DesiredContribution =
+  | { readonly kind: 'passed' }
+  | { readonly kind: 'covered' }
+  | { readonly kind: 'required'; readonly amount: Money; readonly comparison: PaceComparison }
+
+export type PaceComparison =
+  | { readonly kind: 'exceeds' | 'within'; readonly pace: Money }
+  | { readonly kind: 'unmeasured' }
 ```
+
+`monthsNeeded` is how many *more* complete months the pace needs, which is what FR-029 asks the screen to state. `paceMonths` is the window the pace was measured over, which FR-028's assumption names. `desiredContribution` is everything a screen states about a desired date — the amount, how it compares with the pace, or that the date has passed or asks for nothing — added in T113 so the comparison is decided in the domain rather than at two call sites.
 
 `ForecastState` is a union rather than a nullable projection so that the "not enough history" and "pace is zero" cases in FR-029 and FR-030 cannot be forgotten at the call site — the compiler requires both to be rendered.
 

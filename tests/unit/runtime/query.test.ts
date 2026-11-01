@@ -81,7 +81,6 @@ describe('queryKeys', () => {
       queryKeys.goalChanges(),
       queryKeys.entries(),
       queryKeys.futureDatedEntries(calendarDate('2026-08-29')),
-      queryKeys.forecast(),
       queryKeys.reminder(),
       queryKeys.milestones(),
       queryKeys.milestoneReached(),
