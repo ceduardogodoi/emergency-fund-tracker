@@ -18,6 +18,8 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 
 **AP-002 — a fixture equal to the default.** A test storing a `balanced` goal passed against a screen that ignored storage entirely, because `balanced` is also what a fresh draft starts on.
 **The tell:** the value in the fixture is the first one that came to mind. Ask what the code would fall back to if it ignored the input, and make sure the fixture is not that.
+**Again, twice in one round (T106, T112), with the default being a rule rather than a value:** the pace's rounding test divided 100 000 by three, and rounding to nearest gives 33 333 just as rounding down does — the mutation to `Math.round` survived. And the projection's window was six months in every fixture, which is also the most the window can hold, so a hard-coded `paceMonths: 6` passed. Both were caught by the mutation pass, and fixed with 200 000 over three and a three-month pace.
+**The tell, for a rule:** the fixture's answer is the same under the rule and under its nearest alternative. Work the alternative out by hand before keeping the fixture.
 
 **AP-003 — an order that agrees with insertion order.** A repository test asserted entries come back by date and survived deleting the whole `ORDER BY`, because SQLite returns rows in insertion order when nothing tells it otherwise.
 **The tell:** the expected order and the order the test wrote the rows in are the same. Construct them opposed.
@@ -31,6 +33,8 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 
 **AP-014 — a mutation that kills the test on another line.** The revision screen's unreadable-ledger test (T156) ends by asserting no percentage is shown. The mutation meant to prove it read the balance as zero, and the test went red — but at the assertion before it, because the mutation had also removed the "could not be worked out" line. The last assertion had never failed. A second mutation that kept that line and drew a 0% beside it was the one that proved it.
 **The tell:** the suite went red and the failure was read as a count, not a location. Check that the failure points at the assertion the mutation was aimed at; when a mutation breaks several things at once, narrow it until it breaks only the one.
+**Again (T114), in a louder shape:** two mutations of the forecast hooks named a function the file did not import, so every test that rendered the screen failed, and none of it was about the rule being mutated. Rewritten to compile, each one failed exactly one test, the one meant for it.
+**The tell:** every test in the file fails at once. A mutation that breaks everything has proved nothing; it has to compile.
 
 **AP-015 — an order the primary key already gives.** `milestone_ack` is listed lowest threshold first, and its test wrote 75 before 25, as AP-003 says to. Deleting the `ORDER BY` survived anyway: `threshold` is the table's `INTEGER PRIMARY KEY`, which makes it the rowid, and a plain scan returns rows in rowid order whatever order they were written in. Opposing the writes cannot reach that. `PRAGMA reverse_unordered_selects = ON`, set in the test, reverses every SELECT that has no `ORDER BY` — and killed the mutation.
 **The tell:** the column being ordered by is the table's `INTEGER PRIMARY KEY`. SQLite still promises no order without the clause, so the clause stays; the pragma is how a test sees it go.
