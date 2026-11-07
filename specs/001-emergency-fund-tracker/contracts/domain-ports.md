@@ -40,6 +40,7 @@ export type AppError =
   | { readonly kind: 'permission-denied'; readonly capability: 'notifications' | 'file-access' }
   | { readonly kind: 'cancelled' }
   | { readonly kind: 'over-balance'; readonly balance: Money; readonly belowZeroBy: Money }
+  | { readonly kind: 'device'; readonly capability: 'notifications' | 'file-access'; readonly messageKey: string; readonly cause?: unknown }
 
 export interface ImportProblem {
   readonly path: string        // e.g. 'entries[7].amountMinor'
@@ -48,6 +49,8 @@ export interface ImportProblem {
 ```
 
 `over-balance` is a withdrawal larger than the balance, refused until the user confirms it (FR-017). It is a question rather than a validation failure — nothing about the entry is wrong — and it carries the figures the question states, measured by `recordEntry` against the ledger in storage. Added in T121.
+
+`device` is the OS failing to do what was asked — scheduling or cancelling a notification, and later writing a file — with the permission granted or not in question. Not `storage`, because nothing was being stored and its copy would mislead. Added in T132; until then a notifier had no honest way to fail.
 
 `import-invalid` carries a path-and-message list rather than a single string because FR-046 requires telling the user *what* was wrong with the file, not just that it was wrong.
 

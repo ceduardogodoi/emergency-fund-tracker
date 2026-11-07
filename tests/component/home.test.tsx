@@ -178,6 +178,18 @@ describe('Home', () => {
     expect(mockPush).toHaveBeenCalledWith('/forecast')
   })
 
+  // Story 6: reminders are optional, so they are reached from Home rather than offered
+  // during setup.
+  it('offers a way to the reminders', async () => {
+    await storeGoal()
+    await harness.render(<HomeScreen />)
+    await screen.findByTestId('standing-card')
+
+    await userEvent.press(screen.getByRole('button', { name: strings.home.remindersAction }))
+
+    expect(mockPush).toHaveBeenCalledWith('/settings/reminders')
+  })
+
   // FR-024. A contribution returns here, so this is where the milestone it crossed is
   // shown. 50 rather than 25, so a banner that named the first threshold whatever it was
   // told would fail.

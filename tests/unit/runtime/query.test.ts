@@ -3,10 +3,12 @@ import {
   createQueryClient,
   queryKeys,
   toViewState,
+  unwrap,
   type QueryLike,
 } from '@/runtime/query'
 import { calendarDate } from '@/domain/dates/calendar-date'
 import { storageError } from '@/domain/errors'
+import { err, ok } from '@/domain/result'
 import type { ViewState } from '@/ui/primitives/state-view'
 
 /**
@@ -213,5 +215,21 @@ describe('combineQueries', () => {
 
     expect(firstRefetch).toHaveBeenCalled()
     expect(secondRefetch).toHaveBeenCalled()
+  })
+})
+
+// The one place a result becomes an exception: TanStack Query decides a query failed by
+// catching what its function throws, and the screen then reads the error as `AppError`.
+describe('unwrap', () => {
+  it('returns the value of a success', () => {
+    expect(unwrap(ok('saved'))).toBe('saved')
+  })
+
+  it('throws the error of a failure itself, not a wrapper around it', () => {
+    const failure = storageError('reminders.read-failed')
+
+    expect(() => unwrap(err(failure))).toThrow(
+      expect.objectContaining({ kind: 'storage', messageKey: 'reminders.read-failed' }),
+    )
   })
 })

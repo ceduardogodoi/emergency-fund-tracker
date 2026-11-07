@@ -44,13 +44,13 @@ An offline-only Expo app. Nothing leaves the device: no network calls, no analyt
 
 **`app/` is routes only.** Expo Router treats _every_ file under its root as a route, and it prefers `src/app/` over `app/` when that directory exists — which is why the composition root lives in `src/runtime/` and `app.json` sets `expo.extra.router.root` explicitly. A non-route module under `app/` becomes a broken route.
 
-**Errors are values.** Every fallible operation returns `Result<T, E>` from `src/domain/result.ts`; exceptions are reserved for programmer errors, like handing `money()` a fractional cent. There is exactly one place a result becomes an exception — `unwrap` in `src/features/goal/hooks.ts` — because TanStack Query decides a query failed by catching what its function throws.
+**Errors are values.** Every fallible operation returns `Result<T, E>` from `src/domain/result.ts`; exceptions are reserved for programmer errors, like handing `money()` a fractional cent. There is exactly one place a result becomes an exception — `unwrap` in `src/runtime/query.ts` — because TanStack Query decides a query failed by catching what its function throws.
 
 **Money and dates are branded.** `Money` is an integer count of minor units, never a float; `CalendarDate` is a `YYYY-MM-DD` string with no time or zone. The brands make passing a raw `number` or `string` a compile error. Division happens only in `src/domain/money/rounding.ts`.
 
 **Every data-backed view renders four states.** `StateView` takes `loading`, `empty`, `error`, and `ready` renderers, with `empty` required and no default — a meaningful empty state is something only the screen knows. Screens map a query onto it with `toViewState`.
 
-**Repositories not yet implemented fail loudly.** `src/data/sqlite/repositories/pending.ts` returns a storage failure for every call, deliberately: a stub returning `ok([])` would be indistinguishable from an empty fund, and the app would render a zero balance as though it were the truth.
+**A port not yet implemented fails loudly.** A placeholder returns a failure for every call, deliberately: a stub returning `ok([])` would be indistinguishable from an empty fund, and the app would render a zero balance as though it were the truth. Every repository is real since T131, when the last placeholder, `pending.ts`, was deleted; the rule stands for any port wired before its story is built.
 
 ## Plan of record
 

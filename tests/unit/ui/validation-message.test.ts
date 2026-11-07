@@ -10,6 +10,8 @@ import {
 import { MAXIMUM_NOTE_LENGTH, validateEntry } from '@/domain/ledger/entry'
 import type { LedgerEntryInput } from '@/domain/ledger/types'
 import { money } from '@/domain/money/money'
+import { validateReminderSetting } from '@/domain/reminders/schedule'
+import type { ReminderSetting } from '@/domain/reminders/types'
 import { fieldMessage, strings, validationMessage } from '@/ui/strings'
 import { expectErr } from '@tests/support/expect-result'
 
@@ -22,6 +24,15 @@ const entry: LedgerEntryInput = {
   withdrawalReason: null,
 }
 const entryContext = { today: calendarDate('2026-09-26'), hasOpening: false }
+
+/** A reminder every rule accepts, so each rejection below breaks exactly one. */
+const reminder: ReminderSetting = {
+  enabled: true,
+  frequency: 'monthly',
+  dayOfMonth: 17,
+  dayOfWeek: null,
+  timeOfDay: '20:30',
+}
 
 /**
  * The domain reports rejections as keys so it holds no opinion about language, which only
@@ -54,6 +65,12 @@ const rejections: readonly ValidationError[] = [
   expectErr(validateEntry({ ...entry, date: calendarDate('2026-09-27') }, entryContext)),
   expectErr(validateEntry({ ...entry, note: 'a'.repeat(MAXIMUM_NOTE_LENGTH + 1) }, entryContext)),
   expectErr(validateEntry({ ...entry, type: 'opening' }, { ...entryContext, hasOpening: true })),
+  expectErr(validateReminderSetting({ ...reminder, dayOfMonth: 29 })) as ValidationError,
+  expectErr(
+    validateReminderSetting({ ...reminder, frequency: 'weekly', dayOfMonth: null }),
+  ) as ValidationError,
+  expectErr(validateReminderSetting({ ...reminder, dayOfWeek: 4 })) as ValidationError,
+  expectErr(validateReminderSetting({ ...reminder, timeOfDay: '24:00' })) as ValidationError,
 ]
 
 describe('validationMessage', () => {

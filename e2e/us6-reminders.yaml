@@ -1,0 +1,170 @@
+# User Story 6 — reminders.
+#
+# The story's three scenarios, on a device: allowed, a monthly schedule is chosen, saved,
+# and still there on reopening (FR-034); turned off and saved, it is off on reopening
+# (FR-036); with notifications refused, turning a reminder on explains why it cannot be
+# delivered and leaves it off (FR-035). That the notification arrives at its time, and
+# stops once turned off, is not asserted here: a monthly trigger cannot be waited for in a
+# flow. It is R-003's to measure (T134, research.md).
+#
+# The permission is Expo Go's, not the app's — Expo Go is the installed app — so the flow
+# sets it with `launchApp`. Expo Go also keeps a permission per app on top of Android's:
+# allowed but never asked, it asks once, in a dialog of its own, when the app first
+# requests it. Once refused, it remembers the refusal and asks again on a later launch at
+# no fixed point, which a flow cannot wait for — so the refusal comes last, from a clean
+# state, with no launch after it. Measured on 2026-11-07; a real build has no such layer.
+#
+# Runs inside Expo Go; see `us1-set-target.yaml` for why, and for why `APP_ID` and `DEV_URL`
+# come from the npm scripts. The fund is the development seed (T087), only because Home —
+# where the way in is — needs a goal.
+appId: ${APP_ID}
+name: US6 — reminders
+---
+- launchApp:
+    clearState: true
+    permissions:
+      notifications: allow
+- runFlow: open-app.yaml
+- openLink: ${DEV_URL}/--/dev/seed?months=6&pattern=steady
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+
+# Scenario 2 — a monthly schedule on the 17th at 20:30, saved and still there.
+- runFlow: open-reminders.yaml
+# FR-034 — off by default, with nothing to configure.
+- assertNotVisible:
+    id: 'hour-stepper'
+- tapOn:
+    id: 'reminder-enabled'
+# The default schedule, decided with the user on 2026-11-07. Below the grid of days.
+- scrollUntilVisible:
+    element:
+      id: 'reminder-summary'
+    direction: DOWN
+- assertVisible:
+    id: 'reminder-summary'
+    text: 'Todo dia 5, às 09:00.'
+- scrollUntilVisible:
+    element:
+      id: 'day-of-month-17'
+    direction: UP
+- tapOn:
+    id: 'day-of-month-17'
+- scrollUntilVisible:
+    element:
+      id: 'hour-increase'
+    direction: DOWN
+# From 09:00: eleven hours up and two quarters on.
+- tapOn:
+    id: 'hour-increase'
+    repeat: 11
+- tapOn:
+    id: 'minute-increase'
+    repeat: 2
+- scrollUntilVisible:
+    element:
+      id: 'reminder-summary'
+    direction: DOWN
+- assertVisible:
+    id: 'reminder-summary'
+    text: 'Todo dia 17, às 20:30.'
+- scrollUntilVisible:
+    element:
+      id: 'save-reminder'
+    direction: DOWN
+- tapOn:
+    id: 'save-reminder'
+# FR-035 — asked now, on saving it on, and not before. On Android, Expo Go asks in a dialog
+# of its own, since the permission Android holds is Expo Go's; iOS asks nothing more once
+# `launchApp` has allowed it. The form going away is waited for first — it goes under the
+# dialog as it does when the screen leaves — and the dialog answered if it is there.
+- extendedWaitUntil:
+    notVisible:
+      id: 'save-reminder'
+    timeout: 20000
+- runFlow:
+    when:
+      visible: 'Emergency Fund needs permissions for posting notifications.*'
+    commands:
+      - tapOn: '(?i)^allow$'
+# Saved, the screen leaves. Home keeps its scroll, so its own way back in is what is waited
+# for, rather than its title.
+- extendedWaitUntil:
+    visible:
+      id: 'reminders'
+    timeout: 20000
+- runFlow: open-reminders.yaml
+- scrollUntilVisible:
+    element:
+      id: 'reminder-summary'
+    direction: DOWN
+- assertVisible:
+    id: 'reminder-summary'
+    text: 'Todo dia 17, às 20:30.'
+
+# Scenario 3 — turned off, and off on reopening. Centred before the tap: at the top of the
+# screen the switch sits under Expo Go's floating tools button, which takes the tap and
+# opens its developer menu instead.
+- scrollUntilVisible:
+    element:
+      id: 'reminder-enabled'
+    direction: UP
+    centerElement: true
+- tapOn:
+    id: 'reminder-enabled'
+- assertNotVisible:
+    id: 'hour-stepper'
+- scrollUntilVisible:
+    element:
+      id: 'save-reminder'
+    direction: DOWN
+- tapOn:
+    id: 'save-reminder'
+- extendedWaitUntil:
+    visible:
+      id: 'reminders'
+    timeout: 20000
+- runFlow: open-reminders.yaml
+- assertNotVisible:
+    id: 'hour-stepper'
+
+# Scenario 1 — refused: explained, and left off.
+- launchApp:
+    clearState: true
+    permissions:
+      notifications: deny
+- runFlow: open-app.yaml
+- openLink: ${DEV_URL}/--/dev/seed?months=6&pattern=steady
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+- runFlow: open-reminders.yaml
+- tapOn:
+    id: 'reminder-enabled'
+- scrollUntilVisible:
+    element:
+      id: 'save-reminder'
+    direction: DOWN
+- tapOn:
+    id: 'save-reminder'
+# Refused, Android may still ask once more, since it asks twice before it stops; declined.
+# Optional, because whether that prompt appears is the platform's business — iOS answered
+# without one on 2026-11-07 — and what is asserted is the outcome below.
+- runFlow:
+    when:
+      visible: '(?i)(don.t allow|não permitir)'
+    commands:
+      - tapOn:
+          text: '(?i)(don.t allow|não permitir)'
+          optional: true
+- extendedWaitUntil:
+    visible: 'As notificações estão bloqueadas.*'
+    timeout: 20000
+- assertVisible:
+    id: 'open-settings'
+# Left off: the schedule is hidden again.
+- assertNotVisible:
+    id: 'hour-stepper'

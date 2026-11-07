@@ -20,6 +20,7 @@ import type {
   StoreRepository,
 } from '@/domain/ports/repositories'
 import type { Profile, ProfileInput } from '@/domain/profile/types'
+import { DEFAULT_REMINDER_SETTING } from '@/domain/reminders/schedule'
 import type { ReminderSetting } from '@/domain/reminders/types'
 import { err, ok, type Result } from '@/domain/result'
 
@@ -180,18 +181,9 @@ export class InMemoryLedgerRepository implements LedgerRepository {
   }
 }
 
-/** The schedule a first launch reads: off, monthly on the 1st (FR-034). */
-const DEFAULT_REMINDER: ReminderSetting = {
-  enabled: false,
-  frequency: 'monthly',
-  dayOfMonth: 1,
-  dayOfWeek: null,
-  timeOfDay: '09:00',
-}
-
 /** The reminder schedule, disabled until the user turns it on (FR-034). */
 export class InMemoryReminderRepository implements ReminderRepository {
-  private stored: ReminderSetting = DEFAULT_REMINDER
+  private stored: ReminderSetting = DEFAULT_REMINDER_SETTING
 
   public async get(): Promise<Result<ReminderSetting>> {
     return ok(this.stored)
@@ -204,7 +196,7 @@ export class InMemoryReminderRepository implements ReminderRepository {
 
   /** Back to the default schedule, which is what a first launch reads. */
   public erase(): void {
-    this.stored = DEFAULT_REMINDER
+    this.stored = DEFAULT_REMINDER_SETTING
   }
 }
 

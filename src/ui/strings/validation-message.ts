@@ -1,5 +1,6 @@
 import type { ValidationError } from '@/domain/errors'
 import { MAXIMUM_COVERAGE_MONTHS, MINIMUM_COVERAGE_MONTHS } from '@/domain/goal/levels'
+import { MAXIMUM_DAY_OF_MONTH } from '@/domain/reminders/schedule'
 import { strings } from './strings'
 
 /**
@@ -30,6 +31,11 @@ const MESSAGES: Readonly<Record<string, string>> = {
   'entry.reason-required': strings.validation.entryReasonRequired,
   'entry.reason-too-long': strings.validation.entryReasonTooLong,
   'entry.reason-not-allowed': strings.validation.entryReasonNotAllowed,
+  'reminder.day-of-month-out-of-range':
+    strings.validation.reminderDayOfMonthOutOfRange(MAXIMUM_DAY_OF_MONTH),
+  'reminder.day-of-week-out-of-range': strings.validation.reminderDayOfWeekOutOfRange,
+  'reminder.day-not-for-frequency': strings.validation.reminderDayNotForFrequency,
+  'reminder.time-invalid': strings.validation.reminderTimeInvalid,
 }
 
 /**

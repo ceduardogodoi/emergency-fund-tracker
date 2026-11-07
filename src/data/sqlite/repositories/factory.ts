@@ -5,8 +5,8 @@ import type { RepositoriesFactory } from '../database'
 import { createGoalRepository } from './goal-repository'
 import { createLedgerRepository } from './ledger-repository'
 import { createMilestoneRepository } from './milestone-repository'
-import { createPendingReminderRepository } from './pending'
 import { createProfileRepository } from './profile-repository'
+import { createReminderRepository } from './reminder-repository'
 import { createStoreRepository } from './store-repository'
 
 /**
@@ -28,8 +28,7 @@ export function createRepositoriesFactory(clock: Clock, ids: IdGenerator): Repos
     goal: createGoalRepository(db, clock, ids),
     ledger: createLedgerRepository(db, clock, ids),
     milestones: createMilestoneRepository(db, clock),
-    // Not implemented yet, and failing rather than answering. See `pending.ts`.
-    reminders: createPendingReminderRepository(),
+    reminders: createReminderRepository(db),
     store: createStoreRepository(db),
   })
 }

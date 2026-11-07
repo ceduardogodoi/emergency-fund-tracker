@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { QueryClient, UseMutationResult, UseQueryResult } from '@tanstack/react-query'
 import { AccessibilityInfo } from 'react-native'
 
-import { queryKeys } from '@/runtime/query'
+import { queryKeys, unwrap } from '@/runtime/query'
 import type { Services } from '@/runtime/services'
 import { useServices } from '@/runtime/services-context'
 import type { CalendarDate } from '@/domain/dates/calendar-date'
@@ -358,19 +358,4 @@ async function announce(
 /** Hands a sentence to the screen reader, queued behind what it is already saying. */
 function say(sentence: string): void {
   AccessibilityInfo.announceForAccessibilityWithOptions(sentence, { queue: true })
-}
-
-/**
- * Turns a `Result` into its value, or throws the error.
- *
- * The same conversion `features/goal/hooks.ts` makes, and for the same reason: TanStack
- * Query decides a query failed by catching what its function throws. Confining it to these
- * boundaries keeps every layer below on results, and every layer above reading
- * `query.error` — typed `AppError` for exactly this purpose.
- */
-function unwrap<T>(result: Result<T>): T {
-  if (isErr(result)) {
-    throw result.error
-  }
-  return result.value
 }

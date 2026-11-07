@@ -461,6 +461,8 @@ export const strings = {
     withdrawAction: 'Registrar retirada',
     /** The way to the history (FR-014). */
     historyAction: 'Ver histórico',
+    /** The way to the reminders (Story 6). The same word as their screen's title. */
+    remindersAction: 'Lembretes',
     /**
      * Under the coverage meter: how many months the balance covers, and of how many. Both
      * numbers, because the meter is hidden from a screen reader and a filled count without
@@ -472,6 +474,103 @@ export const strings = {
      */
     coverage: (covered: number, planned: string): string =>
       `Seu saldo cobre ${covered} de ${planned}`,
+  },
+
+  /**
+   * The contribution reminder (Story 6, FR-034 – FR-036).
+   *
+   * Plain about what a reminder is and is not: a notification on this device, nothing sent
+   * anywhere (FR-041), and nothing recorded for the user — it asks them to record.
+   */
+  reminders: {
+    title: 'Lembretes',
+    intro: 'Um aviso neste celular para você registrar o que guardou. Nada sai do aparelho.',
+    enabledLabel: 'Lembrar-me de contribuir',
+    frequencyLabel: 'Frequência',
+    monthly: {
+      label: 'Todo mês',
+      description: 'No mesmo dia de cada mês — o dia do pagamento, por exemplo.',
+    },
+    weekly: { label: 'Toda semana', description: 'No mesmo dia de cada semana.' },
+    dayOfMonthLabel: 'Dia do mês',
+    /**
+     * Why the days stop at 28, so the missing 29th to 31st does not read as a bug.
+     *
+     * @param maximum The last day offered.
+     * @returns The help under the days.
+     */
+    dayOfMonthHelp: (maximum: number): string =>
+      `Até o dia ${maximum}, que existe em todos os meses.`,
+    /**
+     * A day's accessible name. The button shows the number alone, which a screen reader
+     * would announce as a bare number.
+     *
+     * @param day The day of the month.
+     * @returns The name announced.
+     */
+    dayOfMonthName: (day: number): string => `Dia ${day}`,
+    dayOfWeekLabel: 'Dia da semana',
+    /**
+     * The days of the week, from Sunday, indexed as the domain stores them (0 to 6).
+     *
+     * `every` is the whole phrase rather than a template over `name`, because Portuguese
+     * agrees it with the day: "toda quinta-feira", but "todo sábado".
+     */
+    weekdays: [
+      { short: 'Dom', name: 'domingo', every: 'Todo domingo' },
+      { short: 'Seg', name: 'segunda-feira', every: 'Toda segunda-feira' },
+      { short: 'Ter', name: 'terça-feira', every: 'Toda terça-feira' },
+      { short: 'Qua', name: 'quarta-feira', every: 'Toda quarta-feira' },
+      { short: 'Qui', name: 'quinta-feira', every: 'Toda quinta-feira' },
+      { short: 'Sex', name: 'sexta-feira', every: 'Toda sexta-feira' },
+      { short: 'Sáb', name: 'sábado', every: 'Todo sábado' },
+    ],
+    timeLabel: 'Horário',
+    hourLabel: 'Hora',
+    minuteLabel: 'Minutos',
+    hourIncrease: 'Uma hora a mais',
+    hourDecrease: 'Uma hora a menos',
+    /**
+     * @param step The minutes one press moves.
+     * @returns The button's accessible name.
+     */
+    minuteIncrease: (step: number): string => `${step} minutos a mais`,
+    /**
+     * @param step The minutes one press moves.
+     * @returns The button's accessible name.
+     */
+    minuteDecrease: (step: number): string => `${step} minutos a menos`,
+    /**
+     * The schedule in one sentence, under the controls, so the choice reads back as a whole.
+     *
+     * @param day The day of the month.
+     * @param time The time, `HH:MM`.
+     * @returns The summary.
+     */
+    summaryMonthly: (day: number, time: string): string => `Todo dia ${day}, às ${time}.`,
+    /**
+     * @param every The weekday's `every` phrase.
+     * @param time The time, `HH:MM`.
+     * @returns The summary.
+     */
+    summaryWeekly: (every: string, time: string): string => `${every}, às ${time}.`,
+    /**
+     * Permission declined (FR-035). What it means, that nothing changed, and the way out —
+     * once refused, the system does not ask again.
+     */
+    deniedBody:
+      'As notificações estão bloqueadas para este app, então o lembrete não teria como chegar. Ele continua desligado. Para usá-lo, permita as notificações nos ajustes do sistema.',
+    openSettings: 'Abrir ajustes',
+    /** The device would not schedule or cancel. The setting is left matching what will arrive. */
+    deviceFailedBody: 'O aparelho não conseguiu atualizar o lembrete. Tente salvar de novo.',
+    saveFailedBody: 'Não foi possível salvar o lembrete. Tente salvar de novo.',
+    /** The Android channel, as the system's notification settings list it. */
+    channelName: 'Lembretes de contribuição',
+    /** The notification itself. It asks the user to record; it records nothing. */
+    notification: {
+      title: 'Hora de registrar sua contribuição',
+      body: 'Guardou algo para a reserva? Registre agora para manter o saldo em dia.',
+    },
   },
 
   /**
@@ -736,6 +835,18 @@ export const strings = {
     /** Only an import or a bug could reach this: no form offers a reason for anything else. */
     entryReasonNotAllowed: 'Só uma retirada tem motivo.',
     desiredDateNotAhead: 'Escolha uma data depois de hoje.',
+    /**
+     * The reminder rules. The screen offers only valid choices, so only an import or a bug
+     * could reach these; they are written for that reader all the same.
+     *
+     * @param maximum The last day a monthly reminder may fall on.
+     * @returns The correction.
+     */
+    reminderDayOfMonthOutOfRange: (maximum: number): string =>
+      `Escolha um dia do mês entre 1 e ${maximum}.`,
+    reminderDayOfWeekOutOfRange: 'Escolha um dia da semana.',
+    reminderDayNotForFrequency: 'O dia escolhido não combina com a frequência do lembrete.',
+    reminderTimeInvalid: 'Escolha um horário entre 00:00 e 23:59.',
     /** For a key no screen knows about — an older stored value, or a new rule. */
     unknown: 'Confira este valor.',
   },

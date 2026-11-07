@@ -2,6 +2,7 @@ import { QueryClient } from '@tanstack/react-query'
 
 import type { CalendarDate } from '@/domain/dates/calendar-date'
 import type { AppError } from '@/domain/errors'
+import { isErr, type Result } from '@/domain/result'
 import type { DateRange } from '@/domain/ledger/types'
 import type { ViewState } from '@/ui/primitives/state-view'
 
@@ -180,4 +181,23 @@ export function combineQueries<A, B, T>(
  */
 function isEmptyCollection(data: unknown): boolean {
   return Array.isArray(data) && data.length === 0
+}
+
+/**
+ * Turns a `Result` into its value, or throws the error.
+ *
+ * The one place in the app where a result becomes an exception, and it is not a choice:
+ * TanStack Query decides a query failed by catching what its function throws. Every query
+ * and mutation function goes through here, which keeps every layer below on results, and
+ * every layer above reading `query.error` — typed `AppError` for exactly this reason.
+ *
+ * @param result The result of a domain or repository call.
+ * @returns The value, if it succeeded.
+ * @throws {AppError} The failure itself, unwrapped, if it did not.
+ */
+export function unwrap<T>(result: Result<T>): T {
+  if (isErr(result)) {
+    throw result.error
+  }
+  return result.value
 }

@@ -1,3 +1,6 @@
+// First, before anything that imports `expo-notifications`. See the module for why.
+import '@/runtime/expo-go-warnings'
+
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'

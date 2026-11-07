@@ -9,7 +9,7 @@ import { currencyCode } from '@/domain/money/currency'
 import type { Repositories } from '@/domain/ports/repositories'
 import type { UnitOfWork } from '@/domain/ports/unit-of-work'
 import { createFormatters } from '@/ui/format'
-import { CountingIdGenerator, FakeClock, createInMemoryRepositories } from './doubles'
+import { CountingIdGenerator, FakeClock, FakeNotifier, createInMemoryRepositories } from './doubles'
 
 /**
  * The providers `app/_layout.tsx` supplies in production, assembled for one test.
@@ -31,6 +31,8 @@ export interface AppHarness {
   readonly clock: FakeClock
   /** The storage the rendered screens read and write. Assert against it directly. */
   readonly repositories: Repositories
+  /** The device's notification scheduler, as the fake it is. Assert what it was asked. */
+  readonly notifier: FakeNotifier
   /** The cache behind every hook, for tests that inspect or seed it. */
   readonly queryClient: QueryClient
   /** The services the tree is given, so a test can see what a screen sees. */
@@ -56,6 +58,7 @@ export function createAppHarness(today = '2026-08-22'): AppHarness {
   const repositories = createInMemoryRepositories(clock, ids)
   const queryClient = createQueryClient()
   const currency = currencyCode('BRL')
+  const notifier = new FakeNotifier()
 
   const services: Services = {
     clock,
@@ -65,11 +68,13 @@ export function createAppHarness(today = '2026-08-22'): AppHarness {
     currency,
     locale: LOCALE,
     unitOfWork: directUnitOfWork(repositories),
+    notifier,
   }
 
   return {
     clock,
     repositories,
+    notifier,
     queryClient,
     services,
     render: (ui) =>

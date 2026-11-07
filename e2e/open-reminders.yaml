@@ -1,0 +1,15 @@
+# From Home to the reminders screen, waiting until the stored setting has been read. A
+# subflow because Story 6's journey makes the trip four times; named outside `us*.yaml` so
+# `e2e/config.yaml` does not run it as a journey of its own, as with `open-app.yaml`.
+appId: ${APP_ID}
+---
+- scrollUntilVisible:
+    element:
+      id: 'reminders'
+    direction: DOWN
+- tapOn:
+    id: 'reminders'
+- extendedWaitUntil:
+    visible:
+      id: 'reminder-enabled'
+    timeout: 20000

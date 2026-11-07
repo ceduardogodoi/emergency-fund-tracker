@@ -1,5 +1,6 @@
 export { CountingIdGenerator, uuidShaped, type IdFormat } from './counting-id-generator'
 export { FakeClock, type FakeClockOptions } from './fake-clock'
+export { FakeNotifier, type NotifierCall } from './fake-notifier'
 export {
   createInMemoryRepositories,
   InMemoryGoalRepository,

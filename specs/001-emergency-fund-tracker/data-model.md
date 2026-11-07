@@ -198,7 +198,7 @@ Division appears in exactly four places: average monthly contribution, pace, mon
 
 **Ledger entry**: `created → edited → deleted`. Deletion is a hard delete requiring confirmation (FR-011). Editing changes `amount_minor`, `entry_date`, `note`, or `withdrawal_reason`, never `id` or `type` — changing an entry's type means deleting it and creating the other kind, which keeps the merge identity in FR-047 stable.
 
-**Reminder**: `off → on` requires an OS permission grant; a denial leaves it `off` (FR-035). `on → off` cancels every scheduled notification (FR-036).
+**Reminder**: `off → on` requires an OS permission grant; a denial leaves it `off` (FR-035). `on → off` cancels every scheduled notification (FR-036). The stored setting and the device's schedule cannot share a transaction, so the order of the two writes decides what a failure between them leaves: turning on stores and then schedules, and a schedule the device refuses stores it back `off`; turning off cancels and then stores, so a cancel that fails leaves it truthfully `on`. Neither failure can leave "on" with nothing scheduled, or "off" with a reminder still arriving (T130, `saveReminder`).
 
 ## Import merge and replace semantics (FR-047)
 

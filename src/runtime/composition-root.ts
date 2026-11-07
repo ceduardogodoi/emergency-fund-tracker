@@ -1,4 +1,7 @@
+import { isRunningInExpoGo } from 'expo'
 import { randomUUID } from 'expo-crypto'
+import * as Notifications from 'expo-notifications'
+import { Platform } from 'react-native'
 
 import type { Services } from '@/runtime/services'
 import { bootstrapDatabase, createUnitOfWork } from '@/data/sqlite/database'
@@ -9,8 +12,10 @@ import { currencyCode } from '@/domain/money/currency'
 import { SystemClock } from '@/platform/clock/system-clock'
 import { createIdGenerator } from '@/platform/id/uuid-generator'
 import { createLogger } from '@/platform/logging/logger'
+import { createNotifier, showNotificationsWhileOpen } from '@/platform/notifications/notifier'
 import { isErr, ok, type Result } from '@/domain/result'
 import { createFormatters } from '@/ui/format'
+import { strings } from '@/ui/strings'
 
 /**
  * The single currency this release stores and renders (FR-039, research decision D-019).
@@ -57,6 +62,15 @@ export function createServices(db: SqliteDatabase): Services {
     currency: CURRENCY,
     locale: LOCALE,
     unitOfWork: createUnitOfWork(db, createRepositoriesFactory(clock, ids)),
+    notifier: createNotifier({
+      notifications: Notifications,
+      content: strings.reminders.notification,
+      // iOS has no channels, and Expo Go on Android refuses them (see `NotifierOptions`).
+      channel:
+        Platform.OS === 'android' && !isRunningInExpoGo()
+          ? { name: strings.reminders.channelName }
+          : null,
+    }),
   }
 }
 
@@ -76,5 +90,9 @@ export async function openServices(): Promise<Result<Services>> {
   if (isErr(migrated)) {
     return migrated
   }
+  // A side effect on the device, so here rather than in the wiring above. It asks for no
+  // permission and schedules nothing; it only decides how a reminder that arrives while the
+  // app is open is shown.
+  showNotificationsWhileOpen(Notifications)
   return ok(createServices(db))
 }

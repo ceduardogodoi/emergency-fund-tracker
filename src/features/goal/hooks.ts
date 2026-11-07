@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query'
 
-import { combineQueries, queryKeys, type QueryLike } from '@/runtime/query'
+import { combineQueries, queryKeys, unwrap, type QueryLike } from '@/runtime/query'
 import { useServices } from '@/runtime/services-context'
 import type { AppError } from '@/domain/errors'
 import { submitGoal } from '@/domain/goal/submit-goal'
@@ -9,7 +9,7 @@ import { forgetMilestonesAbove } from '@/domain/ledger/acknowledge-milestones'
 import type { Goal, GoalInput } from '@/domain/goal/types'
 import type { Money } from '@/domain/money/money'
 import type { Profile } from '@/domain/profile/types'
-import { isErr, type Result } from '@/domain/result'
+import { isErr } from '@/domain/result'
 
 /**
  * The goal, and the monthly expenses it is derived from.
@@ -147,19 +147,4 @@ export function useSubmitGoal(): UseMutationResult<Goal, AppError, GoalDraft> {
       ])
     },
   })
-}
-
-/**
- * Turns a `Result` into its value, or throws the error.
- *
- * The one place in the app where a result becomes an exception, and it is not a choice:
- * TanStack Query decides a query failed by catching what its function throws. Confining the
- * conversion here keeps every layer below on results, and every layer above reading
- * `query.error` — which is typed `AppError` for exactly this reason.
- */
-function unwrap<T>(result: Result<T>): T {
-  if (isErr(result)) {
-    throw result.error
-  }
-  return result.value
 }

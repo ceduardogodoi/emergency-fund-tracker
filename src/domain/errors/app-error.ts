@@ -21,6 +21,7 @@ export type AppError =
   | PermissionDeniedError
   | CancelledError
   | OverBalanceError
+  | DeviceError
 
 /** User input that failed a rule — the amount, the date, the expense figure. */
 export interface ValidationError {
@@ -77,10 +78,28 @@ export interface ImportUnsupportedVersionError {
   readonly supported: number
 }
 
+/** A device capability the app asks the OS for, rather than one it has by default. */
+export type DeviceCapability = 'notifications' | 'file-access'
+
 /** The OS denied a capability the user asked for. Never fatal — the feature stays off. */
 export interface PermissionDeniedError {
   readonly kind: 'permission-denied'
-  readonly capability: 'notifications' | 'file-access'
+  readonly capability: DeviceCapability
+}
+
+/**
+ * The device would not do what was asked of it — schedule a notification, write a file.
+ *
+ * Not a {@link StorageError}: nothing was being stored, and the copy for a storage failure
+ * would send the user looking in the wrong place. Not a {@link PermissionDeniedError}
+ * either: the permission may well be granted, and the system failed anyway.
+ */
+export interface DeviceError {
+  readonly kind: 'device'
+  readonly capability: DeviceCapability
+  readonly messageKey: string
+  /** The platform's error. Logged, never displayed. */
+  readonly cause?: unknown
 }
 
 /** The user backed out. Not a failure to report — nothing changed, so say nothing. */
@@ -121,6 +140,34 @@ export function validationError(field: string, messageKey: string): ValidationEr
  */
 export function overBalanceError(balance: Money, belowZeroBy: Money): OverBalanceError {
   return { kind: 'over-balance', balance, belowZeroBy }
+}
+
+/**
+ * Builds a permission refusal (FR-035).
+ *
+ * @param capability What the user was asked to allow.
+ */
+export function permissionDeniedError(capability: DeviceCapability): PermissionDeniedError {
+  return { kind: 'permission-denied', capability }
+}
+
+/**
+ * Builds a device failure.
+ *
+ * Omits `cause` entirely when there is none, as {@link storageError} does.
+ *
+ * @param capability The capability the failed call was using.
+ * @param messageKey A key into the strings module, not user-facing prose.
+ * @param cause The platform's error. Logged, never displayed.
+ */
+export function deviceError(
+  capability: DeviceCapability,
+  messageKey: string,
+  cause?: unknown,
+): DeviceError {
+  return cause === undefined
+    ? { kind: 'device', capability, messageKey }
+    : { kind: 'device', capability, messageKey, cause }
 }
 
 /** Builds a not-found failure for the named entity. */

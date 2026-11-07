@@ -3,18 +3,16 @@ import { calendarDate } from '@/domain/dates/calendar-date'
 import { money } from '@/domain/money/money'
 import { currencyCode } from '@/domain/money/currency'
 import type { Repositories } from '@/domain/ports/repositories'
-import type { Result } from '@/domain/result'
 import { CountingIdGenerator, FakeClock } from '@tests/support/doubles'
-import { expectErr, expectOk } from '@tests/support/expect-result'
+import { expectOk } from '@tests/support/expect-result'
 import { createMigratedDatabase, type TestDatabase } from '@tests/support/sqlite-harness'
 
 /**
  * The factory the composition root hands to the unit of work.
  *
- * Every repository but the reminders' is implemented; that one arrives with its own user
- * story. What matters here is that it fails loudly — a stub that
- * returned an empty list would be indistinguishable from a fund with no entries, and the
- * app would render a zero balance as though it were the truth.
+ * Each repository is bound to the database handle the factory was given, which is what keeps
+ * a write inside the transaction it was made in. Every one is implemented since T131, when
+ * the last placeholder — the reminders', which failed every call — was deleted.
  */
 describe('the repository set', () => {
   let db: TestDatabase
@@ -70,44 +68,21 @@ describe('the repository set', () => {
 
       expect(expectOk(await repositories.milestones.listAcknowledged())).toEqual([50])
     })
-  })
 
-  describe('what is not implemented yet', () => {
-    /**
-     * Every call that must fail rather than answer.
-     *
-     * Typed as returning `Result<unknown>` rather than `Promise<unknown>` so the list
-     * cannot accidentally hold a call that does not return a result at all — which would
-     * make `expectErr` unable to see what it was given.
-     */
-    const pendingCalls: readonly (readonly [
-      string,
-      (repos: Repositories) => Promise<Result<unknown>>,
-    ])[] = [
-      ['reminders.get', (repos) => repos.reminders.get()],
-      [
-        'reminders.save',
-        (repos) =>
-          repos.reminders.save({
-            enabled: false,
-            frequency: 'monthly',
-            dayOfMonth: 1,
-            dayOfWeek: null,
-            timeOfDay: '09:00',
-          }),
-      ],
-    ]
+    it('binds the reminder repository to the database it was given', async () => {
+      expectOk(
+        await repositories.reminders.save({
+          enabled: true,
+          frequency: 'weekly',
+          dayOfMonth: null,
+          dayOfWeek: 4,
+          timeOfDay: '07:45',
+        }),
+      )
 
-    // The dangerous failure is not a crash but a plausible answer: `ok([])` from the ledger
-    // reads as "this fund has no entries", and the balance would render as zero.
-    it.each(pendingCalls)(
-      '%s reports that it is unimplemented rather than answering',
-      async (_name, call) => {
-        expect(expectErr(await call(repositories))).toMatchObject({
-          kind: 'storage',
-          messageKey: 'repository.not-implemented',
-        })
-      },
-    )
+      expect(await db.selectAll('SELECT day_of_week FROM reminder_setting')).toEqual([
+        { day_of_week: 4 },
+      ])
+    })
   })
 })

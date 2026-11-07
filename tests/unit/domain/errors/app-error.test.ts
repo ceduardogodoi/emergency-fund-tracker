@@ -1,8 +1,10 @@
 import {
   assertNever,
   conflictError,
+  deviceError,
   notFoundError,
   overBalanceError,
+  permissionDeniedError,
   storageError,
   validationError,
   type AppError,
@@ -49,6 +51,36 @@ describe('AppError', () => {
       })
     })
 
+    // FR-035: a refusal is the user's answer, not a fault, and says which capability.
+    it('builds a permission refusal naming the capability', () => {
+      expect(permissionDeniedError('notifications')).toEqual({
+        kind: 'permission-denied',
+        capability: 'notifications',
+      })
+    })
+
+    // The device failed to do what was asked — scheduling a notification, say. Not a
+    // storage failure: nothing was being stored, and the copy for one would mislead.
+    it('builds a device failure naming the capability, with its cause', () => {
+      const cause = new Error('alarm manager unavailable')
+      expect(deviceError('notifications', 'notifications.schedule-failed', cause)).toEqual({
+        kind: 'device',
+        capability: 'notifications',
+        messageKey: 'notifications.schedule-failed',
+        cause,
+      })
+    })
+
+    it('omits the cause key of a device failure when there is none', () => {
+      const error = deviceError('file-access', 'files.write-failed')
+      expect(error).toEqual({
+        kind: 'device',
+        capability: 'file-access',
+        messageKey: 'files.write-failed',
+      })
+      expect('cause' in error).toBe(false)
+    })
+
     it('omits the cause key entirely when there is none', () => {
       // exactOptionalPropertyTypes means an absent cause must be absent, not undefined.
       const error = storageError('storage.readFailed')
@@ -71,6 +103,7 @@ describe('AppError', () => {
     })
 
     it('lets an exhaustive switch compile and return for every kind', () => {
+      // eslint-disable-next-line complexity -- one case per kind is the subject of the test
       const describeError = (error: AppError): string => {
         switch (error.kind) {
           case 'validation':
@@ -91,6 +124,8 @@ describe('AppError', () => {
             return 'cancelled'
           case 'over-balance':
             return `over-balance:${error.belowZeroBy}`
+          case 'device':
+            return `device:${error.capability}`
           default:
             return assertNever(error)
         }
@@ -98,6 +133,7 @@ describe('AppError', () => {
 
       expect(describeError(validationError('amount', 'a'))).toBe('validation:amount')
       expect(describeError({ kind: 'cancelled' })).toBe('cancelled')
+      expect(describeError(deviceError('notifications', 'x'))).toBe('device:notifications')
       expect(describeError({ kind: 'permission-denied', capability: 'notifications' })).toBe(
         'denied:notifications',
       )

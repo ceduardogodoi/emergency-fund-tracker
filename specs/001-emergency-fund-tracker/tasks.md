@@ -283,18 +283,18 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Tests for User Story 6
 
-- [ ] T126 [P] [US6] Unit tests for reminder schedule validation, including the day-of-month cap at 28, in `tests/unit/domain/reminders/schedule.test.ts`
-- [ ] T127 [P] [US6] Integration tests for `ReminderRepository` in `tests/integration/data/reminder-repository.test.ts`
-- [ ] T128 [P] [US6] Component tests for the reminders settings screen including the permission-denied state in `tests/component/reminders.test.tsx`
-- [ ] T129 [P] [US6] Maestro flow covering the Story 6 journey in `e2e/us6-reminders.yaml`
+- [X] T126 [P] [US6] Unit tests for reminder schedule validation, including the day-of-month cap at 28, in `tests/unit/domain/reminders/schedule.test.ts` — also the time steppers' arithmetic, and `saveReminder` in `save-reminder.test.ts`: the order of the store and device writes, chosen so a failure never leaves the screen saying "on" with nothing scheduled, or "off" with a reminder still arriving
+- [X] T127 [P] [US6] Integration tests for `ReminderRepository` in `tests/integration/data/reminder-repository.test.ts` — no row reads as the default without writing it; the factory's placeholder test became a binding test
+- [X] T128 [P] [US6] Component tests for the reminders settings screen including the permission-denied state in `tests/component/reminders.test.tsx` — the permission is asked when the reminder is saved on, not when the switch is turned; the adapter's tests are `notifier.test.tsx`, in the component project because `expo-notifications` cannot load in plain Node, and the new primitives' are `controls.test.tsx`
+- [X] T129 [P] [US6] Maestro flow covering the Story 6 journey in `e2e/us6-reminders.yaml` — the three scenarios, allowed ones first and the refusal last, around Expo Go's own per-app permission layer (research.md, D-013 amendment). Delivery at the scheduled time is not asserted; it is T134's. Passes on both, alongside every earlier flow
 
 ### Implementation for User Story 6
 
-- [ ] T130 [US6] Implement the reminder schedule model in `src/domain/reminders/schedule.ts`
-- [ ] T131 [US6] Implement `ReminderRepository` in `src/data/sqlite/repositories/reminder-repository.ts` — and delete its placeholder from `src/data/sqlite/repositories/pending.ts`, which fails every call so an unimplemented repository can never be mistaken for an empty fund
-- [ ] T132 [US6] Implement the `Notifier` adapter over `expo-notifications`, scheduling local notifications only, in `src/platform/notifications/notifier.ts`
-- [ ] T133 [US6] Build the reminders settings screen with the permission request and denial explanation in `app/settings/reminders.tsx`
-- [ ] T134 [US6] Resolve R-003 — verify scheduling behavior after device restart and force-quit and confirm Android exact-alarm requirements, recording findings in `specs/001-emergency-fund-tracker/research.md`
+- [X] T130 [US6] Implement the reminder schedule model in `src/domain/reminders/schedule.ts` — the default the form starts on is monthly on the 5th at 09:00, decided with the user on 2026-11-07; saving and scheduling together is `save-reminder.ts`. A new `AppError` kind, `device`, for the OS failing to do what was asked (domain-ports amended)
+- [X] T131 [US6] Implement `ReminderRepository` in `src/data/sqlite/repositories/reminder-repository.ts` — and delete its placeholder from `src/data/sqlite/repositories/pending.ts`, which fails every call so an unimplemented repository can never be mistaken for an empty fund. `pending.ts` is gone, it being the last
+- [X] T132 [US6] Implement the `Notifier` adapter over `expo-notifications`, scheduling local notifications only, in `src/platform/notifications/notifier.ts` — no exact-alarm permission, so Android's alarm is inexact (T134 measured how inexact); an Android channel only outside Expo Go, which refuses them (measured). A failed save is logged with the platform's message
+- [X] T133 [US6] Build the reminders settings screen with the permission request and denial explanation in `app/settings/reminders.tsx` — the time is chosen with hour and minute steppers (15-minute steps) and the day from a grid of 1 to 28 or seven weekday chips; a refusal offers to open the system settings. All three decided with the user on 2026-11-07. New primitives `Toggle`, `Chip`, and `Stepper`; Home gains the way in
+- [X] T134 [US6] Resolve R-003 — verify scheduling behavior after device restart and force-quit and confirm Android exact-alarm requirements, recording findings in `specs/001-emergency-fund-tracker/research.md` — measured in release builds on an Android emulator, an Android phone (Galaxy S23 Ultra, Android 17), and an iOS simulator: delivered in the background, after a swipe out of recents or a termination, after a force-stop once the app is reopened (Android), and after a reboot (Android once unlocked; a reminder due before the first unlock is skipped to the next month). No exact-alarm permission: Android's window is up to an hour; iOS comes on the minute. The iOS build needed `expo` 57.0.32 and `@expo/ui` 57.0.26, and CocoaPods
 
 **Checkpoint**: All six user stories are independently functional
 

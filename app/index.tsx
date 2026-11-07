@@ -98,6 +98,15 @@ function StandingView({ standing }: StandingViewProps): ReactNode {
       />
       <Destinations />
       <GoalCard goal={standing.goal} monthsCovered={standing.monthsCovered} />
+      {/* Below the goal, last: optional, and set once rather than visited (Story 6). */}
+      <Button
+        label={strings.home.remindersAction}
+        variant="secondary"
+        onPress={() => {
+          router.push('/settings/reminders')
+        }}
+        testID="reminders"
+      />
     </>
   )
 }
