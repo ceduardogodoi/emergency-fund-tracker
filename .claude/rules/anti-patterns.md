@@ -30,6 +30,8 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 **AP-011 — an event fired and not awaited.** RNTL v14 made `fireEvent` return a promise, and the state updates it causes land when it resolves. Six contribute-screen tests failed as though the reducer were broken — a refusal that would not clear, a picked day that never showed. The picker's own tests had the same missing `await` and passed, only because the callback they asserted on runs synchronously. Nothing in lint flagged either.
 **The tell:** a rendered value that should follow an event does not, while a spy on the same event reports it was called. Check the signature in the `.d.ts` before suspecting the component.
 **Now enforced:** `@typescript-eslint/no-floating-promises` in `eslint.config.mjs`. Turning it on found fourteen more in the older suites, each passing only because a later `await` happened to flush it. The tell still applies to a promise silenced with `void`.
+**Again (T128), with `unmount`:** `screen.unmount()` returns a promise in RNTL v14 too, and a test that reopened the reminders screen left it un-awaited. Its own assertions passed; the three tests after it failed, each unable to find the screen, with "overlapping act() calls" in the console. Running them alone passed. The rule would have caught it at the gate — it was the test run that came first.
+**The tell, for a lifecycle call:** tests that pass alone and fail after one particular test. Look for that test's last un-awaited call, and check its return type in `render.d.ts`.
 
 **AP-014 — a mutation that kills the test on another line.** The revision screen's unreadable-ledger test (T156) ends by asserting no percentage is shown. The mutation meant to prove it read the balance as zero, and the test went red — but at the assertion before it, because the mutation had also removed the "could not be worked out" line. The last assertion had never failed. A second mutation that kept that line and drew a 0% beside it was the one that proved it.
 **The tell:** the suite went red and the failure was read as a count, not a location. Check that the failure points at the assertion the mutation was aimed at; when a mutation breaks several things at once, narrow it until it breaks only the one.
@@ -38,6 +40,9 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 
 **AP-015 — an order the primary key already gives.** `milestone_ack` is listed lowest threshold first, and its test wrote 75 before 25, as AP-003 says to. Deleting the `ORDER BY` survived anyway: `threshold` is the table's `INTEGER PRIMARY KEY`, which makes it the rowid, and a plain scan returns rows in rowid order whatever order they were written in. Opposing the writes cannot reach that. `PRAGMA reverse_unordered_selects = ON`, set in the test, reverses every SELECT that has no `ORDER BY` — and killed the mutation.
 **The tell:** the column being ordered by is the table's `INTEGER PRIMARY KEY`. SQLite still promises no order without the clause, so the clause stays; the pragma is how a test sees it go.
+
+**AP-016 — a check that matched a neighbour.** Three times in one round (T134), a check passed on something other than its subject. Delivery was counted by the notification's title, and the first "delivered" was a reminder Expo Go had left from an earlier run, posted when the emulator's clock moved. CocoaPods' install was declared done on `Successfully installed cocoapods-`, which `cocoapods-core` and five other sub-gems print. And `gem list ffi | grep ffi` found `public_suffix`, so a fallback that should have run did not.
+**The tell:** the check is a substring — of a title, a gem name, a package — that something else on the same device can also contain. Match the identity, not a fragment of it: the package in `pkg=`, `^cocoapods$`, `'^ffi$'`.
 
 ## Tests that fail when nothing is wrong
 
@@ -55,6 +60,8 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 
 **AP-006 — trusting a type's name over its declaration.** `PlatformOSType` looked like the type of `Platform.OS`. It is wider — it admits `'native'`, which `Platform.OS` never holds.
 **The tell:** the names match. Check the declaration, and let `npm run typecheck` decide.
+**Again (T132), with a library's documentation:** the `expo-notifications` docs say its default `'bestEffort'` delivery uses Android's exact alarm call. A comment and research.md repeated it — "may arrive some minutes late". The source calls it only when the app may schedule exact alarms, which this one may not, and `dumpsys alarm` showed an inexact alarm with an hour's window.
+**The tell:** a claim about what happens on the device, taken from the docs alone. Read the call in the library's native source, or the device's own record of it, before writing it down.
 
 **AP-007 — applying a language feature without checking the engine.** `toSorted` typechecks — `tsconfig` targets `esnext` — and does not exist on Hermes. In the one place this codebase sorts, it would have been a boot crash on device.
 **The tell:** a new built-in, and a compiler that is happy. The compiler is not the runtime; probe the device.
@@ -76,3 +83,9 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 
 **AP-012 — changing a rule without reading where it came from.** `percentOf` rounded to nearest, so a fund one centavo short of R$ 12.000,00 read 100% — reached, to the reader and to the 100% milestone. The fix reached for was rounding down, and the test pinning 500 of 12 000 at 4,17 was edited to expect 4,16 as part of it. That figure is User Story 2's first acceptance scenario. A second copy of it, in `progress.test.ts`, carried a comment citing the spec, and that is what stopped the change. The fix that survived keeps to-nearest and caps anything short of the target at 99,99.
 **The tell:** editing an existing test's expectation so that a fix passes. Before changing what a test expects, find out why it expects it — the comment, the task, the spec — and treat a citation as a requirement, not as documentation.
+
+## Steps that run whatever happened
+
+**AP-017 — a destructive step not gated on the one before it.** Measuring a reboot on a phone (T134), one command saved a reminder through the app and then rebooted the phone. The save failed — the flow could not find a button — and the reboot ran anyway, so the phone went through a reboot that measured nothing, with its owner standing by to unlock it. The next attempt read `if slot=$(…); then … reboot; else …; fi`.
+**The tell:** a chain of commands where a later one is costly or hard to undo — a reboot, a delete, a push — and an earlier one can fail without stopping it. Make the costly step conditional on the earlier one's exit, and check that the earlier one reports failure through its exit code rather than only its output.
+
