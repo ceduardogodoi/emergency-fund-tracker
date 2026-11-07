@@ -1,6 +1,11 @@
 import { calendarDate } from '@/domain/dates/calendar-date'
 import { instant } from '@/domain/dates/instant'
-import { calculatePace, MINIMUM_PACE_MONTHS, PACE_WINDOW_MONTHS } from '@/domain/forecast/pace'
+import {
+  calculateContributionPace,
+  calculatePace,
+  MINIMUM_PACE_MONTHS,
+  PACE_WINDOW_MONTHS,
+} from '@/domain/forecast/pace'
 import type { EntryType, LedgerEntry } from '@/domain/ledger/types'
 import { money } from '@/domain/money/money'
 
@@ -205,5 +210,54 @@ describe('calculatePace', () => {
         monthsNeeded: 3,
       })
     })
+  })
+})
+
+/**
+ * The pace a recovery is estimated at (FR-018): what goes in each month, over the same
+ * window, with withdrawals left out — decided with the user on 2026-11-01. A withdrawal
+ * does not slow down how fast the fund refills, and counted, one large one would leave no
+ * estimate at all for the six months it stays in the window.
+ */
+describe('calculateContributionPace', () => {
+  // Net, this is (300_000 − 120_000) / 6 = 30_000.
+  it('averages the contributions alone, leaving withdrawals out', () => {
+    const entries = [
+      ...contributionsIn(50_000, ...WINDOW),
+      entry('withdrawal', 120_000, '2026-07-20'),
+    ]
+    expect(calculateContributionPace(entries, TODAY)).toEqual({
+      kind: 'measured',
+      pace: 50_000,
+      months: WINDOW,
+    })
+  })
+
+  it('leaves the opening balance out, as the net pace does', () => {
+    const entries = [entry('opening', 900_000, '2026-04-01'), ...contributionsIn(50_000, ...WINDOW)]
+    expect(calculateContributionPace(entries, TODAY)).toMatchObject({ pace: 50_000 })
+  })
+
+  it('reads the same window, and leaves out the month in progress', () => {
+    const entries = [
+      ...contributionsIn(800_000, '2026-01', '2026-02', '2026-03'),
+      ...contributionsIn(50_000, ...WINDOW),
+      entry('contribution', 900_000, '2026-10-02'),
+    ]
+    expect(calculateContributionPace(entries, TODAY)).toEqual({
+      kind: 'measured',
+      pace: 50_000,
+      months: WINDOW,
+    })
+  })
+
+  it('needs the same history before it is stated', () => {
+    expect(calculateContributionPace(contributionsIn(50_000, '2026-08', '2026-09'), TODAY)).toEqual(
+      {
+        kind: 'insufficient-history',
+        monthsAvailable: 2,
+        monthsNeeded: 1,
+      },
+    )
   })
 })

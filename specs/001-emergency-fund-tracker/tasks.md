@@ -258,18 +258,18 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ### Tests for User Story 5
 
-- [ ] T117 [P] [US5] Unit tests for withdrawal validation and the over-balance rule in `tests/unit/domain/ledger/withdrawal.test.ts`
-- [ ] T118 [P] [US5] Unit tests for shortfall and the recovery estimate in `tests/unit/domain/forecast/recovery.test.ts`
-- [ ] T119 [P] [US5] Component tests for the withdraw screen and the over-balance confirmation in `tests/component/withdraw.test.tsx`
-- [ ] T120 [P] [US5] Maestro flow covering the Story 5 journey in `e2e/us5-withdrawal.yaml`
+- [X] T117 [P] [US5] Unit tests for withdrawal validation and the over-balance rule in `tests/unit/domain/ledger/withdrawal.test.ts` — the reason through `validateEntry` (required, not blank, at most 280 characters, refused on any other kind), `assessWithdrawal` at and either side of the balance, and `recordEntry` refusing an unconfirmed overdraw against the balance as of today, future-dated entries left out
+- [X] T118 [P] [US5] Unit tests for shortfall and the recovery estimate in `tests/unit/domain/forecast/recovery.test.ts` — also `calculateContributionPace` in `pace.test.ts`. The recovery fixture has four months and a withdrawal inside them, so the contribution pace, the net pace, and a six-month window each give a different answer (AP-002)
+- [X] T119 [P] [US5] Component tests for the withdraw screen and the over-balance confirmation in `tests/component/withdraw.test.tsx` — Story 5's first two scenarios, each predefined reason by its key, the user's own words trimmed, the sheet's figures, cancel, and confirm. The reason on the edit screen and the history's label for a key are in `entries.test.tsx`, the reason on `reviseEntry` in `revise-entry.test.ts`
+- [X] T120 [P] [US5] Maestro flow covering the Story 5 journey in `e2e/us5-withdrawal.yaml` — seeded with six steady months, a withdrawal of R$ 1.200,00 for Saúde with the shortfall and three months to recover, the row in the history, then R$ 2.000,00 against R$ 1.800,00: warned, cancelled, saved again, and confirmed. History rows are matched as patterns, because on iOS a row is one accessibility element. Passes on both, alongside every earlier flow
 
 ### Implementation for User Story 5
 
-- [ ] T121 [US5] Implement withdrawal rules and the required reason in `src/domain/ledger/withdrawal.ts`
-- [ ] T122 [US5] Implement the shortfall and recovery estimate in `src/domain/forecast/recovery.ts`
-- [ ] T123 [US5] Build the withdraw screen with predefined and free-text reasons in `app/entries/withdraw.tsx`
-- [ ] T124 [US5] Build the over-balance warning and explicit confirmation in `src/features/entries/withdraw-confirm.tsx`
-- [ ] T125 [US5] Surface the shortfall and recovery estimate on Home in `app/index.tsx`
+- [X] T121 [US5] Implement withdrawal rules and the required reason in `src/domain/ledger/withdrawal.ts` — five predefined reasons stored as keys (`medical`, `car-repair`, `home-repair`, `income-loss`, `family`) or the user's own words, decided with the user on 2026-11-01. The over-balance check is `recordEntry`'s, against the ledger in storage, and its refusal is a new `AppError` kind, `over-balance`, carrying the balance and how far below zero the withdrawal goes, so the question is asked about the balance the withdrawal is actually taken from (domain-ports amended)
+- [X] T122 [US5] Implement the shortfall and recovery estimate in `src/domain/forecast/recovery.ts` — decided with the user on 2026-11-01: the shortfall is the drop from the highest end-of-day balance, capped at the target, and the estimate is `project` at the pace of contributions alone (`calculateContributionPace`), since a withdrawal does not slow how fast the fund refills (data-model amended)
+- [X] T123 [US5] Build the withdraw screen with predefined and free-text reasons in `app/entries/withdraw.tsx` — the date group moves out of the contribute screen into `src/features/entries/entry-date.tsx`, shared; the reasons are `reason-picker.tsx`, shared with the edit screen, which now corrects a withdrawal's reason too (decided with the user on 2026-11-01). The history shows a predefined reason by its label
+- [X] T124 [US5] Build the over-balance warning and explicit confirmation in `src/features/entries/withdraw-confirm.tsx` — through `ConfirmSheet`, stating the balance and how far below zero the withdrawal leaves it. The question is the mutation's `over-balance` error, read off it rather than copied into the draft
+- [X] T125 [US5] Surface the shortfall and recovery estimate on Home in `app/index.tsx` — a card under the balance, only while there is something to restore, in the secondary voice rather than the negative one; it states the pace and months behind the date, or why there is none. `useStanding` now reads the entries rather than the balance. Home also gains the way in to the withdraw screen
 
 **Checkpoint**: Stories 1–5 all work independently
 
@@ -347,6 +347,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 **Purpose**: Defects and refinements found along the way that no story depends on. They wait here, outside the phase order, so they do not hold up the stories; each is picked up when it is chosen, not when its phase comes round
 
 - [ ] T159 [US2] Recompute what depends on today when the date changes under a running app — the balance is computed from `clock.today()` only when a screen renders (`useBalance`'s `select`), and the future-dated check is keyed by the date it was asked on, so a date that changes while the app is open leaves both as they were drawn. Seen on the Android emulator during T085: an entry recorded with the clock four days ahead, the clock set back, and Home went on showing R$ 3.000,00 and "1 de 6 meses" with that entry counted, where a cold start showed R$ 500,00 and "0 de 6 meses". The clock correction is exactly how FR-033's entries arise, and midnight is the same change in the other direction. Probably a re-render, and a refetch of the date-keyed queries, when the app returns to the foreground or the day turns over; what triggers it is for the task to measure. Raised during T085. Numbered out of sequence for the reason T156 is
+- [ ] T160 [US5] Ask before an edit takes a withdrawal above the balance (FR-017) — `recordEntry` refuses an unconfirmed over-balance withdrawal with an `over-balance` error, but `reviseEntry` checks only `validateEntry`, so correcting a withdrawal of R$ 100,00 to R$ 5.000,00 on the edit screen lands without the question. The balance to measure against is the ledger as of today with the entry's stored amount taken out, not counted twice. The edit screen then needs the confirmation the withdraw screen has (`WithdrawConfirm`), re-sending the patch with the confirmation. Tests first: a unit case in `revise-entry.test.ts` at, just over, and confirmed over the balance, and a component case on the edit screen. Raised during T117–T125. Numbered out of sequence for the reason T156 is
 
 ---
 

@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 
 import { toViewState } from '@/runtime/query'
 import { useServices } from '@/runtime/services-context'
+import { monthKey } from '@/domain/dates/calendar-date'
+import type { RecoveryEstimate, RecoveryState } from '@/domain/forecast/recovery'
 import type { Goal } from '@/domain/goal/types'
 import type { ProgressSummary } from '@/domain/ledger/types'
 import { MilestoneBanner } from '@/features/progress/milestone-banner'
@@ -69,7 +71,8 @@ interface StandingViewProps {
  * The balance leads because it is what moves: the target changes rarely and on purpose,
  * and the question a returning user opens the app with is how far along they are. Above it,
  * only a milestone the last contribution crossed (FR-024), since that is news about the
- * figure below it.
+ * figure below it. Below it, after a withdrawal, what is left to restore (FR-018), which is
+ * the other half of the same news.
  */
 function StandingView({ standing }: StandingViewProps): ReactNode {
   const router = useRouter()
@@ -77,12 +80,21 @@ function StandingView({ standing }: StandingViewProps): ReactNode {
     <>
       <MilestoneBanner />
       <StandingCard progress={standing.progress} />
+      <RecoveryCard recovery={standing.recovery} />
       <Button
         label={strings.home.contributeAction}
         onPress={() => {
           router.push('/entries/contribute')
         }}
         testID="contribute"
+      />
+      <Button
+        label={strings.home.withdrawAction}
+        variant="secondary"
+        onPress={() => {
+          router.push('/entries/withdraw')
+        }}
+        testID="withdraw"
       />
       <Destinations />
       <GoalCard goal={standing.goal} monthsCovered={standing.monthsCovered} />
@@ -169,6 +181,69 @@ function StandingLine({ progress }: StandingCardProps): ReactNode {
       ) : null}
     </>
   )
+}
+
+/** Props for {@link RecoveryCard}. */
+interface RecoveryCardProps {
+  readonly recovery: RecoveryState
+}
+
+/**
+ * What withdrawals have left to restore, and how long restoring it will take (FR-018).
+ *
+ * Nothing at all until there is something to restore. In the secondary voice, never the
+ * negative one: taking money out is what the fund is for, and the card says how it comes
+ * back rather than what was lost.
+ */
+function RecoveryCard({ recovery }: RecoveryCardProps): ReactNode {
+  const { format } = useServices()
+  if (recovery.kind === 'none') {
+    return null
+  }
+  return (
+    <Card testID="recovery-card">
+      <Text variant="label" tone="secondary">
+        {strings.recovery.label}
+      </Text>
+      <Text variant="title" numeric testID="shortfall-amount">
+        {format.money(recovery.shortfall)}
+      </Text>
+      <Text variant="caption" tone="secondary">
+        {strings.recovery.explanation}
+      </Text>
+      <RecoveryLine estimate={recovery.estimate} />
+    </Card>
+  )
+}
+
+/** Props for {@link RecoveryLine}. */
+interface RecoveryLineProps {
+  readonly estimate: RecoveryEstimate
+}
+
+/**
+ * When the fund will be back, with the pace that says so — or why that cannot be said yet,
+ * as the forecast says it (FR-029, FR-030).
+ */
+function RecoveryLine({ estimate }: RecoveryLineProps): ReactNode {
+  const { format } = useServices()
+  switch (estimate.kind) {
+    case 'projected':
+      return (
+        <Text>
+          {strings.recovery.estimate(
+            format.money(estimate.pace),
+            estimate.paceMonths,
+            estimate.monthsToTarget,
+            format.month(monthKey(estimate.projectedDate)),
+          )}
+        </Text>
+      )
+    case 'insufficient-history':
+      return <Text tone="secondary">{strings.recovery.insufficient(estimate.monthsNeeded)}</Text>
+    case 'no-pace':
+      return <Text tone="secondary">{strings.recovery.noPace}</Text>
+  }
 }
 
 /** Props for {@link GoalCard}. */

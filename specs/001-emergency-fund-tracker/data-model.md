@@ -172,7 +172,17 @@ exceedsPace     = requiredMonthly > pace
 
 The months available are the ones a projection counts — whole months from the end of the current one — so saving `requiredMonthly` projects onto the desired month and not after it. With fewer than three months of history there is no pace to compare with, and the screen says so rather than calling the amount within or above it. The date is chosen a month at a time and stored as that month's last day (T116).
 
-**Recovery estimate after a withdrawal (FR-018)**: the same projection applied to the shortfall rather than the full remaining amount.
+**Recovery estimate after a withdrawal (FR-018)**: the same projection applied to the shortfall rather than the full remaining amount. Both halves decided with the user on 2026-11-01 (T122):
+
+```
+high      = highest end-of-day balance the fund has reached, over entries dated today or earlier (from zero)
+shortfall = max(0, min(high, target) − balance)
+pace      = Σ(contributions in window) ÷ monthsInWindow   (the forecast's window and rounding, withdrawals left out)
+```
+
+The shortfall is the drop from the high, so a run of withdrawals is one shortfall and contributions refill it until the old high is reached again; it is capped at the target, since a surplus spent is not a debt to the fund. Balances are read at the end of each day, so the order a day's entries were recorded in cannot raise the high. The pace is of contributions alone — FR-018's "recent contribution pace" — because a withdrawal does not slow down how fast the fund refills, and counted, one large enough to need recovering from would turn the net pace to zero or below and leave no estimate for the six months it stays in the window. The insufficient-history and no-pace states apply as they do to the forecast.
+
+**Withdrawal reasons (FR-016)**: one of `medical`, `car-repair`, `home-repair`, `income-loss`, `family`, stored as the key, or the user's own words, stored trimmed — at most 280 characters, never blank. Chosen with the user on 2026-11-01.
 
 ### Rounding policy
 

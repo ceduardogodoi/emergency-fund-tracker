@@ -1,0 +1,161 @@
+# User Story 5 — withdrawals and recovery.
+#
+# The story's Independent Test, on a device: from a positive balance, a withdrawal with a
+# predefined reason (FR-016) and the balance, shortfall, and recovery estimate it leaves
+# (FR-018); then one larger than the balance, with the warning, a cancel, and the explicit
+# confirmation that records it (FR-017).
+#
+# The fund comes from the development seed route (`npm run seed`, T087), opened as a link:
+# R$ 500,00 on the 5th of each of the six complete months before today, against a goal of
+# R$ 12.000,00. Relative to the day the flow runs, so every figure below holds on any date —
+# which is why the month the fund recovers by is not asserted, only the months to it. Both
+# withdrawals are today's, so neither is in the pace's window. Hand calculation:
+#
+#   seeded       balance 3.000,00, the highest it has been · contribution pace 500,00 over 6
+#   − 1.200,00   balance 1.800,00 · shortfall 3.000 − 1.800 = 1.200,00 · 1.200 ÷ 500 = 3 months
+#   − 2.000,00   more than 1.800,00, so asked: 200,00 below zero · balance −200,00 ·
+#                shortfall 3.200,00 · 3.200 ÷ 500 = 6,4, so 7 months
+#
+# Runs inside Expo Go; see `us1-set-target.yaml` for why, for why `APP_ID` and `DEV_URL` come
+# from the npm scripts, and for why amounts are matched by their digits alone.
+appId: ${APP_ID}
+name: US5 — withdrawals
+---
+- clearState
+- runFlow: open-app.yaml
+
+# Opening a link reloads the app inside Expo Go, bundle check included, so this waits as
+# long as a restart does.
+- openLink: ${DEV_URL}/--/dev/seed?months=6&pattern=steady
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+- assertVisible:
+    id: 'balance-amount'
+    text: '.*3[.,]000[.,]00.*'
+# Nothing withdrawn, nothing to restore.
+- assertNotVisible:
+    id: 'recovery-card'
+
+# FR-016 — an amount and a predefined reason, dated today by default.
+- scrollUntilVisible:
+    element:
+      id: 'withdraw'
+    direction: DOWN
+- tapOn:
+    id: 'withdraw'
+- extendedWaitUntil:
+    visible:
+      id: 'amount-input'
+    timeout: 20000
+- tapOn:
+    id: 'amount-input'
+- inputText: '120000'
+- swipe:
+    start: 50%, 32%
+    end: 50%, 22%
+- scrollUntilVisible:
+    element:
+      id: 'reason-medical'
+    direction: DOWN
+- tapOn:
+    id: 'reason-medical'
+- scrollUntilVisible:
+    element:
+      id: 'save-entry'
+    direction: DOWN
+- tapOn:
+    id: 'save-entry'
+
+# FR-018 — the balance, what is left to restore, and when it will be, at the pace of
+# contributions over the six months.
+- extendedWaitUntil:
+    visible:
+      id: 'balance-amount'
+      text: '.*1[.,]800[.,]00.*'
+    timeout: 20000
+- assertVisible:
+    id: 'shortfall-amount'
+    text: '.*1[.,]200[.,]00.*'
+- assertVisible: '.*nos últimos 6 meses completos, .*500[.,]00 por mês, isso leva 3 meses.*'
+
+# FR-014 — the history tells it from a contribution, and names the reason in words. Matched
+# as patterns: on iOS a row is one accessibility element, read as all of its text at once,
+# so a label on its own matches nothing there.
+- scrollUntilVisible:
+    element:
+      id: 'history'
+    direction: DOWN
+- tapOn:
+    id: 'history'
+- extendedWaitUntil:
+    visible: '.*Retirada.*'
+    timeout: 20000
+- assertVisible: '.*Saúde.*'
+- assertVisible: '.*− \D*1[.,]200[.,]00.*'
+
+# FR-017 — more than the balance, for a reason in the user's own words: asked first, and
+# nothing recorded on cancel. Back to Home by a restart, as `us2-record-progress.yaml` does:
+# Maestro's `back` is Android's.
+- stopApp
+- runFlow: open-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: 'withdraw'
+    direction: DOWN
+- tapOn:
+    id: 'withdraw'
+- extendedWaitUntil:
+    visible:
+      id: 'amount-input'
+    timeout: 20000
+- tapOn:
+    id: 'amount-input'
+- inputText: '200000'
+- swipe:
+    start: 50%, 32%
+    end: 50%, 22%
+- scrollUntilVisible:
+    element:
+      id: 'reason-other'
+    direction: DOWN
+- tapOn:
+    id: 'reason-other'
+- tapOn:
+    id: 'reason-input'
+- inputText: 'Dentista'
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: 'save-entry'
+    direction: DOWN
+- tapOn:
+    id: 'save-entry'
+- extendedWaitUntil:
+    visible: 'A retirada é maior que o saldo'
+    timeout: 20000
+- assertVisible: '.*Seu saldo é de .*1[.,]800[.,]00.*ele fica .*200[.,]00 abaixo de zero.*'
+- tapOn: 'Cancelar'
+- assertNotVisible: 'A retirada é maior que o saldo'
+
+# Asked again on the next save, and recorded once confirmed.
+- tapOn:
+    id: 'save-entry'
+- extendedWaitUntil:
+    visible: 'Registrar mesmo assim'
+    timeout: 20000
+- tapOn: 'Registrar mesmo assim'
+- extendedWaitUntil:
+    visible:
+      id: 'balance-amount'
+      text: '.*-\D*200[.,]00.*'
+    timeout: 20000
+- assertVisible:
+    id: 'shortfall-amount'
+    text: '.*3[.,]200[.,]00.*'
+- assertVisible: '.*500[.,]00 por mês, isso leva 7 meses.*'

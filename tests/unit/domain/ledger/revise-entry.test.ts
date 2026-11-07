@@ -148,6 +148,45 @@ describe('reviseEntry', () => {
     expect(await readBack(opening.id)).toMatchObject({ type: 'opening', amount: money(300_000) })
   })
 
+  // FR-016 on the way back in: what a withdrawal says about itself can be corrected, but
+  // not taken away.
+  describe('the reason for a withdrawal', () => {
+    async function withdrawn(): Promise<LedgerEntry> {
+      return stored({ type: 'withdrawal', note: null, withdrawalReason: 'car-repair' })
+    }
+
+    it('can be changed', async () => {
+      const entry = await withdrawn()
+
+      expectOk(await reviseEntry(repositories, entry.id, { withdrawalReason: 'Dentista' }, TODAY))
+
+      expect(await readBack(entry.id)).toMatchObject({ withdrawalReason: 'Dentista' })
+    })
+
+    // Checked as it would be stored, so the patch's reason is the one read. Were the stored
+    // reason checked instead, this blank one would pass.
+    it('cannot be emptied, and the entry keeps the one it had', async () => {
+      const entry = await withdrawn()
+
+      const failure = expectErr(
+        await reviseEntry(repositories, entry.id, { withdrawalReason: '  ' }, TODAY),
+      )
+
+      expect(failure).toMatchObject({ kind: 'validation', field: 'reason' })
+      expect(await readBack(entry.id)).toMatchObject({ withdrawalReason: 'car-repair' })
+    })
+
+    it('cannot be given to a contribution', async () => {
+      const entry = await stored()
+
+      const failure = expectErr(
+        await reviseEntry(repositories, entry.id, { withdrawalReason: 'Dentista' }, TODAY),
+      )
+
+      expect(failure).toMatchObject({ kind: 'validation', field: 'reason' })
+    })
+  })
+
   it('reports an entry that is not there', async () => {
     const failure = expectErr(
       await reviseEntry(repositories, 'no-such-entry', { amount: money(1) }, TODAY),

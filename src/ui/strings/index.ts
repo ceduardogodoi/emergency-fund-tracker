@@ -6,3 +6,4 @@
  */
 export { strings } from './strings'
 export { fieldMessage, validationMessage } from './validation-message'
+export { withdrawalReasonText } from './withdrawal-reason'

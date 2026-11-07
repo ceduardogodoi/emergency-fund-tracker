@@ -27,6 +27,9 @@ const MESSAGES: Readonly<Record<string, string>> = {
   'entry.date-in-future': strings.validation.entryDateInFuture,
   'entry.note-too-long': strings.validation.entryNoteTooLong,
   'entry.opening-already-exists': strings.validation.entryOpeningAlreadyExists,
+  'entry.reason-required': strings.validation.entryReasonRequired,
+  'entry.reason-too-long': strings.validation.entryReasonTooLong,
+  'entry.reason-not-allowed': strings.validation.entryReasonNotAllowed,
 }
 
 /**

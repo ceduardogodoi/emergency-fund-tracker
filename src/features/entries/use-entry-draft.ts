@@ -8,16 +8,8 @@ import type { LedgerEntryInput } from '@/domain/ledger/types'
 import { money, type Money } from '@/domain/money/money'
 import { isErr } from '@/domain/result'
 import { fieldMessage } from '@/ui/strings'
+import { resolveDate, type DateChoice, type DateDraft } from './date-choice'
 import { useAddEntry } from './hooks'
-
-/**
- * How the day of an entry was chosen.
- *
- * A choice rather than a date, because "Hoje" and "Ontem" are relative: they are resolved
- * against today when the entry is built, and a picked day is kept aside so that returning
- * to the calendar finds it where it was left.
- */
-export type DateChoice = 'today' | 'yesterday' | 'other'
 
 /** Everything the user has entered so far, as one value — see `use-goal-draft.ts`. */
 interface EntryDraft {
@@ -43,29 +35,18 @@ type EntryDraftAction =
 type EntryDraftEdit = Exclude<EntryDraftAction, { kind: 'submission-refused' }>
 
 /** The contribution being composed, and everything a screen needs to render or change it. */
-export interface EntryDraftState {
+export interface EntryDraftState extends DateDraft {
   readonly amount: Money
-  readonly dateChoice: DateChoice
-  /** Today, as it was when the form opened. The calendar's last selectable day. */
-  readonly today: CalendarDate
-  /** The day "Ontem" stands for. */
-  readonly yesterday: CalendarDate
-  /** The day last picked from the calendar. */
-  readonly pickedDate: CalendarDate
   readonly note: string
   /** The message under the amount, when that is what was refused. */
   readonly amountError: string | undefined
   /** The message under the note, when that is what was refused. */
   readonly noteError: string | undefined
-  /** The message under the date, when that is what was refused. */
-  readonly dateError: string | undefined
   /** Whether the submission is in flight, for the save control's own pending state. */
   readonly isSaving: boolean
   /** Whether the last submission failed in storage, as opposed to in validation. */
   readonly hasFailed: boolean
   readonly changeAmount: (value: Money) => void
-  readonly chooseDate: (choice: DateChoice) => void
-  readonly pickDate: (value: CalendarDate) => void
   readonly changeNote: (value: string) => void
   /** Validates and submits. Does nothing when a value is refused, beyond saying so. */
   readonly save: () => void
@@ -111,7 +92,7 @@ export function useEntryDraft(onSaved: () => void): EntryDraftState {
       // against a day that has stopped being today — and `recordEntry` would then refuse
       // what this let through, as a storage failure with no field to point at.
       const now = clock.today()
-      const entry = buildEntry(draft, now, addDays(now, -1))
+      const entry = buildEntry(draft, now)
       // A contribution is never an opening balance, so whether one exists cannot change the
       // answer — and finding out would cost a read of the whole ledger.
       const validated = validateEntry(entry, { today: now, hasOpening: false })
@@ -182,33 +163,13 @@ function applyEdit(draft: EntryDraft, action: EntryDraftEdit): EntryDraft {
  * The note is trimmed, and a blank one is no note: stored as spaces it would show in the
  * history as an entry with something to say and nothing said.
  */
-function buildEntry(
-  draft: EntryDraft,
-  today: CalendarDate,
-  yesterday: CalendarDate,
-): LedgerEntryInput {
+function buildEntry(draft: EntryDraft, today: CalendarDate): LedgerEntryInput {
   const note = draft.note.trim()
   return {
     type: 'contribution',
     amount: draft.amount,
-    date: resolveDate(draft, today, yesterday),
+    date: resolveDate(draft.dateChoice, draft.pickedDate, today),
     note: note === '' ? null : note,
     withdrawalReason: null,
-  }
-}
-
-/** The day the current choice stands for. */
-function resolveDate(
-  draft: EntryDraft,
-  today: CalendarDate,
-  yesterday: CalendarDate,
-): CalendarDate {
-  switch (draft.dateChoice) {
-    case 'today':
-      return today
-    case 'yesterday':
-      return yesterday
-    case 'other':
-      return draft.pickedDate
   }
 }

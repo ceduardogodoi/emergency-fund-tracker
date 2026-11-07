@@ -333,6 +333,94 @@ export const strings = {
     },
   },
 
+  /**
+   * Recording money taken out of the fund (FR-016, FR-017).
+   *
+   * "Retirada" throughout, the word the history already uses, and never a word for failure:
+   * taking money out is what an emergency fund is for, and the copy says so by saying
+   * nothing about it either way.
+   */
+  withdrawal: {
+    title: 'Registrar retirada',
+    amountHelp: 'Quanto saiu da reserva.',
+    otherDateExplanation: 'Para registrar uma retirada de outro dia.',
+    reasonLabel: 'Motivo',
+    /**
+     * The predefined reasons, keyed as the domain stores them, so the screen offers
+     * whatever `WITHDRAWAL_REASONS` holds. Each says what it covers, so a reader can tell
+     * which one describes them.
+     */
+    reasons: {
+      medical: { label: 'Saúde', description: 'Consultas, exames, remédios ou internação.' },
+      'car-repair': { label: 'Conserto do carro', description: 'Mecânico, peças ou guincho.' },
+      'home-repair': {
+        label: 'Reparo em casa',
+        description: 'Um vazamento, a parte elétrica, um eletrodoméstico que quebrou.',
+      },
+      'income-loss': {
+        label: 'Perda de renda',
+        description: 'Desemprego, ou uma queda no que você recebe.',
+      },
+      family: { label: 'Ajuda à família', description: 'Uma emergência de alguém próximo.' },
+    },
+    otherReason: 'Outro motivo',
+    otherReasonDescription: 'Para descrever com as suas palavras.',
+    otherReasonLabel: 'Descreva o motivo',
+    /** The save button. The verb, as the title says it, rather than "Salvar". */
+    saveAction: 'Registrar retirada',
+    /** When the withdrawal is more than the fund holds (FR-017). */
+    overBalanceTitle: 'A retirada é maior que o saldo',
+    /**
+     * What recording it means, in figures, so the user can tell a typo from what happened.
+     * How far below zero rather than a signed balance: the formatter writes a negative as
+     * "-R$", which is easy to miss.
+     *
+     * @param balance The formatted balance.
+     * @param belowZero How far below zero the withdrawal would leave it, formatted, unsigned.
+     * @returns The sheet's body.
+     */
+    overBalanceBody: (balance: string, belowZero: string): string =>
+      `Seu saldo é de ${balance}. Com esta retirada, ele fica ${belowZero} abaixo de zero. Registre assim se o valor estiver certo.`,
+    overBalanceConfirm: 'Registrar mesmo assim',
+  },
+
+  /**
+   * What a withdrawal left to restore, on Home (FR-018).
+   *
+   * Said as something to restore, at the user's own pace, rather than as a loss. "Recompor",
+   * never "déficit" or "prejuízo".
+   */
+  recovery: {
+    label: 'A recompor',
+    explanation: 'O que falta para o saldo voltar ao valor mais alto que já teve, até a meta.',
+    /**
+     * When the fund will be back, and the pace that says so — never a date without it.
+     *
+     * @param pace The formatted contribution pace per month.
+     * @param paceMonths The complete months it was measured over, three to six.
+     * @param months Whole months until the shortfall is restored, at least one.
+     * @param month The month it will be, formatted.
+     * @returns The estimate.
+     */
+    estimate: (pace: string, paceMonths: number, months: number, month: string): string =>
+      `No ritmo das suas contribuições nos últimos ${paceMonths} meses completos, ${pace} por mês, isso leva ${
+        months === 1 ? '1 mês' : `${months} meses`
+      }: até ${month}.`,
+    /**
+     * Too little history for a pace (FR-029, as on the forecast).
+     *
+     * @param needed Complete months still to come, at least one.
+     * @returns The sentence in place of the estimate.
+     */
+    insufficient: (needed: number): string =>
+      needed === 1
+        ? 'Falta 1 mês completo de histórico para estimar quanto tempo isso leva.'
+        : `Faltam ${needed} meses completos de histórico para estimar quanto tempo isso leva.`,
+    /** No contribution in the window, so no pace and no date (FR-030, as on the forecast). */
+    noPace:
+      'Nos últimos meses completos não houve contribuição, então não há como estimar quanto tempo isso leva. Uma nova contribuição retoma a estimativa.',
+  },
+
   /** The first screen after launch. */
   home: {
     title: 'Sua reserva',
@@ -369,6 +457,8 @@ export const strings = {
     surplus: (amount: string): string => `${amount} além da meta`,
     /** The way to the contribute screen. The same words as its title, deliberately. */
     contributeAction: 'Nova contribuição',
+    /** The way to the withdraw screen (FR-016). The same words as its title. */
+    withdrawAction: 'Registrar retirada',
     /** The way to the history (FR-014). */
     historyAction: 'Ver histórico',
     /**
@@ -641,6 +731,10 @@ export const strings = {
     entryDateInFuture: 'A data não pode ser no futuro.',
     entryNoteTooLong: 'A observação ficou longa demais.',
     entryOpeningAlreadyExists: 'Você já registrou um saldo inicial.',
+    entryReasonRequired: 'Escolha um motivo ou escreva o seu.',
+    entryReasonTooLong: 'O motivo ficou longo demais.',
+    /** Only an import or a bug could reach this: no form offers a reason for anything else. */
+    entryReasonNotAllowed: 'Só uma retirada tem motivo.',
     desiredDateNotAhead: 'Escolha uma data depois de hoje.',
     /** For a key no screen knows about — an older stored value, or a new rule. */
     unknown: 'Confira este valor.',

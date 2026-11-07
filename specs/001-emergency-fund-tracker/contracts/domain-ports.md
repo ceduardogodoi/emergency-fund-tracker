@@ -39,12 +39,15 @@ export type AppError =
   | { readonly kind: 'import-unsupported-version'; readonly found: number; readonly supported: number }
   | { readonly kind: 'permission-denied'; readonly capability: 'notifications' | 'file-access' }
   | { readonly kind: 'cancelled' }
+  | { readonly kind: 'over-balance'; readonly balance: Money; readonly belowZeroBy: Money }
 
 export interface ImportProblem {
   readonly path: string        // e.g. 'entries[7].amountMinor'
   readonly messageKey: string
 }
 ```
+
+`over-balance` is a withdrawal larger than the balance, refused until the user confirms it (FR-017). It is a question rather than a validation failure — nothing about the entry is wrong — and it carries the figures the question states, measured by `recordEntry` against the ledger in storage. Added in T121.
 
 `import-invalid` carries a path-and-message list rather than a single string because FR-046 requires telling the user *what* was wrong with the file, not just that it was wrong.
 
@@ -170,6 +173,9 @@ levelToCoverageMonths(level: LevelKey): number
 
 // ledger
 calculateBalance(entries: readonly LedgerEntry[], today: CalendarDate): Money
+validateEntry(entry: LedgerEntryInput, context: EntryContext): Result<LedgerEntryInput, ValidationError>
+assessWithdrawal(amount: Money, balance: Money): Result<void, OverBalanceError>
+recordEntry(repositories: Repositories, entry: LedgerEntryInput, today: CalendarDate, options?: { overBalanceConfirmed: boolean }): Promise<Result<LedgerEntry>>
 summarizeProgress(balance: Money, target: Money): ProgressSummary
 crossedMilestones(previous: ProgressSummary, next: ProgressSummary): readonly MilestoneThreshold[]
 
@@ -180,9 +186,12 @@ longestStreak(entries: readonly LedgerEntry[]): number
 
 // forecast
 calculatePace(entries: readonly LedgerEntry[], today: CalendarDate): PaceResult
+calculateContributionPace(entries: readonly LedgerEntry[], today: CalendarDate): PaceResult
 project(remaining: Money, pace: PaceResult, today: CalendarDate): ForecastState
 requiredMonthly(remaining: Money, desired: CalendarDate, today: CalendarDate): Result<Money, ValidationError>
 desiredContribution(remaining: Money, desired: CalendarDate, pace: PaceResult, today: CalendarDate): DesiredContribution
+calculateShortfall(entries: readonly LedgerEntry[], target: Money, today: CalendarDate): Money
+estimateRecovery(entries: readonly LedgerEntry[], target: Money, today: CalendarDate): RecoveryState
 
 export type PaceResult =
   | { readonly kind: 'insufficient-history'; readonly monthsAvailable: number; readonly monthsNeeded: number }
@@ -202,9 +211,15 @@ export type DesiredContribution =
 export type PaceComparison =
   | { readonly kind: 'exceeds' | 'within'; readonly pace: Money }
   | { readonly kind: 'unmeasured' }
+
+export type RecoveryState =
+  | { readonly kind: 'none' }
+  | { readonly kind: 'recovering'; readonly shortfall: Money; readonly estimate: Exclude<ForecastState, { kind: 'reached' }> }
 ```
 
 `monthsNeeded` is how many *more* complete months the pace needs, which is what FR-029 asks the screen to state. `paceMonths` is the window the pace was measured over, which FR-028's assumption names. `desiredContribution` is everything a screen states about a desired date — the amount, how it compares with the pace, or that the date has passed or asks for nothing — added in T113 so the comparison is decided in the domain rather than at two call sites.
+
+`validateEntry` holds a withdrawal's reason to FR-016 — required, not blank, at most 280 characters, and forbidden on any other kind — and `recordEntry` asks `assessWithdrawal` against the stored balance unless the withdrawal arrives confirmed. `calculateContributionPace` is `calculatePace`'s window with withdrawals left out, the pace a recovery is estimated at; `estimateRecovery` applies `project` to the shortfall at that pace, and a shortfall of nothing is `none`. All added in T121 and T122, with the shortfall and the pace decided with the user on 2026-11-01 (data-model.md, recovery).
 
 `ForecastState` is a union rather than a nullable projection so that the "not enough history" and "pace is zero" cases in FR-029 and FR-030 cannot be forgotten at the call site — the compiler requires both to be rendered.
 

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native'
 import { useServices } from '@/runtime/services-context'
 import type { EntryType, LedgerEntry } from '@/domain/ledger/types'
 import { Text, type TextTone } from '@/ui/primitives'
-import { strings } from '@/ui/strings'
+import { strings, withdrawalReasonText } from '@/ui/strings'
 import { borderWidth, color, opacity, radius, spacing } from '@/ui/tokens'
 
 /** Props for {@link EntryRow}. */
@@ -48,7 +48,8 @@ export function EntryRow({ entry, onPress }: EntryRowProps): ReactNode {
   // A note for a contribution or an opening, a reason for a withdrawal. The ledger keeps
   // them apart because one is optional and the other is not; to a reader both are what was
   // written about the entry.
-  const remark = entry.note ?? entry.withdrawalReason
+  const remark =
+    entry.withdrawalReason === null ? entry.note : withdrawalReasonText(entry.withdrawalReason)
 
   return (
     <Pressable

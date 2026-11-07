@@ -1,3 +1,5 @@
+import type { Money } from '../money/money'
+
 /**
  * Every way an operation in this app can fail for a reason worth telling the user about.
  *
@@ -18,6 +20,7 @@ export type AppError =
   | ImportUnsupportedVersionError
   | PermissionDeniedError
   | CancelledError
+  | OverBalanceError
 
 /** User input that failed a rule — the amount, the date, the expense figure. */
 export interface ValidationError {
@@ -86,6 +89,21 @@ export interface CancelledError {
 }
 
 /**
+ * A withdrawal larger than the balance, refused until the user confirms it (FR-017).
+ *
+ * Not a validation failure: nothing about the entry is wrong, and the user may record it as
+ * it is. It is a question, and it carries the figures the question states, measured against
+ * the ledger in storage rather than a balance a screen happened to have cached.
+ */
+export interface OverBalanceError {
+  readonly kind: 'over-balance'
+  /** The balance as of today, which may already be zero or below. */
+  readonly balance: Money
+  /** How far below zero the withdrawal would leave the fund. Always above zero. */
+  readonly belowZeroBy: Money
+}
+
+/**
  * Builds a validation failure.
  *
  * @param field The form field to attach the message to.
@@ -93,6 +111,16 @@ export interface CancelledError {
  */
 export function validationError(field: string, messageKey: string): ValidationError {
   return { kind: 'validation', field, messageKey }
+}
+
+/**
+ * Builds an over-balance refusal (FR-017).
+ *
+ * @param balance The balance the withdrawal was measured against.
+ * @param belowZeroBy How far below zero it would leave the fund, above zero.
+ */
+export function overBalanceError(balance: Money, belowZeroBy: Money): OverBalanceError {
+  return { kind: 'over-balance', balance, belowZeroBy }
 }
 
 /** Builds a not-found failure for the named entity. */

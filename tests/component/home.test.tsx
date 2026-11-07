@@ -2,7 +2,7 @@ import { screen, userEvent, waitFor } from '@testing-library/react-native'
 import type { RedirectProps } from 'expo-router'
 
 import { queryKeys } from '@/runtime/query'
-import { calendarDate } from '@/domain/dates/calendar-date'
+import { calendarDate, monthKey } from '@/domain/dates/calendar-date'
 import { storageError } from '@/domain/errors/app-error'
 import { money } from '@/domain/money/money'
 import { err } from '@/domain/result'
@@ -143,6 +143,17 @@ describe('Home', () => {
     await userEvent.press(screen.getByRole('button', { name: strings.home.historyAction }))
 
     expect(mockPush).toHaveBeenCalledWith('/entries')
+  })
+
+  // FR-016: a withdrawal is recorded from where the balance is read, beside a contribution.
+  it('offers a way to record a withdrawal', async () => {
+    await storeGoal()
+    await harness.render(<HomeScreen />)
+    await screen.findByTestId('standing-card')
+
+    await userEvent.press(screen.getByRole('button', { name: strings.home.withdrawAction }))
+
+    expect(mockPush).toHaveBeenCalledWith('/entries/withdraw')
   })
 
   // FR-020 – FR-025 live on their own screen, and Home is the way in.
@@ -314,5 +325,107 @@ describe('Home, once there is money in the fund', () => {
 
     expect(await screen.findByText(strings.state.errorTitle)).toBeTruthy()
     expect(screen.queryByTestId('standing-card')).toBeNull()
+  })
+})
+
+/**
+ * After a withdrawal (FR-018, T125): what is left to restore, and how long restoring it
+ * takes at the pace of contributions.
+ *
+ * Today is the 22nd of August, so July is the last complete month.
+ */
+describe('Home, after a withdrawal', () => {
+  /** Stores one entry, the way a save would have. */
+  async function entry(
+    type: 'contribution' | 'withdrawal',
+    minorUnits: number,
+    date: string,
+  ): Promise<void> {
+    expectOk(
+      await harness.repositories.ledger.add({
+        type,
+        amount: money(minorUnits),
+        date: calendarDate(date),
+        note: null,
+        withdrawalReason: type === 'withdrawal' ? 'medical' : null,
+      }),
+    )
+  }
+
+  /** April to July, 100_000 each, then 250_000 withdrawn late in July. */
+  async function fourMonthsThenAWithdrawal(): Promise<void> {
+    for (const month of ['04', '05', '06', '07']) {
+      await entry('contribution', 100_000, `2026-${month}-05`)
+    }
+    await entry('withdrawal', 250_000, '2026-07-20')
+  }
+
+  // The shortfall is the drop from the high, 400_000, not what remains to the target,
+  // which is 1_050_000. At 100_000 a month that is three months from the end of August,
+  // November. The net pace, (400_000 − 250_000) / 4, would make it seven.
+  it('shows what is left to restore, and when it will be at the pace of contributions', async () => {
+    await storeGoal()
+    await fourMonthsThenAWithdrawal()
+
+    await harness.render(<HomeScreen />)
+
+    expect(await screen.findByTestId('recovery-card')).toBeTruthy()
+    expect(screen.getByTestId('shortfall-amount')).toHaveTextContent(shown(250_000))
+    expect(
+      screen.getByText(
+        strings.recovery.estimate(
+          shown(100_000),
+          4,
+          3,
+          harness.services.format.month(monthKey(calendarDate('2026-11-30'))),
+        ),
+      ),
+    ).toBeTruthy()
+  })
+
+  it('shows nothing to restore when no withdrawal has been made', async () => {
+    await storeGoal()
+    await contribute(300_000)
+
+    await harness.render(<HomeScreen />)
+
+    await screen.findByTestId('standing-card')
+    expect(screen.queryByTestId('recovery-card')).toBeNull()
+  })
+
+  it('shows nothing to restore once the fund is back where it was', async () => {
+    await storeGoal()
+    await fourMonthsThenAWithdrawal()
+    await entry('contribution', 250_000, '2026-08-10')
+
+    await harness.render(<HomeScreen />)
+
+    await screen.findByTestId('standing-card')
+    expect(screen.queryByTestId('recovery-card')).toBeNull()
+  })
+
+  // FR-029, as in the forecast: July is the only complete month, two more are needed.
+  it('says how much more history the estimate needs', async () => {
+    await storeGoal()
+    await entry('contribution', 100_000, '2026-07-05')
+    await entry('withdrawal', 50_000, '2026-07-20')
+
+    await harness.render(<HomeScreen />)
+
+    expect(await screen.findByText(strings.recovery.insufficient(2))).toBeTruthy()
+    expect(screen.getByTestId('shortfall-amount')).toHaveTextContent(shown(50_000))
+  })
+
+  // Saving stopped in 2025, and February to July have no contribution: no date to give.
+  it('says why there is no estimate when nothing has been contributed lately', async () => {
+    await storeGoal()
+    for (const month of ['10', '11', '12']) {
+      await entry('contribution', 300_000, `2025-${month}-05`)
+    }
+    await entry('withdrawal', 200_000, '2026-07-20')
+
+    await harness.render(<HomeScreen />)
+
+    expect(await screen.findByText(strings.recovery.noPace)).toBeTruthy()
   })
 })

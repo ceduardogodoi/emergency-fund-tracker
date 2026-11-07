@@ -2,10 +2,12 @@ import {
   assertNever,
   conflictError,
   notFoundError,
+  overBalanceError,
   storageError,
   validationError,
   type AppError,
 } from '@/domain/errors/app-error'
+import { money } from '@/domain/money/money'
 
 describe('AppError', () => {
   describe('builders', () => {
@@ -34,6 +36,16 @@ describe('AppError', () => {
         kind: 'storage',
         messageKey: 'storage.writeFailed',
         cause,
+      })
+    })
+
+    // FR-017: the refusal carries the figures the confirmation states, so the question is
+    // asked about the balance in storage rather than one a screen happened to have cached.
+    it('builds an over-balance refusal carrying the balance and how far below zero it leads', () => {
+      expect(overBalanceError(money(500_000), money(100_000))).toEqual({
+        kind: 'over-balance',
+        balance: 500_000,
+        belowZeroBy: 100_000,
       })
     })
 
@@ -77,6 +89,8 @@ describe('AppError', () => {
             return `denied:${error.capability}`
           case 'cancelled':
             return 'cancelled'
+          case 'over-balance':
+            return `over-balance:${error.belowZeroBy}`
           default:
             return assertNever(error)
         }

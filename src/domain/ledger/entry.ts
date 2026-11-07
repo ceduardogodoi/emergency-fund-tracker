@@ -1,8 +1,9 @@
 import type { CalendarDate } from '../dates/calendar-date'
 import { isAfter } from '../dates/calendar-date'
 import { validationError, type ValidationError } from '../errors/app-error'
-import { err, ok, type Result } from '../result'
+import { err, isErr, ok, type Result } from '../result'
 import type { LedgerEntryInput } from './types'
+import { validateWithdrawalReason } from './withdrawal'
 
 /**
  * The longest note an entry may carry.
@@ -34,10 +35,10 @@ export interface EntryContext {
  * (FR-046), where no form has been anywhere near it. A rule enforced only by the screen is
  * a rule the import path does not have.
  *
- * Withdrawal-specific rules — that a withdrawal carries a reason (FR-016), and the
- * over-balance confirmation (FR-017) — are not here. They need the balance, which is a
- * question about the whole ledger rather than about one entry, and they arrive with User
- * Story 5.
+ * That a withdrawal carries a reason, and nothing else does (FR-016), is checked here too,
+ * through `validateWithdrawalReason`. The over-balance confirmation (FR-017) is not: it
+ * needs the balance, which is a question about the whole ledger rather than about one
+ * entry, and `recordEntry` asks it.
  *
  * @param entry The entry to check.
  * @param context What the rules need beyond the entry — see {@link EntryContext}.
@@ -48,13 +49,18 @@ export function validateEntry(
   context: EntryContext,
 ): Result<LedgerEntryInput, ValidationError> {
   // Ordered as the user would correct them: the amount is the reason the entry exists, the
-  // date is what they chose next, and the note is an afterthought. Reporting the note first
-  // would send someone to fix the least important thing about a row that is wrong anyway.
+  // date is what they chose next, a withdrawal's reason after that, and the note is an
+  // afterthought. Reporting the note first would send someone to fix the least important
+  // thing about a row that is wrong anyway.
   if (entry.amount <= 0) {
     return err(validationError('amount', 'entry.amount-must-be-positive'))
   }
   if (isAfter(entry.date, context.today)) {
     return err(validationError('date', 'entry.date-in-future'))
+  }
+  const reason = validateWithdrawalReason(entry)
+  if (isErr(reason)) {
+    return reason
   }
   if (entry.note !== null && entry.note.length > MAXIMUM_NOTE_LENGTH) {
     return err(validationError('note', 'entry.note-too-long'))

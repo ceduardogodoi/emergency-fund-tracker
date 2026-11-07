@@ -395,6 +395,17 @@ describe('the history screen', () => {
     expect(within(withdrawn!).getByText('Conserto do carro')).toBeTruthy()
   })
 
+  // A predefined reason is stored as a key, which is not something to show anyone.
+  it('names a predefined reason in words', async () => {
+    await record({ type: 'withdrawal', withdrawalReason: 'car-repair' })
+
+    await harness.render(<HistoryScreen />)
+
+    const [row] = await screen.findAllByTestId('entry-row')
+    expect(within(row!).getByText(strings.withdrawal.reasons['car-repair'].label)).toBeTruthy()
+    expect(within(row!).queryByText('car-repair')).toBeNull()
+  })
+
   // FR-025: an empty view says what will appear and what produces it, and offers the action.
   it('says what will appear when nothing has been recorded, and offers the way to record it', async () => {
     await harness.render(<HistoryScreen />)
@@ -718,9 +729,8 @@ describe('the edit screen', () => {
     expect(mockBack).not.toHaveBeenCalled()
   })
 
-  // A withdrawal has a reason where the others have a note, and what a reason may be is
-  // User Story 5's to say (FR-016). Until then the form does not offer one to edit — and
-  // must not wipe the one that is there by saving a note over it.
+  // A withdrawal has a reason where the others have a note. Correcting the amount must not
+  // wipe the reason by saving a note over it, nor rewrite it from what the form shows.
   it('corrects a withdrawal without touching why it was made', async () => {
     const entry = await open({ type: 'withdrawal', note: null, withdrawalReason: 'Conserto' })
 
@@ -737,6 +747,63 @@ describe('the edit screen', () => {
       note: null,
       withdrawalReason: 'Conserto',
     })
+  })
+
+  // FR-016 on the way back in: the reason can be corrected with the same choices it was
+  // recorded with.
+  describe('for a withdrawal', () => {
+    const reasonRequired = validationMessage({
+      kind: 'validation',
+      field: 'reason',
+      messageKey: 'entry.reason-required',
+    })
+
+    it('opens on its predefined reason', async () => {
+      await open({ type: 'withdrawal', note: null, withdrawalReason: 'medical' })
+
+      expect(
+        screen.getByRole('radio', { name: strings.withdrawal.reasons.medical.label }),
+      ).toBeSelected()
+      expect(screen.queryByTestId('reason-input')).toBeNull()
+    })
+
+    it('opens a reason the user wrote as their own words, ready to change', async () => {
+      await open({ type: 'withdrawal', note: null, withdrawalReason: 'Conserto' })
+
+      expect(screen.getByRole('radio', { name: strings.withdrawal.otherReason })).toBeSelected()
+      expect(screen.getByTestId('reason-input').props.value).toBe('Conserto')
+    })
+
+    it('saves another reason chosen', async () => {
+      const entry = await open({ type: 'withdrawal', note: null, withdrawalReason: 'Conserto' })
+
+      await userEvent.press(
+        screen.getByRole('radio', { name: strings.withdrawal.reasons.family.label }),
+      )
+      await save()
+
+      await waitFor(() => {
+        expect(mockBack).toHaveBeenCalled()
+      })
+      expect(await readBack(entry.id)).toMatchObject({ withdrawalReason: 'family' })
+    })
+
+    it('refuses a reason emptied, under the reasons, and keeps the one stored', async () => {
+      const entry = await open({ type: 'withdrawal', note: null, withdrawalReason: 'Conserto' })
+
+      await fireEvent.changeText(screen.getByTestId('reason-input'), '  ')
+      await save()
+
+      expect(await screen.findByText(reasonRequired)).toBeTruthy()
+      expect(await readBack(entry.id)).toMatchObject({ withdrawalReason: 'Conserto' })
+      expect(mockBack).not.toHaveBeenCalled()
+    })
+  })
+
+  it('offers no reason for a contribution', async () => {
+    await open()
+
+    expect(screen.queryByRole('radio', { name: strings.withdrawal.otherReason })).toBeNull()
   })
 
   // User Story 2, scenario 3: deletion requires explicit confirmation.

@@ -117,14 +117,38 @@ export function useFutureDatedEntries(): UseQueryResult<readonly LedgerEntry[], 
   })
 }
 
+/** A withdrawal to record, and whether the user has confirmed it is more than the balance. */
+export interface WithdrawalRequest {
+  /** The withdrawal, already shaped by the form. */
+  readonly entry: LedgerEntryInput
+  /** Whether the user has answered the over-balance question with yes (FR-017). */
+  readonly overBalanceConfirmed: boolean
+}
+
 /**
- * Records a contribution, withdrawal, or opening balance (FR-008, FR-010).
+ * Records a contribution or an opening balance (FR-008, FR-010). A withdrawal goes through
+ * {@link useRecordWithdrawal}, which can say it was confirmed.
  *
  * @returns The mutation. A refused entry arrives as `error`, for the screen to render.
  */
 export function useAddEntry(): UseMutationResult<LedgerEntry, AppError, LedgerEntryInput> {
   return useLedgerWrite((repositories, entry: LedgerEntryInput, today) =>
     recordEntry(repositories, entry, today),
+  )
+}
+
+/**
+ * Records a withdrawal (FR-016, FR-017).
+ *
+ * One larger than the balance comes back as an `over-balance` error — a question for the
+ * screen to ask, carrying the balance it was measured against — until it is sent again
+ * confirmed.
+ *
+ * @returns The mutation.
+ */
+export function useRecordWithdrawal(): UseMutationResult<LedgerEntry, AppError, WithdrawalRequest> {
+  return useLedgerWrite((repositories, { entry, overBalanceConfirmed }: WithdrawalRequest, today) =>
+    recordEntry(repositories, entry, today, { overBalanceConfirmed }),
   )
 }
 

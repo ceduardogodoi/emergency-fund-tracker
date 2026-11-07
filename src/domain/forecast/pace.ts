@@ -59,6 +59,36 @@ export type PaceResult =
  * @returns The pace, or how much more history it needs.
  */
 export function calculatePace(entries: readonly LedgerEntry[], today: CalendarDate): PaceResult {
+  return measurePace(entries, today, signedSaving)
+}
+
+/**
+ * The average monthly contribution over the same window, withdrawals left out — the pace a
+ * recovery is estimated at (FR-018, decided with the user on 2026-11-01).
+ *
+ * "Recent contribution pace", as FR-018 says, rather than the net pace the forecast uses. A
+ * withdrawal does not slow down how fast the fund refills, and counted, one large enough to
+ * need recovering from would turn the net pace to zero or below and leave no estimate for
+ * the six months it stays in the window. The window, the minimum history, and the rounding
+ * are the net pace's, through the same code.
+ *
+ * @param entries Every entry in the fund, in any order.
+ * @param today From the `Clock` port.
+ * @returns The pace, never below zero, or how much more history it needs.
+ */
+export function calculateContributionPace(
+  entries: readonly LedgerEntry[],
+  today: CalendarDate,
+): PaceResult {
+  return measurePace(entries, today, contributed)
+}
+
+/** The window both paces share, averaged over what `saving` counts of each entry. */
+function measurePace(
+  entries: readonly LedgerEntry[],
+  today: CalendarDate,
+  saving: (entry: LedgerEntry) => number,
+): PaceResult {
   const months = periodMonths(entries, { kind: 'recent', months: PACE_WINDOW_MONTHS }, today)
   if (months.length < MINIMUM_PACE_MONTHS) {
     return {
@@ -70,7 +100,7 @@ export function calculatePace(entries: readonly LedgerEntry[], today: CalendarDa
   const inWindow = new Set(months)
   const net = entries
     .filter((entry) => inWindow.has(monthKey(entry.date)))
-    .reduce((total, entry) => total + signedSaving(entry), 0)
+    .reduce((total, entry) => total + saving(entry), 0)
   return { kind: 'measured', pace: divideToAmount(money(net), months.length), months }
 }
 
@@ -84,4 +114,9 @@ function signedSaving(entry: LedgerEntry): number {
     case 'opening':
       return 0
   }
+}
+
+/** What an entry put in: a contribution's amount, and nothing for any other kind. */
+function contributed(entry: LedgerEntry): number {
+  return entry.type === 'contribution' ? entry.amount : 0
 }

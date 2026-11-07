@@ -17,6 +17,7 @@ import {
 import { strings } from '@/ui/strings'
 import { spacing } from '@/ui/tokens'
 import { useEntry, useRemoveEntry } from './hooks'
+import { ReasonPicker } from './reason-picker'
 import { useEntryEdit, type EntryEditState } from './use-entry-edit'
 
 /** Props for {@link EditEntry}. */
@@ -88,8 +89,8 @@ interface EntryFormProps {
  *
  * The kind is stated and not offered: an entry's type is part of its identity (FR-047), so
  * turning a contribution into a withdrawal is deleting one and recording the other. A
- * withdrawal shows no note, because it has a reason instead, and what a reason may be
- * arrives with User Story 5 (FR-016).
+ * withdrawal shows its reason where the others show a note, with the choices it was
+ * recorded with (FR-016).
  */
 function EntryForm({ entry, removal, onDone }: EntryFormProps): ReactNode {
   const { format } = useServices()
@@ -109,7 +110,11 @@ function EntryForm({ entry, removal, onDone }: EntryFormProps): ReactNode {
         testID="amount-input"
       />
       <EntryDay edit={edit} />
-      {entry.type === 'withdrawal' ? null : <EntryNote edit={edit} />}
+      {entry.type === 'withdrawal' ? (
+        <ReasonPicker reason={edit.reason} onChange={edit.changeReason} error={edit.reasonError} />
+      ) : (
+        <EntryNote edit={edit} />
+      )}
       <Button
         label={strings.action.save}
         onPress={edit.save}

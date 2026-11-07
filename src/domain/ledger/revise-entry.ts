@@ -50,8 +50,9 @@ export async function reviseEntry(
 /**
  * The entry as the patch would leave it, in the shape the rules read.
  *
- * `note` is compared with `undefined` rather than defaulted with `??`: null is a value
- * here, the one that clears a note, and `??` would read it as "left alone".
+ * `note` and `withdrawalReason` are compared with `undefined` rather than defaulted with
+ * `??`: null is a value here — the one that clears a note, and the one a withdrawal's
+ * reason is refused for — and `??` would read it as "left alone".
  */
 function revised(stored: LedgerEntry, patch: LedgerEntryPatch): LedgerEntryInput {
   return {
@@ -59,6 +60,7 @@ function revised(stored: LedgerEntry, patch: LedgerEntryPatch): LedgerEntryInput
     amount: patch.amount ?? stored.amount,
     date: patch.date ?? stored.date,
     note: patch.note === undefined ? stored.note : patch.note,
-    withdrawalReason: stored.withdrawalReason,
+    withdrawalReason:
+      patch.withdrawalReason === undefined ? stored.withdrawalReason : patch.withdrawalReason,
   }
 }
