@@ -326,7 +326,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 **Purpose**: The verification the success criteria demand, and the checks that only make sense once everything exists
 
-- [ ] T146 [P] Walk all eleven screens with VoiceOver and TalkBack and fix every finding, in the affected files under `app/` and `src/features/`
+- [ ] T146 [P] Walk all eleven screens with VoiceOver and TalkBack and fix every finding, in the affected files under `app/` and `src/features/`. Since feature 002 (T191), the walk also covers the navigation menu and its button: the button's name and its open or closed state on Home, History, Statistics, and Forecast; the menu's heading and its six items, the current section announced as selected; nothing behind the open menu reachable; and Home's new shape — the fund and both actions first, no buttons to other sections. Where focus lands when the menu opens and closes is T194's measurement (`specs/backlog.md`), which this walk need not repeat
 - [ ] T147 [P] Add maximum text-scale component tests for every screen in `tests/component/text-scale.test.tsx`
 - [ ] T148 [P] Verify SC-014 by exercising every screen with a proxy attached and confirming zero outbound requests, recording the result in `specs/001-emergency-fund-tracker/quickstart.md`
 - [ ] T149 [P] Verify FR-040 by running every scenario in `specs/001-emergency-fund-tracker/quickstart.md` with the device in airplane mode
