@@ -23,7 +23,7 @@ import DrawerLayout from '../../app/(drawer)/_layout'
  * drawer hides the side not shown through animated props, driven by the open and close
  * animation, and under reanimated's Jest mock animated props never reach the view — so in
  * this environment nothing is ever hidden, open or closed. That half of FR-010 is the
- * drawer's own, and it is measured on a device with VoiceOver and TalkBack (T180).
+ * drawer's own, and it is measured on a device with VoiceOver and TalkBack (T194).
  */
 
 /** A section of the drawer: its name, and the button that opens the menu. */
