@@ -300,28 +300,25 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 ---
 
-## Phase 9: Data Portability (Cross-Cutting)
+## Phase 9: Data Portability (Cross-Cutting) — dropped
 
-**Purpose**: Export, import, and erase — FR-044 through FR-047 and SC-015. Required for release, but serves no single user story.
+**Purpose**: Was export and import — FR-044 through FR-047 and SC-015. **Dropped 2026-11-08**: storing the fund in a Supabase database, a change still to be specified, is to take over storage and data portability, so a file-based export and import would be built only to be replaced. Nothing was built; the ids stay so references to them still resolve. The erase flow, T145, serves FR-048 rather than portability and moved to Improvements
 
 ### Tests
 
-- [ ] T135 [P] Unit tests for the export document builder in `tests/unit/domain/transfer/export.test.ts`
-- [ ] T136 [P] Unit tests for the import schema covering every rejection case in contracts/fund-export-v1.md in `tests/unit/domain/transfer/import-schema.test.ts`
-- [ ] T137 [P] Unit tests for merge deduplication and replace semantics in `tests/unit/domain/transfer/merge.test.ts`
-- [ ] T138 [P] Integration test asserting an export imported into a fresh database reproduces the goal, every entry, the balance, and every statistic (SC-015) in `tests/integration/data/round-trip.test.ts`
-- [ ] T139 [P] Integration test asserting a failed import leaves the database exactly as it was in `tests/integration/data/import-atomicity.test.ts`
+- [X] T135 [P] ~~Unit tests for the export document builder in `tests/unit/domain/transfer/export.test.ts`~~ — **dropped 2026-11-08**, with Phase 9; nothing was built, and the id stays so references to it still resolve
+- [X] T136 [P] ~~Unit tests for the import schema covering every rejection case in contracts/fund-export-v1.md in `tests/unit/domain/transfer/import-schema.test.ts`~~ — **dropped 2026-11-08**, with Phase 9
+- [X] T137 [P] ~~Unit tests for merge deduplication and replace semantics in `tests/unit/domain/transfer/merge.test.ts`~~ — **dropped 2026-11-08**, with Phase 9
+- [X] T138 [P] ~~Integration test asserting an export imported into a fresh database reproduces the goal, every entry, the balance, and every statistic (SC-015) in `tests/integration/data/round-trip.test.ts`~~ — **dropped 2026-11-08**, with Phase 9
+- [X] T139 [P] ~~Integration test asserting a failed import leaves the database exactly as it was in `tests/integration/data/import-atomicity.test.ts`~~ — **dropped 2026-11-08**, with Phase 9
 
 ### Implementation
 
-- [ ] T140 Implement the export document builder in `src/domain/transfer/export.ts`
-- [ ] T141 Implement the `zod` import schema and the cross-field rules in `src/domain/transfer/import-schema.ts`
-- [ ] T142 Implement merge and replace application inside a single `UnitOfWork` transaction in `src/domain/transfer/apply-import.ts`
-- [ ] T143 Implement the `FileGateway` adapter over `expo-file-system`, `expo-sharing`, and `expo-document-picker` in `src/platform/files/file-gateway.ts`
-- [ ] T144 Build the data settings screen with export, import, and the replace-or-merge choice stating what each will do, in `app/settings/data.tsx`
-- [ ] T145 Build the erase-all-data flow with `ConfirmSheet` in `src/features/data-transfer/erase.tsx` — the erase itself exists since T087 (`StoreRepository.eraseAll`); what remains is the flow and its confirmation
-
-**Checkpoint**: A fund survives a reinstall and a platform switch
+- [X] T140 ~~Implement the export document builder in `src/domain/transfer/export.ts`~~ — **dropped 2026-11-08**, with Phase 9
+- [X] T141 ~~Implement the `zod` import schema and the cross-field rules in `src/domain/transfer/import-schema.ts`~~ — **dropped 2026-11-08**, with Phase 9
+- [X] T142 ~~Implement merge and replace application inside a single `UnitOfWork` transaction in `src/domain/transfer/apply-import.ts`~~ — **dropped 2026-11-08**, with Phase 9
+- [X] T143 ~~Implement the `FileGateway` adapter over `expo-file-system`, `expo-sharing`, and `expo-document-picker` in `src/platform/files/file-gateway.ts`~~ — **dropped 2026-11-08**, with Phase 9
+- [X] T144 ~~Build the data settings screen with export, import, and the replace-or-merge choice stating what each will do, in `app/settings/data.tsx`~~ — **dropped 2026-11-08**, with Phase 9
 
 ---
 
@@ -348,6 +345,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 
 - [ ] T159 [US2] Recompute what depends on today when the date changes under a running app — the balance is computed from `clock.today()` only when a screen renders (`useBalance`'s `select`), and the future-dated check is keyed by the date it was asked on, so a date that changes while the app is open leaves both as they were drawn. Seen on the Android emulator during T085: an entry recorded with the clock four days ahead, the clock set back, and Home went on showing R$ 3.000,00 and "1 de 6 meses" with that entry counted, where a cold start showed R$ 500,00 and "0 de 6 meses". The clock correction is exactly how FR-033's entries arise, and midnight is the same change in the other direction. Probably a re-render, and a refetch of the date-keyed queries, when the app returns to the foreground or the day turns over; what triggers it is for the task to measure. Raised during T085. Numbered out of sequence for the reason T156 is
 - [ ] T160 [US5] Ask before an edit takes a withdrawal above the balance (FR-017) — `recordEntry` refuses an unconfirmed over-balance withdrawal with an `over-balance` error, but `reviseEntry` checks only `validateEntry`, so correcting a withdrawal of R$ 100,00 to R$ 5.000,00 on the edit screen lands without the question. The balance to measure against is the ledger as of today with the entry's stored amount taken out, not counted twice. The edit screen then needs the confirmation the withdraw screen has (`WithdrawConfirm`), re-sending the patch with the confirmation. Tests first: a unit case in `revise-entry.test.ts` at, just over, and confirmed over the balance, and a component case on the edit screen. Raised during T117–T125. Numbered out of sequence for the reason T156 is
+- [ ] T145 Build the erase-all-data flow with `ConfirmSheet` in `src/features/data-transfer/erase.tsx` — the erase itself exists since T087 (`StoreRepository.eraseAll`); what remains is the flow and its confirmation. Moved here from Phase 9 when that phase was dropped on 2026-11-08: erasing is FR-048, not portability. How it relates to data held in Supabase is for that change to decide
 
 ---
 
@@ -358,7 +356,7 @@ Paths follow the structure in [plan.md](./plan.md): `app/` for Expo Router route
 - **Setup (Phase 1)**: No dependencies — start immediately
 - **Foundational (Phase 2)**: Depends on Setup. **Blocks every user story.**
 - **User Stories (Phases 3–8)**: All depend on Foundational. Then either sequentially by priority, or in parallel with enough people.
-- **Data Portability (Phase 9)**: Depends on Foundational and on every entity existing — realistically after Phase 8, though it only strictly needs the repositories
+- **Data Portability (Phase 9)**: Dropped 2026-11-08 — storage and portability move to Supabase
 - **Polish (Phase 10)**: Depends on every story intended for the release
 
 ### User Story Dependencies
@@ -426,14 +424,13 @@ Each story is a shippable increment:
 5. + US4 → a projected finish date
 6. + US5 → correct behavior when the fund is actually used
 7. + US6 → consistency support
-8. + Phase 9 → data survives a reinstall
-9. + Phase 10 → release-ready
+8. + Phase 10 → release-ready
 
-A reasonable public release is US1–US3 plus Phase 9. US4 and US5 are what make it a considered product rather than a ledger; US5 in particular should not be deferred indefinitely, because a user who withdraws before it exists will see a wrong balance.
+A reasonable public release is US1–US3, with data surviving a reinstall once the move to Supabase lands — Phase 9 was to provide that by export and import, and was dropped for it. US4 and US5 are what make it a considered product rather than a ledger; US5 in particular should not be deferred indefinitely, because a user who withdraws before it exists will see a wrong balance.
 
 ### Parallel Team Strategy
 
-Phases 1 and 2 are hard to parallelize across people — they are foundations with tight interdependencies, and one person should own them for coherence. After that, six stories can proceed independently. Phase 9 is a natural parallel track for a second developer once the repositories exist.
+Phases 1 and 2 are hard to parallelize across people — they are foundations with tight interdependencies, and one person should own them for coherence. After that, six stories can proceed independently.
 
 ---
 
