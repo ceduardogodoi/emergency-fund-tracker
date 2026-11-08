@@ -54,4 +54,4 @@ An offline-only Expo app. Nothing leaves the device: no network calls, no analyt
 
 ## Plan of record
 
-Built with Spec Kit. [`specs/001-emergency-fund-tracker/tasks.md`](specs/001-emergency-fund-tracker/tasks.md) is the plan of record — numbered tasks worked in order, with commit scopes naming the task being closed and the checkbox moving in the same commit. The spec, plan, data model, and the domain-port, UI, and export-format contracts sit beside it, and [`.specify/memory/constitution.md`](.specify/memory/constitution.md) holds the six principles the rules defer to.
+Built with Spec Kit. [`specs/001-emergency-fund-tracker/tasks.md`](specs/001-emergency-fund-tracker/tasks.md) is the plan of record — numbered tasks worked in order, with commit scopes naming the task being closed and the checkbox moving in the same commit. Tasks that no story depends on, from any feature, wait in [`specs/backlog.md`](specs/backlog.md). The spec, plan, data model, and the domain-port, UI, and export-format contracts sit beside it, and [`.specify/memory/constitution.md`](.specify/memory/constitution.md) holds the six principles the rules defer to.
