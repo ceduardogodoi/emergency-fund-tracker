@@ -24,6 +24,14 @@ export interface ScreenProps {
    */
   readonly title?: string
   /**
+   * Drawn before the title, on the title's row — where a screen in the navigation menu puts
+   * the button that opens it (specs/002-drawer-navigation/contracts/navigation-ui.md).
+   *
+   * A slot rather than a menu prop, so this layer stays free of navigation: `Screen` draws
+   * what it is handed and knows nothing of what it does.
+   */
+  readonly leading?: ReactNode
+  /**
    * Whether this screen scrolls. Defaults to true.
    *
    * Pass `false` only when the content brings its own scrolling container — a long list,
@@ -38,6 +46,9 @@ export interface ScreenProps {
 
 /** The scrolling container, for tests that assert content is inside one. */
 export const SCREEN_SCROLL_TEST_ID = 'screen-scroll'
+
+/** The row holding the title and whatever comes before it, for tests that assert its order. */
+export const SCREEN_TITLE_ROW_TEST_ID = 'screen-title-row'
 
 /** The keyboard-avoiding container, for the test that asserts each platform avoids once. */
 export const SCREEN_KEYBOARD_TEST_ID = 'screen-keyboard'
@@ -85,14 +96,16 @@ function keyboardBehavior(): 'padding' | undefined {
  * @param props - See {@link ScreenProps}
  * @returns The rendered screen
  */
-export function Screen({ children, title, scrolls = true, testID }: ScreenProps): ReactNode {
+export function Screen({
+  children,
+  title,
+  leading,
+  scrolls = true,
+  testID,
+}: ScreenProps): ReactNode {
   const content = (
     <>
-      {title === undefined ? null : (
-        <Text variant="title" accessibilityRole="header">
-          {title}
-        </Text>
-      )}
+      <TitleRow title={title} leading={leading} />
       {children}
     </>
   )
@@ -131,6 +144,39 @@ export function Screen({ children, title, scrolls = true, testID }: ScreenProps)
   )
 }
 
+/** Props for {@link TitleRow}. */
+interface TitleRowProps {
+  readonly title: string | undefined
+  readonly leading: ReactNode
+}
+
+/**
+ * The title, and whatever the screen puts before it, side by side.
+ *
+ * Inside the scrolling content rather than pinned above it, as the title always was: a bar
+ * fixed to the top would take its height from every screen, and at the largest text size
+ * (FR-050) that height is a share of the screen nothing else can use. The title shrinks and
+ * wraps beside the leading element rather than pushing it off the row.
+ */
+function TitleRow({ title, leading }: TitleRowProps): ReactNode {
+  if (title === undefined && leading === undefined) {
+    return null
+  }
+  return (
+    <View style={styles.titleRow} testID={SCREEN_TITLE_ROW_TEST_ID}>
+      {leading}
+      {title === undefined ? null : (
+        // The wrapper takes the shrink, since `Text` accepts no style of a caller's own.
+        <View style={styles.title}>
+          <Text variant="title" accessibilityRole="header">
+            {title}
+          </Text>
+        </View>
+      )}
+    </View>
+  )
+}
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -147,4 +193,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   } satisfies ViewStyle,
   fill: { flex: 1 } satisfies ViewStyle,
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  } satisfies ViewStyle,
+  title: { flexShrink: 1 } satisfies ViewStyle,
 })

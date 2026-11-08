@@ -4,6 +4,7 @@ import { Platform, View } from 'react-native'
 import {
   SCREEN_KEYBOARD_TEST_ID,
   SCREEN_SCROLL_TEST_ID,
+  SCREEN_TITLE_ROW_TEST_ID,
   Button,
   Card,
   CoverageMeter,
@@ -197,6 +198,79 @@ describe('Screen', () => {
     )
     expect(screen.queryByTestId(SCREEN_SCROLL_TEST_ID)).toBeNull()
     expect(screen.getByTestId('content')).toBeTruthy()
+  })
+})
+
+/**
+ * The slot before the title is where a screen in the menu puts the button that opens it
+ * (specs/002-drawer-navigation/contracts/navigation-ui.md). `Screen` knows nothing of
+ * navigation; it draws what it is handed, on the title's row, ahead of the title.
+ *
+ * Order is read from the row's host children, which is the order a screen reader moves
+ * through them, and the order they are laid out in a row. The title is recognised by its
+ * heading role, found inside whatever holds it, and the leading element by its test id.
+ */
+describe('Screen with something before its title', () => {
+  /** The title row's children in render order: each by its test id, the title as `header`. */
+  function titleRowOrder(): readonly unknown[] {
+    return screen.getByTestId(SCREEN_TITLE_ROW_TEST_ID).children.map((child) => {
+      if (typeof child === 'string') {
+        return child
+      }
+      return within(child).queryByRole('header') === null ? child.props.testID : 'header'
+    })
+  }
+
+  it('draws it on the title row, ahead of the title', async () => {
+    await render(
+      <Screen title="Estatísticas" leading={<View testID="leading" />}>
+        <View />
+      </Screen>,
+    )
+    expect(titleRowOrder()).toEqual(['leading', 'header'])
+    expect(
+      within(screen.getByTestId(SCREEN_TITLE_ROW_TEST_ID)).getByRole('header', {
+        name: 'Estatísticas',
+      }),
+    ).toBeTruthy()
+  })
+
+  it('leaves the title alone on its row when given nothing', async () => {
+    await render(
+      <Screen title="Estatísticas">
+        <View />
+      </Screen>,
+    )
+    expect(titleRowOrder()).toEqual(['header'])
+  })
+
+  it('still draws it when the screen has no title of its own', async () => {
+    await render(
+      <Screen leading={<View testID="leading" />}>
+        <View />
+      </Screen>,
+    )
+    expect(titleRowOrder()).toEqual(['leading'])
+  })
+
+  it('draws no title row at all when there is neither', async () => {
+    await render(
+      <Screen>
+        <View />
+      </Screen>,
+    )
+    expect(screen.queryByTestId(SCREEN_TITLE_ROW_TEST_ID)).toBeNull()
+  })
+
+  // Scrolls with the content, as the title does: a button pinned above a scrolling page
+  // would take its height from every screen at the largest text size (FR-050).
+  it('scrolls with the content', async () => {
+    await render(
+      <Screen title="Estatísticas" leading={<View testID="leading" />}>
+        <View />
+      </Screen>,
+    )
+    expect(within(screen.getByTestId(SCREEN_SCROLL_TEST_ID)).getByTestId('leading')).toBeTruthy()
   })
 })
 

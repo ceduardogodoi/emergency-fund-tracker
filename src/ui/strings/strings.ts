@@ -867,6 +867,29 @@ export const strings = {
     },
   },
 
+  /**
+   * The navigation menu and the button that opens it (specs/002-drawer-navigation).
+   *
+   * A destination is named with the title its screen shows, so the same place is called
+   * the same thing in the menu and on arrival (FR-001). Goal is the exception: its screen is
+   * titled "Ajustar meta", an action, and the menu lists places, so it takes the noun.
+   */
+  navigation: {
+    /** The menu button's accessible name: what pressing it does, since it shows no word. */
+    open: 'Abrir menu',
+    /** The menu's own accessible name, announced as focus enters it. */
+    menuLabel: 'Navegação',
+    /** Each destination's name in the menu, keyed as in `src/features/navigation/destinations.ts`. */
+    destinations: {
+      home: 'Sua reserva',
+      history: 'Histórico',
+      statistics: 'Estatísticas',
+      forecast: 'Previsão',
+      goal: 'Meta',
+      reminders: 'Lembretes',
+    },
+  },
+
   state: {
     loading: 'Carregando',
     errorTitle: 'Algo deu errado',

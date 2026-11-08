@@ -19,7 +19,13 @@ export { ErrorState, type ErrorStateProps } from './error-state'
 export { Field, type FieldProps } from './field'
 export { LoadingState } from './loading-state'
 export { MoneyInput, type MoneyInputProps } from './money-input'
-export { SCREEN_KEYBOARD_TEST_ID, SCREEN_SCROLL_TEST_ID, Screen, type ScreenProps } from './screen'
+export {
+  SCREEN_KEYBOARD_TEST_ID,
+  SCREEN_SCROLL_TEST_ID,
+  SCREEN_TITLE_ROW_TEST_ID,
+  Screen,
+  type ScreenProps,
+} from './screen'
 export { StateView, type StateViewProps, type ViewState } from './state-view'
 export { Stepper, type StepperProps } from './stepper'
 export { Text, type TextProps, type TextTone, type TextVariant } from './text'
