@@ -139,9 +139,11 @@ const styles = StyleSheet.create({
   stepper: { gap: spacing.xs } satisfies ViewStyle,
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm } satisfies ViewStyle,
   value: { minWidth: minimumTouchTarget } satisfies ViewStyle,
+  // At least the touch target rather than exactly it, as `Chip` is: the sign grows with the
+  // platform's text size, and a box held to 48 would let it overflow (FR-050).
   button: {
-    width: minimumTouchTarget,
-    height: minimumTouchTarget,
+    minWidth: minimumTouchTarget,
+    minHeight: minimumTouchTarget,
     borderRadius: radius.none,
     borderWidth: borderWidth.control,
     borderColor: color.boundary.control,

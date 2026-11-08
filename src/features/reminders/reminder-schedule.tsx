@@ -84,7 +84,7 @@ function TimeOfDayControls({ state }: ReminderScheduleProps): ReactNode {
   return (
     <View style={styles.group}>
       <Text variant="label">{strings.reminders.timeLabel}</Text>
-      <View style={styles.time}>
+      <View style={styles.time} testID="reminder-time">
         <Stepper
           label={strings.reminders.hourLabel}
           value={twoDigits(time.hour)}
@@ -181,5 +181,7 @@ function twoDigits(value: number): string {
 const styles = StyleSheet.create({
   group: { gap: spacing.sm } satisfies ViewStyle,
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs } satisfies ViewStyle,
-  time: { flexDirection: 'row', gap: spacing.lg } satisfies ViewStyle,
+  // Wraps, so at the largest text size the minute stepper drops under the hour rather than
+  // running off the screen (FR-050).
+  time: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg } satisfies ViewStyle,
 })

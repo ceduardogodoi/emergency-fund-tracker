@@ -117,9 +117,11 @@ const styles = StyleSheet.create({
   // A square with an edge, like an empty unit in the coverage meter: the mark is a glyph
   // set in the app's own face rather than an icon from a set, which would bring a second
   // drawing style — and a dependency — for three shapes.
+  // At least that size rather than exactly it: the glyph grows with the platform's text
+  // size, and a box held to it would let the glyph overflow (FR-050).
   mark: {
-    width: spacing.xl,
-    height: spacing.xl,
+    minWidth: spacing.xl,
+    minHeight: spacing.xl,
     borderWidth: borderWidth.control,
     borderColor: color.boundary.control,
     borderRadius: radius.none,

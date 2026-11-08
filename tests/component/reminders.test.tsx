@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react-native'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react-native'
 import { Linking } from 'react-native'
 
 import { deviceError, storageError } from '@/domain/errors'
@@ -221,6 +221,19 @@ describe('turning reminders on', () => {
     expect(screen.getByTestId('day-of-month-28')).toBeOnTheScreen()
     expect(screen.queryByTestId('day-of-month-29')).toBeNull()
     expect(screen.getByText(strings.reminders.dayOfMonthHelp(28))).toBeOnTheScreen()
+  })
+
+  // FR-050. At iOS's largest text size the hour stepper alone takes two thirds of an iPhone
+  // 15's width, and with the two side by side the minute stepper ran off the screen, its +
+  // out of reach (seen on the simulator during T147). Wrapping puts it under the hour.
+  it('lets the minute stepper wrap under the hour when they do not fit side by side', async () => {
+    await render()
+    await turn(true)
+
+    const time = screen.getByTestId('reminder-time')
+    expect(time).toHaveStyle({ flexDirection: 'row', flexWrap: 'wrap' })
+    expect(within(time).getByTestId('hour-stepper')).toBeOnTheScreen()
+    expect(within(time).getByTestId('minute-stepper')).toBeOnTheScreen()
   })
 
   // A screen reader adjusts a stepper with a swipe rather than finding its two buttons.
