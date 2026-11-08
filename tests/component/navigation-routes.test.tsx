@@ -141,4 +141,31 @@ describe('going back', () => {
     await go(() => router.back())
     expect(pathname()).toBe('/entries')
   })
+
+  // Story 2 starts from a section, not Home, so a layout that always went back Home could
+  // not pass the two after this one (AP-002).
+  it('from a section reached from another section returns Home', async () => {
+    const pathname = await renderAt('/statistics')
+    await go(() => router.navigate('/forecast'))
+    await go(() => router.back())
+    expect(pathname()).toBe('/')
+  })
+
+  // FR-006. The menu opens Goal with `navigate`, as it opens every destination.
+  it('from Goal chosen in the menu on Statistics returns to Statistics', async () => {
+    const pathname = await renderAt('/statistics')
+    await go(() => router.navigate('/settings/goal'))
+    expect(pathname()).toBe('/settings/goal')
+    await go(() => router.back())
+    expect(pathname()).toBe('/statistics')
+  })
+
+  // FR-012. The forecast's own way to Goal, its desired-date card, pushes.
+  it('from Goal opened by the forecast returns to the forecast', async () => {
+    const pathname = await renderAt('/forecast')
+    await go(() => router.push('/settings/goal'))
+    expect(pathname()).toBe('/settings/goal')
+    await go(() => router.back())
+    expect(pathname()).toBe('/forecast')
+  })
 })

@@ -24,6 +24,14 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn() }),
 }))
 
+// The real button reads the drawer it sits in, and the screen is rendered here without one.
+// What the button does is tested with the real drawer in `navigation-menu.test.tsx`.
+jest.mock('@/features/navigation/menu-button', () => ({
+  MenuButton: () =>
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('react').createElement(require('react-native').View, { testID: 'menu-button' }),
+}))
+
 let harness: AppHarness
 
 beforeEach(async () => {

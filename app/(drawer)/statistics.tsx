@@ -8,6 +8,7 @@ import { MonthBreakdown } from '@/features/statistics/month-breakdown'
 import { coverage, PeriodFilter, periodName } from '@/features/statistics/period-filter'
 import { StreaksCard, TotalsCard } from '@/features/statistics/statistics-cards'
 import { useStatistics, type StatisticsView } from '@/features/statistics/use-statistics'
+import { MenuButton } from '@/features/navigation/menu-button'
 import { Button, Card, Screen, StateView, Text } from '@/ui/primitives'
 import { strings } from '@/ui/strings'
 
@@ -28,7 +29,7 @@ export default function StatisticsScreen(): ReactNode {
   const statistics = useStatistics(period)
 
   return (
-    <Screen title={strings.statistics.title}>
+    <Screen title={strings.statistics.title} leading={<MenuButton />}>
       <StateView
         state={toViewState(statistics, (view) => !view.hasMovements)}
         empty={() => <EmptyStatistics />}

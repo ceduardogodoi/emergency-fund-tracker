@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { toViewState } from '@/runtime/query'
 import { DesiredDateCard, ForecastCard } from '@/features/forecast/forecast-cards'
 import { useForecast } from '@/features/forecast/hooks'
+import { MenuButton } from '@/features/navigation/menu-button'
 import { ErrorState, LoadingState, Screen, StateView } from '@/ui/primitives'
 import { strings } from '@/ui/strings'
 
@@ -25,7 +26,7 @@ export default function ForecastScreen(): ReactNode {
   const forecast = useForecast()
 
   return (
-    <Screen title={strings.forecast.title}>
+    <Screen title={strings.forecast.title} leading={<MenuButton />}>
       <StateView
         state={toViewState(forecast, (data) => data === null)}
         loading={() => <LoadingState />}

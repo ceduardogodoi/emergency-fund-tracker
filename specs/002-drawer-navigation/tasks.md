@@ -95,16 +95,16 @@ The structure in [plan.md](./plan.md): `app/` for routes, with the new `app/(dra
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T182 [P] [US2] Component tests for the button on the three sections — `menu-button` present on History in `tests/component/entries.test.tsx`, on Statistics in `tests/component/statistics.test.tsx`, and on Forecast in `tests/component/forecast.test.tsx`, in each screen's ready state and its error state (spec, Edge Cases: the menu does not depend on the screen's data)
-- [ ] T183 [P] [US2] Route tests in `tests/component/navigation-routes.test.tsx` — from `/statistics`, choosing Forecast and then going back lands on `/`; from `/statistics`, pushing `/settings/goal` and going back lands on `/statistics`; from `/forecast`, the forecast's own push of `/settings/goal` and back lands on `/forecast` (FR-012). The fixture starts somewhere other than Home, so a layout that always returns Home cannot pass the second and third (AP-002)
-- [ ] T184 [P] [US2] Extend `e2e/navigation-menu.yaml` with Story 2's journey — from Statistics open the menu, check Estatísticas is marked, go to Previsão, go back to Home; from Estatísticas open Meta, check there is no `menu-button`, go back to Estatísticas
+- [X] T182 [P] [US2] Component tests for the button on the three sections — `menu-button` present on History in `tests/component/entries.test.tsx`, on Statistics in `tests/component/statistics.test.tsx`, and on Forecast in `tests/component/forecast.test.tsx`, in each screen's ready state and its error state (spec, Edge Cases: the menu does not depend on the screen's data) — red first, all six for the intended reason (no `menu-button` on the title row); then a mutation showing the button only once the screen's query succeeds failed exactly the error-state test of each screen, one screen at a time. `tests/component/statistics-a11y.test.tsx` renders Statistics without a drawer too, and needed the same stand-in for the button
+- [X] T183 [P] [US2] Route tests in `tests/component/navigation-routes.test.tsx` — from `/statistics`, choosing Forecast and then going back lands on `/`; from `/statistics`, pushing `/settings/goal` and going back lands on `/statistics`; from `/forecast`, the forecast's own push of `/settings/goal` and back lands on `/forecast` (FR-012). The fixture starts somewhere other than Home, so a layout that always returns Home cannot pass the second and third (AP-002) — these passed on first write: Phase 3's layout already gave the behaviour. Proved by mutation instead: `backBehavior="history"` failed both returns-Home tests, and Goal's stand-in moved inside the drawer group failed both Goal tests. `initialRoute` survived, as an equivalent mutation: with `/statistics` as the initial URL the drawer's initial route is still Home
+- [X] T184 [P] [US2] Extend `e2e/navigation-menu.yaml` with Story 2's journey — from Statistics open the menu, check Estatísticas is marked, go to Previsão, go back to Home; from Estatísticas open Meta, check there is no `menu-button`, go back to Estatísticas — the way back from Goal is Android's back button, and on iOS the edge swipe, which on a screen opened over the menu goes back (spec, Edge Cases)
 
 ### Implementation for User Story 2
 
-- [ ] T185 [P] [US2] Pass `MenuButton` as `Screen`'s `leading` on History in `app/(drawer)/entries/index.tsx`
-- [ ] T186 [P] [US2] Pass `MenuButton` as `Screen`'s `leading` on Statistics in `app/(drawer)/statistics.tsx`
-- [ ] T187 [P] [US2] Pass `MenuButton` as `Screen`'s `leading` on Forecast in `app/(drawer)/forecast.tsx`
-- [ ] T188 [US2] Run `e2e/navigation-menu.yaml` on an Android emulator and an iOS simulator, and fix what either finds before calling the story done (`.claude/rules/workflow.md`)
+- [X] T185 [P] [US2] Pass `MenuButton` as `Screen`'s `leading` on History in `app/(drawer)/entries/index.tsx`
+- [X] T186 [P] [US2] Pass `MenuButton` as `Screen`'s `leading` on Statistics in `app/(drawer)/statistics.tsx`
+- [X] T187 [P] [US2] Pass `MenuButton` as `Screen`'s `leading` on Forecast in `app/(drawer)/forecast.tsx`
+- [X] T188 [US2] Run `e2e/navigation-menu.yaml` on an Android emulator and an iOS simulator, and fix what either finds before calling the story done (`.claude/rules/workflow.md`) — passed first time on the Pixel 9 emulator and the iPhone 15 simulator, on 2026-11-08, with the Story 2 steps read in each log as run rather than skipped: Statistics marked, Forecast reached from it, Goal with no menu button, back to Statistics by Android's back and by iOS's edge swipe
 
 **Checkpoint**: The menu is the app's navigation, not Home's
 

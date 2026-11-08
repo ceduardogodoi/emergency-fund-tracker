@@ -7,6 +7,7 @@ import type { LedgerEntry } from '@/domain/ledger/types'
 import { EntryRow } from '@/features/entries/entry-row'
 import { FutureDatedBanner } from '@/features/entries/future-dated-banner'
 import { useEntries } from '@/features/entries/hooks'
+import { MenuButton } from '@/features/navigation/menu-button'
 import { MilestoneBanner } from '@/features/progress/milestone-banner'
 import { Button, Card, Screen, StateView, Text } from '@/ui/primitives'
 import { strings } from '@/ui/strings'
@@ -25,7 +26,7 @@ export default function HistoryScreen(): ReactNode {
   const entries = useEntries()
 
   return (
-    <Screen title={strings.entries.historyTitle} scrolls={false}>
+    <Screen title={strings.entries.historyTitle} leading={<MenuButton />} scrolls={false}>
       <StateView
         state={toViewState(entries)}
         empty={() => <EmptyHistory />}

@@ -2,7 +2,9 @@
 #
 # Story 1's Independent Test, on a device: Home shows the fund and its two actions without
 # a scroll, and the menu, opened from Home, reaches every destination and closes every way
-# it should (FR-001, FR-002, FR-005 – FR-008). Story 2 extends this file (T184).
+# it should (FR-001, FR-002, FR-005 – FR-008). Then Story 2's, from the end of this file:
+# the menu on a section marks that section and leads straight to another, and Goal opened
+# from a section returns to it (FR-002, FR-006, FR-007).
 #
 # The fund comes from the development seed route: 8 complete months of R$ 500,00 against a
 # goal of R$ 12.000,00, enough history for the forecast to show a date. Runs inside Expo Go;
@@ -76,9 +78,8 @@ name: Navigation menu
       - assertVisible:
           id: 'standing-card'
 
-# FR-006, FR-009 — each section, reached from Home through the menu, and back to Home. In
-# Story 1 only Home has the menu button, so the way back is back itself; Story 2 gives every
-# section the button, and its journey below moves between them directly.
+# FR-006, FR-009 — each section, reached from Home through the menu, and back to Home by
+# back itself. Story 2's journey below moves between sections directly.
 - runFlow:
     file: go-to-section.yaml
     env:
@@ -133,3 +134,72 @@ name: Navigation menu
     timeout: 20000
 - assertNotVisible:
     id: 'menu-button'
+- runFlow: back-home.yaml
+
+# Story 2. FR-002, FR-007 — the menu opened on Statistics marks Statistics, not Home, and
+# leads straight to Forecast; back from there is still Home (FR-009).
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-statistics'
+- extendedWaitUntil:
+    visible:
+      id: 'statistics-period'
+    timeout: 20000
+- tapOn:
+    id: 'menu-button'
+- extendedWaitUntil:
+    visible:
+      id: 'navigation-menu'
+    timeout: 10000
+- assertVisible:
+    id: 'menu-item-statistics-current'
+- assertNotVisible:
+    id: 'menu-item-home-current'
+- tapOn:
+    id: 'menu-item-forecast'
+- extendedWaitUntil:
+    visible:
+      id: 'projected-date'
+    timeout: 20000
+- runFlow: back-home.yaml
+
+# FR-006 — Goal chosen in the menu on Statistics opens over Statistics, with no menu button
+# of its own, and back returns to Statistics rather than Home. On iOS, back is the edge
+# swipe, which on a screen opened over the menu goes back (spec, Edge Cases).
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-statistics'
+- extendedWaitUntil:
+    visible:
+      id: 'statistics-period'
+    timeout: 20000
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-goal'
+- extendedWaitUntil:
+    visible:
+      id: 'expenses-input'
+    timeout: 20000
+- assertNotVisible:
+    id: 'menu-button'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 0%, 50%
+          end: 80%, 50%
+- extendedWaitUntil:
+    visible:
+      id: 'statistics-period'
+    timeout: 10000
+- assertNotVisible:
+    id: 'standing-card'

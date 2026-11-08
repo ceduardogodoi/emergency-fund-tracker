@@ -7,6 +7,7 @@ import { MAXIMUM_NOTE_LENGTH } from '@/domain/ledger/entry'
 import type { LedgerEntry, LedgerEntryInput } from '@/domain/ledger/types'
 import { money } from '@/domain/money/money'
 import { err } from '@/domain/result'
+import { SCREEN_TITLE_ROW_TEST_ID } from '@/ui/primitives'
 import { strings, validationMessage } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
 import { expectOk } from '@tests/support/expect-result'
@@ -40,6 +41,16 @@ jest.mock('expo-router', () => ({
     canGoBack: () => mockCanGoBack,
   }),
   useLocalSearchParams: () => mockParams,
+}))
+
+// The real button reads the drawer it sits in, and this screen is rendered here without
+// one. What the screen owes is a button in its title slot; what the button does is tested
+// with the real drawer in `navigation-menu.test.tsx`. Built with `createElement` because a
+// mock factory may not reach the module's own JSX runtime.
+jest.mock('@/features/navigation/menu-button', () => ({
+  MenuButton: () =>
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('react').createElement(require('react-native').View, { testID: 'menu-button' }),
 }))
 
 let harness: AppHarness
@@ -883,5 +894,32 @@ describe('the edit screen', () => {
 
     expect(await screen.findByText(strings.state.errorTitle)).toBeTruthy()
     expect(screen.queryByText(strings.entries.missingTitle)).toBeNull()
+  })
+})
+
+// FR-002, Story 2: every section carries the way to every other, beside its title. In the
+// error state too — the menu does not depend on the screen's data, so a ledger this screen
+// cannot read must not strand the user on it (spec, Edge Cases).
+describe('the menu button on History', () => {
+  it('sits on the title row', async () => {
+    await record({})
+    await harness.render(<HistoryScreen />)
+    await screen.findByTestId('entry-row')
+
+    expect(
+      within(screen.getByTestId(SCREEN_TITLE_ROW_TEST_ID)).getByTestId('menu-button'),
+    ).toBeTruthy()
+  })
+
+  it('is still there when the ledger cannot be read', async () => {
+    jest
+      .spyOn(harness.repositories.ledger, 'list')
+      .mockResolvedValue(err(storageError('ledger.read-failed')))
+    await harness.render(<HistoryScreen />)
+
+    expect(await screen.findByText(strings.state.errorTitle)).toBeTruthy()
+    expect(
+      within(screen.getByTestId(SCREEN_TITLE_ROW_TEST_ID)).getByTestId('menu-button'),
+    ).toBeTruthy()
   })
 })
