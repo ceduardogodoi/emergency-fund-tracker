@@ -50,6 +50,9 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 **The tell:** a `findBy` on text the screen draws in every state — a title, a label — followed by an assertion about data. Ask whether the thing waited for could appear before the thing asserted, and wait for the consequence instead.
 **Again (T083), in a second shape:** an entry-hooks test waited for the future-dated warning and then asserted the balance with `getByText`. Nothing was already on screen this time — they are two queries, and one arriving says nothing about the other. The balance was still `pending` about one run in fifteen. A wait covers only the thing it names.
 
+**AP-018 — a helper lost to an `await`.** Planning the drawer (feature 002), a route test called `await renderRouter(…)` and then `getPathname()`, and failed with `getPathname is not a function` — on a function `expo-router/testing-library` documents and declares. `renderRouter` assigns its helpers onto what RNTL's `render` returns, and in RNTL v14 that is a promise: the helpers sit on the promise, and `await` hands back the value inside it, which has none. `expect(screen).toHavePathname(…)` fails the same way, because the matcher calls `getPathname` on whatever it is given. Three runs went on mocks and imports before the source said why. Keep the returned value, `await` it, then call the helpers on the value that was kept.
+**The tell:** a method the `.d.ts` declares is missing at runtime, right after an `await`. Read how the function builds what it returns; a library written for a synchronous `render` may be decorating a promise.
+
 ## Explanations invented to fit a surprise
 
 **AP-005 — reaching for a mechanism instead of measuring one.** A surviving mutation was explained by "`babel-preset-expo` folds `Platform.OS` per bundle, so the other branch does not exist". It was false, it was written into three files and a commit message, and it sent a whole task down the wrong path. The real cause was AP-001.
@@ -83,6 +86,11 @@ Each carries an id, the way requirements and tasks do, so a commit message or a 
 
 **AP-012 — changing a rule without reading where it came from.** `percentOf` rounded to nearest, so a fund one centavo short of R$ 12.000,00 read 100% — reached, to the reader and to the 100% milestone. The fix reached for was rounding down, and the test pinning 500 of 12 000 at 4,17 was edited to expect 4,16 as part of it. That figure is User Story 2's first acceptance scenario. A second copy of it, in `progress.test.ts`, carried a comment citing the spec, and that is what stopped the change. The fix that survived keeps to-nearest and caps anything short of the target at 99,99.
 **The tell:** editing an existing test's expectation so that a fix passes. Before changing what a test expects, find out why it expects it — the comment, the task, the spec — and treat a citation as a requirement, not as documentation.
+
+## Dependencies that work by accident
+
+**AP-019 — a package that is there because something else brought it.** The drawer needs gesture handler, reanimated, and worklets, and all three were already in `node_modules`, so importing the drawer worked without declaring them. `npm ls` showed why: gesture handler and reanimated hung under `expo-router` as optional peers, and worklets under `@expo/ui`. Declaring them with `npx expo install` (T161) brought different versions — gesture handler ~2.32.0 where 3.2.1 had been resolved, a major version apart — because the SDK pins what Expo Go ships natively, and an optional peer's range does not. The import kept working in Jest and in the editor, and on a device it would probably have met native code of another major version — probably, because it was declared before anyone ran it there.
+**The tell:** something imports cleanly but appears in `package.json` nowhere. Run `npm ls <name>`; if it hangs under another package, declare it with `npx expo install` and read the version that comes back before assuming it matches.
 
 ## Steps that run whatever happened
 
