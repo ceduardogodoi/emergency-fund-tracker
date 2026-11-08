@@ -126,8 +126,10 @@ name: US2 — record progress
 # id: a row is one accessible element, so iOS exposes it as a single node carrying
 # everything in it, while Android exposes the texts inside it. A contribution's pattern
 # insists on its sign, because without it `500,00` is also the tail of a balance.
-- tapOn:
-    id: 'history'
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-history'
 - extendedWaitUntil:
     visible:
       id: 'history-list'

@@ -89,11 +89,11 @@ name: US6 — reminders
       visible: 'Emergency Fund needs permissions for posting notifications.*'
     commands:
       - tapOn: '(?i)^allow$'
-# Saved, the screen leaves. Home keeps its scroll, so its own way back in is what is waited
-# for, rather than its title.
+# Saved, the screen leaves, back to Home. Home keeps its scroll, and it was at the top when
+# the menu was opened there, so the menu button is what is waited for, rather than the title.
 - extendedWaitUntil:
     visible:
-      id: 'reminders'
+      id: 'menu-button'
     timeout: 20000
 - runFlow: open-reminders.yaml
 - scrollUntilVisible:
@@ -124,7 +124,7 @@ name: US6 — reminders
     id: 'save-reminder'
 - extendedWaitUntil:
     visible:
-      id: 'reminders'
+      id: 'menu-button'
     timeout: 20000
 - runFlow: open-reminders.yaml
 - assertNotVisible:

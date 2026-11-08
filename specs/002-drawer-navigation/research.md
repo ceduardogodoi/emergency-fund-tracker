@@ -80,6 +80,10 @@ The headers stay hidden, as they are today: `Screen` draws each title as a headi
 
 **Rationale**: The drawer state is what the drawer already knows; deriving the current section from the URL a second time would be two answers that could disagree.
 
+**Amendment (T174, 2026-11-08)**: Built from the router's pathname instead. The drawer's route names are file paths — `entries/index` for History — while the destination list is written in hrefs, so reading the drawer's state needed a second mapping from one to the other; the pathname is the router's single answer, in the list's own terms. And choosing does not branch on presentation: every destination is navigated to by its href, and the form's route file being in the root stack is what makes it open over the current screen. A mutation that swapped `router.push` for `router.navigate` on the forms survived the tests, because the two do the same thing for a route not already in the stack — and a form never is while the menu can be opened. The branch was deleted rather than tested (AP-008), as was a guard that only a section could be current. The explicit `closeDrawer` stays: the drawer closes itself on moving to another section, but measured without it, choosing the current section or a form left the menu open.
+
+**Also found (T168)**: what the drawer hides from a screen reader cannot be seen in Jest. `react-native-drawer-layout` computes `importantForAccessibility` and `accessibilityElementsHidden` in animated props driven by the open and close animation, and under reanimated's Jest mock animated props never reach the view, so nothing is hidden, open or closed. The component tests therefore read open and closed from the menu button's `expanded` state, which comes from the drawer's state; the hiding itself is measured on devices at T180.
+
 ## D-006: Every size behaves like a phone
 
 **Decision**: `drawerType: 'front'` everywhere, set explicitly.

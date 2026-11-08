@@ -3,3 +3,5 @@
 flows:
   - smoke.yaml
   - us*.yaml
+  # Feature 002's journey: not one of 001's stories, so named rather than matched.
+  - navigation-menu.yaml

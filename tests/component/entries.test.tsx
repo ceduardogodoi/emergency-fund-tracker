@@ -12,7 +12,7 @@ import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
 import { expectOk } from '@tests/support/expect-result'
 import EditEntryScreen from '../../app/entries/[id]'
 import ContributeScreen from '../../app/entries/contribute'
-import HistoryScreen from '../../app/entries/index'
+import HistoryScreen from '../../app/(drawer)/entries/index'
 
 /**
  * Recording a contribution (FR-008, FR-009, FR-010), reading back what was recorded

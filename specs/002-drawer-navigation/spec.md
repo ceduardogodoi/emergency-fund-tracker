@@ -73,6 +73,7 @@ A user reading their statistics wants to see the forecast. They open the menu fr
 - **Screen reader**: opening the menu moves focus into it, and the content behind it cannot be reached while it is open. Closing it returns focus to the menu control.
 - **Wide screens** (a tablet, or a phone in landscape): the menu behaves as it does on a phone, sliding over the content. It never stays permanently open.
 - **Arriving from a reminder notification**: whatever screen the notification opens, the menu works there as it does when that screen is reached any other way.
+- **A swipe in from the left edge** opens the menu on Home, History, Statistics, and Forecast. On a screen that opens over the menu — Goal, Reminders, recording a contribution or withdrawal, editing an entry — it goes back instead, as it does on any iOS screen and as Android's back gesture does. With no navigation header, that swipe is the only way back from those screens on iOS short of saving, and the menu is deliberately absent there. Measured on the iPhone 15 simulator on 2026-11-08, when it was raised as a possible bug on Goal: Contribute behaves the same way.
 - **Development-only screens** are never listed in the menu.
 
 ## Requirements *(mandatory)*

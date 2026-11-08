@@ -11,7 +11,7 @@ import { err } from '@/domain/result'
 import { strings } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
 import { expectOk } from '@tests/support/expect-result'
-import ForecastScreen from '../../app/forecast'
+import ForecastScreen from '../../app/(drawer)/forecast'
 
 /**
  * The forecast screen (FR-026 – FR-032) in each of the four states the domain can put it

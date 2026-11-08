@@ -6,7 +6,7 @@ import { money } from '@/domain/money/money'
 import { strings } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
 import { expectOk } from '@tests/support/expect-result'
-import StatisticsScreen from '../../app/statistics'
+import StatisticsScreen from '../../app/(drawer)/statistics'
 
 /**
  * The month-by-month breakdown, as a screen reader meets it (FR-049).

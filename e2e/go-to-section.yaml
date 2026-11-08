@@ -1,0 +1,27 @@
+# Reaches a section through the navigation menu: opens the menu from the screen the flow is
+# on, taps the item named by `ITEM` (`menu-item-statistics`, say), and waits for the menu to
+# close. A subflow because every journey that used to tap a button on Home now makes this
+# trip (specs/002-drawer-navigation, research D-007), so the next change to how a section is
+# reached is one file. Named outside `us*.yaml`, like `open-app.yaml`, so `e2e/config.yaml`
+# does not run it as a journey of its own.
+#
+# The menu button sits on the title row, which scrolls with the page, so a screen the flow
+# has scrolled down is scrolled back to the top for it first.
+appId: ${APP_ID}
+---
+- scrollUntilVisible:
+    element:
+      id: 'menu-button'
+    direction: UP
+- tapOn:
+    id: 'menu-button'
+- extendedWaitUntil:
+    visible:
+      id: ${ITEM}
+    timeout: 10000
+- tapOn:
+    id: ${ITEM}
+- extendedWaitUntil:
+    notVisible:
+      id: 'navigation-menu'
+    timeout: 10000

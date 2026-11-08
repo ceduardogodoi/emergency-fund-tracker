@@ -1,0 +1,135 @@
+# Feature 002 — the navigation menu.
+#
+# Story 1's Independent Test, on a device: Home shows the fund and its two actions without
+# a scroll, and the menu, opened from Home, reaches every destination and closes every way
+# it should (FR-001, FR-002, FR-005 – FR-008). Story 2 extends this file (T184).
+#
+# The fund comes from the development seed route: 8 complete months of R$ 500,00 against a
+# goal of R$ 12.000,00, enough history for the forecast to show a date. Runs inside Expo Go;
+# see `us1-set-target.yaml` for why, and for why `APP_ID` and `DEV_URL` come from the npm
+# scripts.
+#
+# Not one of the `us*.yaml` journeys of 001, so `e2e/config.yaml` lists it by name.
+appId: ${APP_ID}
+name: Navigation menu
+---
+- clearState
+- runFlow: open-app.yaml
+- openLink: ${DEV_URL}/--/dev/seed?months=8&pattern=steady
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000
+
+# FR-005 — the balance and both actions, with no scroll first.
+- assertVisible:
+    id: 'balance-amount'
+- assertVisible:
+    id: 'contribute'
+- assertVisible:
+    id: 'withdraw'
+
+# FR-001, FR-007 — every destination, by name, with Home marked by its bar.
+- tapOn:
+    id: 'menu-button'
+- extendedWaitUntil:
+    visible:
+      id: 'navigation-menu'
+    timeout: 10000
+- assertVisible: 'Sua reserva'
+- assertVisible: 'Histórico'
+- assertVisible: 'Estatísticas'
+- assertVisible: 'Previsão'
+- assertVisible: 'Meta'
+- assertVisible: 'Lembretes'
+- assertVisible:
+    id: 'menu-item-home-current'
+- assertNotVisible:
+    id: 'menu-item-statistics-current'
+
+# FR-008 — a tap beside the menu closes it, and Home is as it was.
+- tapOn:
+    point: '95%,50%'
+- extendedWaitUntil:
+    notVisible:
+      id: 'navigation-menu'
+    timeout: 10000
+- assertVisible:
+    id: 'standing-card'
+
+# FR-008 — so does Android's back. iOS has no back button to press.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: 'menu-button'
+      - extendedWaitUntil:
+          visible:
+            id: 'navigation-menu'
+          timeout: 10000
+      - back
+      - extendedWaitUntil:
+          notVisible:
+            id: 'navigation-menu'
+          timeout: 10000
+      - assertVisible:
+          id: 'standing-card'
+
+# FR-006, FR-009 — each section, reached from Home through the menu, and back to Home. In
+# Story 1 only Home has the menu button, so the way back is back itself; Story 2 gives every
+# section the button, and its journey below moves between them directly.
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-history'
+- extendedWaitUntil:
+    visible:
+      id: 'history-list'
+    timeout: 20000
+- runFlow: back-home.yaml
+
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-statistics'
+- extendedWaitUntil:
+    visible:
+      id: 'statistics-period'
+    timeout: 20000
+- runFlow: back-home.yaml
+
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-forecast'
+- extendedWaitUntil:
+    visible:
+      id: 'projected-date'
+    timeout: 20000
+- runFlow: back-home.yaml
+
+# The two forms open over Home, with no menu button of their own, and back returns to Home,
+# where they were opened from.
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-goal'
+- extendedWaitUntil:
+    visible:
+      id: 'expenses-input'
+    timeout: 20000
+- assertNotVisible:
+    id: 'menu-button'
+- runFlow: back-home.yaml
+
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-reminders'
+- extendedWaitUntil:
+    visible:
+      id: 'reminder-enabled'
+    timeout: 20000
+- assertNotVisible:
+    id: 'menu-button'

@@ -83,12 +83,10 @@ name: US5 — withdrawals
 # FR-014 — the history tells it from a contribution, and names the reason in words. Matched
 # as patterns: on iOS a row is one accessibility element, read as all of its text at once,
 # so a label on its own matches nothing there.
-- scrollUntilVisible:
-    element:
-      id: 'history'
-    direction: DOWN
-- tapOn:
-    id: 'history'
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-history'
 - extendedWaitUntil:
     visible: '.*Retirada.*'
     timeout: 20000

@@ -424,8 +424,6 @@ export const strings = {
   /** The first screen after launch. */
   home: {
     title: 'Sua reserva',
-    /** The way to the revision screen (FR-006). */
-    reviseAction: 'Ajustar meta',
     /** No goal means setup never finished, which is the only first launch the app knows. */
     emptyTitle: 'Defina sua meta',
     emptyBody: 'Informe seus gastos mensais para descobrir de quanto a sua reserva precisa.',
@@ -459,10 +457,6 @@ export const strings = {
     contributeAction: 'Nova contribuição',
     /** The way to the withdraw screen (FR-016). The same words as its title. */
     withdrawAction: 'Registrar retirada',
-    /** The way to the history (FR-014). */
-    historyAction: 'Ver histórico',
-    /** The way to the reminders (Story 6). The same word as their screen's title. */
-    remindersAction: 'Lembretes',
     /**
      * Under the coverage meter: how many months the balance covers, and of how many. Both
      * numbers, because the meter is hidden from a screen reader and a filled count without
@@ -607,8 +601,6 @@ export const strings = {
    */
   statistics: {
     title: 'Estatísticas',
-    /** The way in, from Home. */
-    action: 'Ver estatísticas',
     periodLabel: 'Período',
     /** The filter's options (FR-023). Keyed so the screen offers whatever the domain does. */
     allTime: 'Desde o início',
@@ -705,8 +697,6 @@ export const strings = {
    */
   forecast: {
     title: 'Previsão',
-    /** The way in, from Home. */
-    action: 'Ver previsão',
     /** Above the projected date (FR-027). */
     projectedLabel: 'Você deve alcançar a meta em',
     /**

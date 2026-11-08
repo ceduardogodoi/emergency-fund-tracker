@@ -22,6 +22,7 @@ What the menu, its button, and the reshaped Home promise to the user, to the tes
 |----|---------|
 | `menu-button` | The button, on every `section` screen |
 | `navigation-menu` | The menu's container |
+| `menu-item-<key>-current` | The bar on the current item, present only there |
 | `menu-item-<key>` | Each item: `menu-item-home`, `menu-item-history`, `menu-item-statistics`, `menu-item-forecast`, `menu-item-goal`, `menu-item-reminders` |
 
 Removed from Home: `history`, `statistics`, `forecast`, `reminders`, and `revise-goal`. `contribute` and `withdraw` stay. A test or flow still looking for a removed id fails rather than finding a stale button, which is the point of retiring them rather than reusing them on the menu items.
@@ -43,7 +44,7 @@ New keys under `strings.navigation`, pt-BR:
 | Key | Text |
 |-----|------|
 | `open` | Abrir menu |
-| `menuLabel` | Navegação |
+| `menuLabel` | Navegação — a visible heading at the top of the menu, with the header role, so a screen reader lands on it as focus enters. A label on the container would not be announced: the container is not itself an accessible element |
 | `destinations.home` … `destinations.reminders` | as data-model.md |
 
 `strings.home.historyAction`, `remindersAction`, and `reviseAction`, and `strings.statistics.action` and `strings.forecast.action`, lose their only consumer on Home. Each is deleted if nothing else reads it, checked by search when the task lands — a string kept for a button that no longer exists is how the strings module drifts from the screens.

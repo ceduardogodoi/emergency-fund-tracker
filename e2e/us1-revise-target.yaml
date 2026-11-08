@@ -53,15 +53,12 @@ name: US1 — revise a savings target
     id: 'goal-amount'
     text: '.*12[.,]000[.,]00.*' # balanced, 6 months of R$ 2.000,00
 
-# FR-006 is unreachable without a way in, so the way in is part of the journey. Scrolled to:
-# it closes the goal card, the last thing on Home, and on an iPhone 15 the way in to a
-# withdrawal (Story 5) put it below the fold, where a tap goes nowhere.
-- scrollUntilVisible:
-    element:
-      id: 'revise-goal'
-    direction: DOWN
-- tapOn:
-    id: 'revise-goal'
+# FR-006 is unreachable without a way in, so the way in is part of the journey: the
+# navigation menu's Goal (feature 002), which opens the revision screen over Home.
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-goal'
 - extendedWaitUntil:
     visible:
       id: 'expenses-input'

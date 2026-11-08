@@ -32,9 +32,11 @@ describe('the Expo Router root', () => {
     expect(configured).toBe('./app')
   })
 
+  // Home's file is inside the drawer's group (specs/002-drawer-navigation, research D-003).
+  // A group's name is not part of a path, so it is still the route for `/`.
   it('names a directory that actually holds the routes', () => {
     expect(existsSync(join(routes, '_layout.tsx'))).toBe(true)
-    expect(existsSync(join(routes, 'index.tsx'))).toBe(true)
+    expect(existsSync(join(routes, '(drawer)', 'index.tsx'))).toBe(true)
   })
 
   // `src/app` would win over the setting's absence, and the failure is silent until a

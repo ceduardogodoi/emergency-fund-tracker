@@ -1,4 +1,4 @@
-import { screen, userEvent, waitFor } from '@testing-library/react-native'
+import { screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import type { RedirectProps } from 'expo-router'
 
 import { queryKeys } from '@/runtime/query'
@@ -6,11 +6,12 @@ import { calendarDate, monthKey } from '@/domain/dates/calendar-date'
 import { storageError } from '@/domain/errors/app-error'
 import { money } from '@/domain/money/money'
 import { err } from '@/domain/result'
+import { SCREEN_TITLE_ROW_TEST_ID } from '@/ui/primitives'
 import { strings } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
 import { filledUnits, meterUnits } from '@tests/support/coverage-meter'
 import { expectOk } from '@tests/support/expect-result'
-import HomeScreen from '../../app/index'
+import HomeScreen from '../../app/(drawer)/index'
 
 /**
  * Home is where first launch is decided, so both of its answers are tested here: the
@@ -31,6 +32,16 @@ jest.mock('expo-router', () => ({
     mockRedirect(href)
     return null
   },
+}))
+
+// The real button reads the drawer it sits in, and Home is rendered here without one. What
+// Home owes is to put a button in its title slot; what the button does is tested with the
+// real drawer in `navigation-menu.test.tsx`. Built with `createElement` because a mock
+// factory may not reach the module's own JSX runtime.
+jest.mock('@/features/navigation/menu-button', () => ({
+  MenuButton: () =>
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('react').createElement(require('react-native').View, { testID: 'menu-button' }),
 }))
 
 let harness: AppHarness
@@ -111,19 +122,6 @@ describe('Home', () => {
     expect(mockRedirect).not.toHaveBeenCalled()
   })
 
-  // FR-006 asks for the target to be changeable, and a screen with no way in is a feature
-  // that exists only in the route table. Home is where a returning user is, so this is
-  // where the way in belongs.
-  it('offers a way to change the target', async () => {
-    await storeGoal()
-    await harness.render(<HomeScreen />)
-    await screen.findByTestId('goal-card')
-
-    await userEvent.press(screen.getByRole('button', { name: strings.home.reviseAction }))
-
-    expect(mockPush).toHaveBeenCalledWith('/settings/goal')
-  })
-
   it('offers a way to record a contribution', async () => {
     await storeGoal()
     await harness.render(<HomeScreen />)
@@ -132,17 +130,6 @@ describe('Home', () => {
     await userEvent.press(screen.getByRole('button', { name: strings.home.contributeAction }))
 
     expect(mockPush).toHaveBeenCalledWith('/entries/contribute')
-  })
-
-  // FR-014: the history exists to be read, and Home is the only screen a user is sure to see.
-  it('offers a way to the history', async () => {
-    await storeGoal()
-    await harness.render(<HomeScreen />)
-    await screen.findByTestId('standing-card')
-
-    await userEvent.press(screen.getByRole('button', { name: strings.home.historyAction }))
-
-    expect(mockPush).toHaveBeenCalledWith('/entries')
   })
 
   // FR-016: a withdrawal is recorded from where the balance is read, beside a contribution.
@@ -156,38 +143,44 @@ describe('Home', () => {
     expect(mockPush).toHaveBeenCalledWith('/entries/withdraw')
   })
 
-  // FR-020 – FR-025 live on their own screen, and Home is the way in.
-  it('offers a way to the statistics', async () => {
+  // FR-004 and SC-001: Home offers the two things a user opens it to do, and leaves every
+  // other section to the menu. Counted rather than looked for by id, so a button added
+  // back under any name fails this — which is how Home came to hold seven.
+  it('offers only contribute and withdraw, leaving every other section to the menu', async () => {
     await storeGoal()
     await harness.render(<HomeScreen />)
-    await screen.findByTestId('standing-card')
+    await screen.findByTestId('goal-card')
 
-    await userEvent.press(screen.getByRole('button', { name: strings.statistics.action }))
-
-    expect(mockPush).toHaveBeenCalledWith('/statistics')
+    expect(screen.getAllByRole('button').map((button) => button.props.accessibilityLabel)).toEqual([
+      strings.home.contributeAction,
+      strings.home.withdrawAction,
+    ])
   })
 
-  // FR-026 – FR-032 live on their own screen too, beside the statistics.
-  it('offers a way to the forecast', async () => {
+  // The way to every other section, beside the title where every section puts it.
+  it('puts the menu button on the title row', async () => {
     await storeGoal()
     await harness.render(<HomeScreen />)
-    await screen.findByTestId('standing-card')
+    await screen.findByTestId('goal-card')
 
-    await userEvent.press(screen.getByRole('button', { name: strings.forecast.action }))
-
-    expect(mockPush).toHaveBeenCalledWith('/forecast')
+    expect(
+      within(screen.getByTestId(SCREEN_TITLE_ROW_TEST_ID)).getByTestId('menu-button'),
+    ).toBeTruthy()
   })
 
-  // Story 6: reminders are optional, so they are reached from Home rather than offered
-  // during setup.
-  it('offers a way to the reminders', async () => {
+  // The menu button is there whatever state the fund is in: the other sections do not
+  // depend on Home's data, so a fund Home cannot read must not strand the user on it
+  // (spec, Edge Cases). The error state rather than loading, because loading may already
+  // have ended by the time a test looks (AP-013); the error is waited for, then the button.
+  it('still offers the menu when the fund cannot be read', async () => {
     await storeGoal()
+    jest
+      .spyOn(harness.repositories.ledger, 'list')
+      .mockResolvedValue(err(storageError('ledger.read-failed')))
     await harness.render(<HomeScreen />)
-    await screen.findByTestId('standing-card')
 
-    await userEvent.press(screen.getByRole('button', { name: strings.home.remindersAction }))
-
-    expect(mockPush).toHaveBeenCalledWith('/settings/reminders')
+    expect(await screen.findByText(strings.state.errorTitle)).toBeTruthy()
+    expect(screen.getByTestId('menu-button')).toBeTruthy()
   })
 
   // FR-024. A contribution returns here, so this is where the milestone it crossed is

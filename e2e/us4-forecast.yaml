@@ -38,12 +38,10 @@ name: US4 — forecast
     visible:
       id: 'standing-card'
     timeout: 60000
-- scrollUntilVisible:
-    element:
-      id: 'forecast'
-    direction: DOWN
-- tapOn:
-    id: 'forecast'
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-forecast'
 - extendedWaitUntil:
     visible:
       id: 'forecast-insufficient'
@@ -61,12 +59,10 @@ name: US4 — forecast
 - assertVisible:
     id: 'balance-amount'
     text: '.*3[.,]000[.,]00.*'
-- scrollUntilVisible:
-    element:
-      id: 'forecast'
-    direction: DOWN
-- tapOn:
-    id: 'forecast'
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-forecast'
 - extendedWaitUntil:
     visible:
       id: 'projected-date'
@@ -106,12 +102,10 @@ name: US4 — forecast
       id: 'balance-amount'
       text: '.*4[.,]000[.,]00.*'
     timeout: 20000
-- scrollUntilVisible:
-    element:
-      id: 'forecast'
-    direction: DOWN
-- tapOn:
-    id: 'forecast'
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-forecast'
 - extendedWaitUntil:
     visible:
       id: 'projected-date'

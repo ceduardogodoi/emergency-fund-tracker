@@ -28,7 +28,7 @@ const routeFiles = readdirSync(ROUTES, { recursive: true, encoding: 'utf8' }).fi
 
 describe('the route files', () => {
   it('are all present, so an empty listing cannot pass this suite silently', () => {
-    expect(routeFiles).toContain('index.tsx')
+    expect(routeFiles).toContain('(drawer)/index.tsx')
     expect(routeFiles).toContain('_layout.tsx')
   })
 

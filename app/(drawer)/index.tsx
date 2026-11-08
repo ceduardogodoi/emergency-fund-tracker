@@ -7,6 +7,7 @@ import { monthKey } from '@/domain/dates/calendar-date'
 import type { RecoveryEstimate, RecoveryState } from '@/domain/forecast/recovery'
 import type { Goal } from '@/domain/goal/types'
 import type { ProgressSummary } from '@/domain/ledger/types'
+import { MenuButton } from '@/features/navigation/menu-button'
 import { MilestoneBanner } from '@/features/progress/milestone-banner'
 import { useStanding, type Standing } from '@/features/progress/use-standing'
 import {
@@ -35,6 +36,10 @@ const ONBOARDING = '/onboarding/expenses'
  * owns the question. A guard in the layout would have to run on every screen, including
  * the onboarding screens it sends people to, and know which of them to leave alone.
  *
+ * The menu button sits beside the title in every state, loading and failed included: the
+ * other sections do not depend on Home's data, and a fund Home cannot read must not leave
+ * the user with nowhere to go (specs/002-drawer-navigation, Edge Cases).
+ *
  * @returns The rendered screen
  */
 export default function HomeScreen(): ReactNode {
@@ -42,7 +47,7 @@ export default function HomeScreen(): ReactNode {
   const state = toViewState(standing, (data) => data === null)
 
   return (
-    <Screen title={strings.home.title}>
+    <Screen title={strings.home.title} leading={<MenuButton />}>
       <StateView
         state={state}
         loading={() => <LoadingState />}
@@ -66,13 +71,17 @@ interface StandingViewProps {
 }
 
 /**
- * The fund's position, the way in to change it, and the goal it is measured against.
+ * The fund's position, the two ways to change it, and the goal it is measured against.
  *
  * The balance leads because it is what moves: the target changes rarely and on purpose,
  * and the question a returning user opens the app with is how far along they are. Above it,
  * only a milestone the last contribution crossed (FR-024), since that is news about the
  * figure below it. Below it, after a withdrawal, what is left to restore (FR-018), which is
- * the other half of the same news.
+ * the other half of the same news. Then the two things a user opens the app to do, and the
+ * goal last.
+ *
+ * Nothing here leads to another section: those are in the menu (specs/002-drawer-navigation,
+ * FR-004), which is what lets the balance and both actions fit without a scroll (FR-005).
  */
 function StandingView({ standing }: StandingViewProps): ReactNode {
   const router = useRouter()
@@ -96,50 +105,7 @@ function StandingView({ standing }: StandingViewProps): ReactNode {
         }}
         testID="withdraw"
       />
-      <Destinations />
       <GoalCard goal={standing.goal} monthsCovered={standing.monthsCovered} />
-      {/* Below the goal, last: optional, and set once rather than visited (Story 6). */}
-      <Button
-        label={strings.home.remindersAction}
-        variant="secondary"
-        onPress={() => {
-          router.push('/settings/reminders')
-        }}
-        testID="reminders"
-      />
-    </>
-  )
-}
-
-/** The screens that read the same fund from other angles: its history, its statistics, and its forecast. */
-function Destinations(): ReactNode {
-  const router = useRouter()
-  return (
-    <>
-      <Button
-        label={strings.home.historyAction}
-        variant="secondary"
-        onPress={() => {
-          router.push('/entries')
-        }}
-        testID="history"
-      />
-      <Button
-        label={strings.statistics.action}
-        variant="secondary"
-        onPress={() => {
-          router.push('/statistics')
-        }}
-        testID="statistics"
-      />
-      <Button
-        label={strings.forecast.action}
-        variant="secondary"
-        onPress={() => {
-          router.push('/forecast')
-        }}
-        testID="forecast"
-      />
     </>
   )
 }
@@ -269,10 +235,12 @@ interface GoalCardProps {
  * number the user cannot evaluate — FR-004's derivation, kept visible after setup rather
  * than only during it. The meter draws the plan as months and fills the ones the balance
  * pays for, with the caption saying both numbers for a reader who cannot see it.
+ *
+ * Revising it is reached from the menu, as Goal, not from here (specs/002-drawer-navigation,
+ * Clarifications).
  */
 function GoalCard({ goal, monthsCovered }: GoalCardProps): ReactNode {
   const { format } = useServices()
-  const router = useRouter()
   return (
     <Card testID="goal-card">
       <Text variant="label" tone="secondary">
@@ -291,14 +259,6 @@ function GoalCard({ goal, monthsCovered }: GoalCardProps): ReactNode {
           strings.coverageDuration(goal.coverageMonths),
         )}
       </Text>
-      <Button
-        label={strings.home.reviseAction}
-        variant="secondary"
-        onPress={() => {
-          router.push('/settings/goal')
-        }}
-        testID="revise-goal"
-      />
     </Card>
   )
 }

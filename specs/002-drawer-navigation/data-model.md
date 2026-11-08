@@ -30,7 +30,7 @@ The labels are each screen's existing title, except Goal: its screen is titled "
 
 ## Which destination is current
 
-Derived, never stored: the drawer's focused route, read from the state `drawerContent` receives (research D-005). Only `section` destinations can be current. An `over` destination is never marked, because the menu is not reachable while one is showing.
+Derived, never stored: the router's pathname compared with each destination's `href` (research D-005, amended). Only a `section` destination can match, because the menu is not reachable while an `over` one is showing — its screen has no menu button and opens over the drawer.
 
 ## State transitions
 

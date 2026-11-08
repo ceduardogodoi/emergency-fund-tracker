@@ -8,7 +8,7 @@ import { err } from '@/domain/result'
 import { strings } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
 import { expectOk } from '@tests/support/expect-result'
-import StatisticsScreen from '../../app/statistics'
+import StatisticsScreen from '../../app/(drawer)/statistics'
 
 /**
  * The statistics view (FR-020 – FR-025), checked figure by figure against a hand

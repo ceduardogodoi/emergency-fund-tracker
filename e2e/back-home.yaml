@@ -1,0 +1,24 @@
+# Returns to Home from a section reached through the menu, and waits for it. On Android by
+# the back button, which is the thing being tested: back from a section returns Home, never
+# through earlier choices (FR-009). iOS has no back button for Maestro to press, so there it
+# is a restart, as the 001 journeys do — a stop and a launch, since reopening the link into
+# a running Expo Go keeps the screen it is on. A subflow, named outside `us*.yaml` so
+# `e2e/config.yaml` does not run it on its own.
+appId: ${APP_ID}
+---
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+# Stopped first: reopening the link into a running Expo Go keeps the screen it is on.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - stopApp
+      - runFlow: open-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'standing-card'
+    timeout: 60000

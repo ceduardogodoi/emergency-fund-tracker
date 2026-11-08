@@ -38,12 +38,10 @@ name: US3 — statistics
     text: '.*4[.,]000[.,]00.*'
 
 # FR-020, FR-021 — all time, the period the screen opens on.
-- scrollUntilVisible:
-    element:
-      id: 'statistics'
-    direction: DOWN
-- tapOn:
-    id: 'statistics'
+- runFlow:
+    file: go-to-section.yaml
+    env:
+      ITEM: 'menu-item-statistics'
 - extendedWaitUntil:
     visible:
       id: 'period-all-time'
