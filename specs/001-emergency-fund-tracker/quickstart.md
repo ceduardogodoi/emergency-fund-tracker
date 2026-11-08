@@ -126,6 +126,10 @@ One per user story, in priority order. Each is independently verifiable — a st
 
 **Offline (FR-040, SC-014)**: put the device in airplane mode and run every scenario above. All must pass. Separately, with a proxy attached, exercise every screen and **expect zero outbound requests** — this is the SC-014 check, and any analytics or crash SDK would fail it.
 
+*Measured (T148), 2026-11-08* — with the operating system's per-app counters rather than a proxy, which sees only traffic routed through it. In release builds, a Maestro pass went through onboarding, a contribution, a withdrawal with a reason, an entry edited with a note, History, Statistics, Forecast, a revised goal, and a reminder turned on. On the Pixel 9 emulator, `dumpsys netstats` for the app's uid read 0 bytes received and 0 sent before and after; a page opened in Chrome moved Chrome's uid to about 317 KB received, so the counter does register traffic. On an iPad (A16) simulator, `nettop` logging every process each second through the same pass listed the app holding a socket on 79 samples, with 0 bytes in and out on every one; a page opened in the simulator's Safari during the same log registered about 124 KB. On iOS the pass stopped at the system's notification prompt, so no reminder was scheduled there; every screen before it was exercised. Zero outbound bytes, on both platforms.
+
+*Measured offline (T149), 2026-11-08* — Android only; the iOS simulator shares the Mac's network and has no airplane mode. With the Pixel 9 emulator in airplane mode, the release build completed the same full pass, and the full Maestro suite passed 8 of 9 in Expo Go. US1 failed once, on a relaunch that reopened a screen it never visits; run alone in airplane mode, it passed.
+
 **Export and import (SC-015)**: export from a seeded fund, `--reset`, then import. Expect the goal, every entry, the balance, and every statistic to be identical. Repeat across platforms — export on Android, import on iOS. Then confirm each rejection case in [fund-export-v1.md](./contracts/fund-export-v1.md) leaves existing data untouched.
 
 **Money exactness (SC-007)**: `npm run test:integration -- reconciliation` runs at least 1,000 randomized entry sequences and asserts the reported balance equals the exact sum every time, with zero rounding discrepancies.
@@ -137,8 +141,8 @@ One per user story, in priority order. Each is independently verifiable — a st
 ## Definition of done for this feature
 
 - [ ] Every acceptance scenario in [spec.md](./spec.md) has a passing automated test
-- [ ] `npm run typecheck`, `npm run lint`, and `npm test` all clean, with no `skip`, `only`, or `todo` left in any test file
-- [ ] Coverage thresholds met — 80% global, 95% on money, dates, statistics, and forecast
+- [x] `npm run typecheck`, `npm run lint`, and `npm test` all clean, with no `skip`, `only`, or `todo` left in any test file
+- [x] Coverage thresholds met — 80% global, 95% on money, dates, statistics, and forecast
 - [ ] Every scenario above verified on both a physical iOS and a physical Android device
-- [ ] SC-014 verified by proxy: zero outbound requests
+- [x] SC-014 verified: zero outbound requests — by per-app network counters rather than a proxy (T148)
 - [ ] R-001, R-002, and R-003 from [research.md](./research.md) resolved and recorded

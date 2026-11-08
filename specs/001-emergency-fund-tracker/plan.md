@@ -16,7 +16,7 @@ All six user stories are in scope. They remain independently shippable in priori
 
 **Language/Version**: TypeScript **5.9.3** in `strict` mode, with `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `noUnusedLocals`, and `noUnusedParameters` enabled. Pinned to 5.x deliberately: TypeScript 7 is released, but `typescript-eslint` requires `<6.1.0`, so adopting it would mean dropping the lint gate that Principle I requires.
 
-**Primary Dependencies** *(installed — R-001 resolved 2026-08-15)*: Expo SDK **57.0.13**, React Native **0.86.2**, React **19.2.3**, Expo Router 57.0.13, `expo-sqlite` 57.0.1, TanStack Query 5.101.4, `zod` 4.4.3, `uuid` 14.0.1. Deferred to the phases that introduce them: `expo-notifications` (Phase 8), `expo-file-system`/`expo-sharing`/`expo-document-picker` (Phase 9). `date-fns` was planned but proved unnecessary and was removed — see the D-004 amendment in research.md. A charting library was planned for Phase 5 and dropped with charts themselves — see the D-011 amendment.
+**Primary Dependencies** *(installed — R-001 resolved 2026-08-15)*: Expo SDK **57.0.13**, React Native **0.86.2**, React **19.2.3**, Expo Router 57.0.13, `expo-sqlite` 57.0.1, TanStack Query 5.101.4, `zod` 4.4.3, `uuid` 14.0.1. Deferred to the phases that introduce them: `expo-notifications` (Phase 8), `expo-file-system`/`expo-sharing`/`expo-document-picker` (Phase 9). `date-fns` was planned but proved unnecessary and was removed — see the D-004 amendment in research.md. A charting library was planned for Phase 5 and dropped with charts themselves — see the D-011 amendment. `zod` was removed on 2026-11-08 (T155): its only purpose was validating imported files, and Phase 9 was dropped before any were built.
 
 **Storage**: `expo-sqlite` on device, accessed only through repository modules implementing domain-owned ports; schema versioned by the `user_version` pragma with forward-only migrations
 
@@ -57,7 +57,7 @@ The constitution requires each third-party dependency to be justified by the pla
 |------------|------------------|-------------------------------------|
 | `expo-sqlite` | Hand-rolled file persistence | Relational aggregation over a growing ledger is what SQL is for; JSON-in-storage degrades and gives up transactional integrity that FR-046 needs |
 | TanStack Query | Per-screen `useEffect` state machines | FR-051's four states and FR-032's recalculate-on-change would otherwise be rewritten on ~11 screens (D-008) |
-| `zod` | Hand-written import validators | FR-046 requires rejecting a malformed file *with an explanation of what was wrong*; hand-rolled nested validation either loses that detail or reimplements a schema library (D-012) |
+| ~~`zod`~~ | Hand-written import validators | FR-046 requires rejecting a malformed file *with an explanation of what was wrong*; hand-rolled nested validation either loses that detail or reimplements a schema library (D-012). **Removed 2026-11-08 (T155)**, unused once Phase 9 was dropped |
 | `date-fns` | Hand-rolled month arithmetic | Month bucketing, streak boundaries, and month-offset projection are easy to get subtly wrong; tree-shakeable so only the used functions ship |
 | `expo-notifications` | — | Only way to deliver the local reminders in FR-034 |
 | `expo-file-system`, `expo-sharing`, `expo-document-picker` | — | Only way to write, hand off, and select the export/import files in FR-044 and FR-045 |

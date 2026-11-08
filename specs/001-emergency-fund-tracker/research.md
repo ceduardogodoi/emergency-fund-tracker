@@ -46,6 +46,8 @@ This document resolves every unknown in the plan's Technical Context. Each decis
 
 **Verification at init (R-002)**: Confirm `Intl.NumberFormat` and `Intl.DateTimeFormat` with non-default locales work on Hermes for Android release builds, since FR-039 depends on locale-aware currency formatting. Expo builds normally include the necessary ICU data; if a release build turns out to lack it, the fallback is to enable full ICU rather than to hand-roll formatting.
 
+**Resolved (T151, 2026-11-08)**: no fallback needed. In a release build (`npx expo run:android --variant release`, Hermes) on the Pixel 9 emulator at API 35, a Maestro flow read each formatter's output in pt-BR: the balance as `R$ 3.000,00` and, after a contribution, `R$ 3.500,00` — the symbol, a separating space, a point for thousands, a comma for cents; History's dates in the medium style, `8 de nov. de 2026`; and Statistics' month in full, `novembro de 2026`. Each check was a pattern an English fallback (`R$3,000.00`, `Nov 8, 2026`, `November 2026`) would not match. Neither `app.json` nor the generated `android/app/build.gradle` sets any ICU option, so the default Hermes build is enough.
+
 ## D-005: Local storage
 
 **Decision**: `expo-sqlite` with hand-written SQL, reached only through repository modules that implement domain-owned port interfaces. Schema versioning via SQLite's `user_version` pragma with forward-only migration steps.
@@ -218,7 +220,7 @@ This document resolves every unknown in the plan's Technical Context. Each decis
 | ID | Item | Resolved by |
 |----|------|-------------|
 | R-001 | Record exact Expo SDK, RN, and React versions and the resulting iOS and Android minimums | Project init |
-| R-002 | Confirm `Intl` currency and date formatting on Hermes in Android release builds | First release build |
+| R-002 | ~~Confirm `Intl` currency and date formatting on Hermes in Android release builds~~ | **Done** — T151, see D-004's verification above |
 | R-003 | Confirm local notification scheduling behavior after restart and force-quit, and Android exact-alarm requirements | Story 6 implementation |
 | R-004 | Reflect the complete-months pace refinement (D-017) back into FR-026 | **Done** — FR-026, FR-029, and Story 4's third scenario updated during this planning pass |
 

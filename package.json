@@ -16,7 +16,7 @@
     "test:unit": "jest --selectProjects unit",
     "test:integration": "jest --selectProjects integration",
     "test:component": "jest --selectProjects component",
-    "test:a11y": "jest --selectProjects component --testPathPattern \"a11y|contrast|text-scale\"",
+    "test:a11y": "jest --selectProjects unit component --testPathPattern \"a11y|contrast|text-scale\"",
     "test:coverage": "jest --coverage",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage",
     "e2e": "maestro test -p android --test-output-dir .maestro-out/android --debug-output .maestro-out/android -e APP_ID=host.exp.exponent -e DEV_URL=exp://127.0.0.1:8081 e2e",
@@ -45,8 +45,7 @@
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
-    "react-native-worklets": "0.10.1",
-    "zod": "^4.4.3"
+    "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
     "@testing-library/react-native": "^14.0.1",

@@ -32,15 +32,17 @@ An offline-only Expo app. Nothing leaves the device: no network calls, no analyt
 
 **Dependencies point inward** (Constitution Principle III), which is the structure worth knowing before editing anything:
 
-| Layer           | Holds                                                                                              | May import                    |
-| --------------- | -------------------------------------------------------------------------------------------------- | ----------------------------- |
-| `src/domain/`   | Pure rules and types. No I/O, no async, no React. Ports are declared here as interfaces            | nothing outside `src/domain/` |
-| `src/data/`     | SQLite adapters implementing the repository ports, plus migrations and mappers                     | domain                        |
-| `src/platform/` | Adapters for the remaining ports — clock, ids, logging                                             | domain                        |
-| `src/features/` | Per-feature hooks and components; TanStack Query lives here                                        | domain, ui, runtime           |
-| `src/ui/`       | Tokens, primitives, strings, formatters. The only place a style value or user-facing string exists | domain types                  |
-| `src/runtime/`  | Composition root, query client, services context, boot                                             | everything                    |
-| `app/`          | Expo Router routes, and nothing else                                                               | everything                    |
+| Layer           | Holds                                                                                              | May import                          |
+| --------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `src/domain/`   | Pure rules and types. No I/O, no async, no React. Ports are declared here as interfaces            | nothing outside `src/domain/`       |
+| `src/data/`     | SQLite adapters implementing the repository ports, plus migrations and mappers                     | domain                              |
+| `src/platform/` | Adapters for the remaining ports — clock, ids, logging                                             | domain                              |
+| `src/features/` | Per-feature hooks and components; TanStack Query lives here                                        | domain, ui, runtime, other features |
+| `src/ui/`       | Tokens, primitives, strings, formatters. The only place a style value or user-facing string exists | domain                              |
+| `src/runtime/`  | Composition root, query client, services context, boot                                             | everything                          |
+| `app/`          | Expo Router routes, and nothing else                                                               | everything                          |
+
+Only the domain's boundary is enforced by lint (`no-restricted-imports` in `eslint.config.mjs`); the rest is held in review. `src/ui/` reads domain constants and constructors as well as types — the limits it validates against, `money()` — which is safe because the domain is pure. A feature may use another's hooks (Forecast reads the ledger through `entries`), never in a cycle.
 
 **`app/` is routes only.** Expo Router treats _every_ file under its root as a route, and it prefers `src/app/` over `app/` when that directory exists — which is why the composition root lives in `src/runtime/` and `app.json` sets `expo.extra.router.root` explicitly. A non-route module under `app/` becomes a broken route.
 
