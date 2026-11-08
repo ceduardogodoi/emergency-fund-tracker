@@ -26,6 +26,8 @@ Every claim below was read from the installed source, run in this repository, or
 
 **Constitution**: Principle-required justification is in plan.md's dependency table.
 
+**Amendment (T161, 2026-11-08)**: The versions SDK 57 pins are not the ones that were in `node_modules`. `npx expo install` declared `react-native-gesture-handler` ~2.32.0, `react-native-reanimated` 4.5.1, and `react-native-worklets` 0.10.1, replacing the 3.2.1, 4.5.3, and 0.10.4 that `expo-router`'s and `@expo/ui`'s ranges had resolved to. Gesture handler is a major version apart: Expo Go ships the SDK's pinned native code, so the undeclared 3.x would probably have met 2.x native code on a device. That is a guess, not tested on a device, and it no longer matters, since the pinned versions are now the only copies (`npm ls` shows one of each, deduped). `react-native-drawer-layout` 4.2.10 asks for `>= 2.0.0` of both gesture handler and reanimated, so it accepts them.
+
 ## D-003: Route layout — a drawer group inside the root stack, with every URL unchanged
 
 **Decision**:

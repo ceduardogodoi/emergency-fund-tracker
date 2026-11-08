@@ -160,6 +160,23 @@ export default defineConfig(
     },
   },
 
+  // A `.cjs` file declares CommonJS in its extension (tooling.md), and `require` is how
+  // CommonJS imports — banning it there would ban the module system the file says it uses.
+  {
+    files: ['**/*.cjs'],
+    languageOptions: { sourceType: 'commonjs' },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+
+  // Jest setup files run inside the test environment, where `jest` is a global, but are
+  // not test files, so no Jest plugin config reaches them.
+  {
+    files: ['tests/support/*.cjs'],
+    languageOptions: { globals: { jest: 'readonly' } },
+  },
+
   // Tests and scripts may be long and may reach for console.
   {
     files: ['tests/**/*.ts', 'tests/**/*.tsx', 'scripts/**/*.mts'],

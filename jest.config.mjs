@@ -61,7 +61,10 @@ export default {
       displayName: 'component',
       preset: 'jest-expo',
       testMatch: ['<rootDir>/tests/component/**/*.test.tsx'],
-      setupFiles,
+      // The drawer's gesture and animation libraries need their native halves mocked
+      // before any test file loads; see the file. Component tests only, since nothing
+      // else renders a navigator.
+      setupFiles: [...setupFiles, '<rootDir>/tests/support/native-animation-mocks.cjs'],
       moduleNameMapper,
     },
   ],
