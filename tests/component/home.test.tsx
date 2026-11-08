@@ -7,6 +7,7 @@ import { storageError } from '@/domain/errors/app-error'
 import { money } from '@/domain/money/money'
 import { err } from '@/domain/result'
 import { SCREEN_TITLE_ROW_TEST_ID } from '@/ui/primitives'
+import { minimumTouchTarget } from '@/ui/tokens'
 import { strings } from '@/ui/strings'
 import { createAppHarness, type AppHarness } from '@tests/support/app-harness'
 import { filledUnits, meterUnits } from '@tests/support/coverage-meter'
@@ -199,6 +200,23 @@ describe('Home', () => {
     expect(screen.queryByTestId('milestone-banner')).toBeNull()
   })
 
+  // T179: in Home's fullest state the full-width close button helped push Withdraw below
+  // the fold on a 6.1-inch iPhone. The control now sits beside the heading, the size of a
+  // touch target rather than the width of the card. Its size is asserted on the host view,
+  // where the style lands, rather than read back from a prop.
+  it('closes the milestone from a control beside its heading, not a full-width button', async () => {
+    await storeGoal()
+    harness.queryClient.setQueryData(queryKeys.milestoneReached(), 50)
+    await harness.render(<HomeScreen />)
+
+    const row = await screen.findByTestId('milestone-heading-row')
+    expect(within(row).getByRole('header')).toBeTruthy()
+    expect(within(row).getByRole('button', { name: strings.milestones.dismiss })).toHaveStyle({
+      width: minimumTouchTarget,
+      height: minimumTouchTarget,
+    })
+  })
+
   it('shows no milestone when the last save crossed none', async () => {
     await storeGoal()
     await harness.render(<HomeScreen />)
@@ -386,6 +404,23 @@ describe('Home, after a withdrawal', () => {
         ),
       ),
     ).toBeTruthy()
+  })
+
+  // SC-001, measured in T179: with a milestone message and this card both showing, Withdraw
+  // fell below the fold on a 6.1-inch iPhone when the card came first. The two things a
+  // user opens Home to do now come straight after the balance, so no amount of news above
+  // or below can push them out of reach.
+  it('puts both actions directly under the balance, ahead of what is left to restore', async () => {
+    await storeGoal()
+    await fourMonthsThenAWithdrawal()
+    await harness.render(<HomeScreen />)
+    await screen.findByTestId('recovery-card')
+
+    expect(
+      screen
+        .getAllByTestId(/^(standing-card|contribute|withdraw|recovery-card|goal-card)$/)
+        .map((element) => element.props.testID),
+    ).toEqual(['standing-card', 'contribute', 'withdraw', 'recovery-card', 'goal-card'])
   })
 
   it('shows nothing to restore when no withdrawal has been made', async () => {

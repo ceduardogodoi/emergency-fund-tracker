@@ -76,12 +76,14 @@ interface StandingViewProps {
  * The balance leads because it is what moves: the target changes rarely and on purpose,
  * and the question a returning user opens the app with is how far along they are. Above it,
  * only a milestone the last contribution crossed (FR-024), since that is news about the
- * figure below it. Below it, after a withdrawal, what is left to restore (FR-018), which is
- * the other half of the same news. Then the two things a user opens the app to do, and the
- * goal last.
+ * figure below it. Below it, the two things a user opens the app to do; then, after a
+ * withdrawal, what is left to restore (FR-018); and the goal last.
  *
- * Nothing here leads to another section: those are in the menu (specs/002-drawer-navigation,
- * FR-004), which is what lets the balance and both actions fit without a scroll (FR-005).
+ * The actions come before what is left to restore because of a measurement, not a taste:
+ * with a milestone message and that card both showing, Withdraw fell below the fold on a
+ * 6.1-inch iPhone when the card came first (specs/002-drawer-navigation, T179). Straight
+ * after the balance, nothing shown above or below can push them out of reach (FR-005).
+ * Nothing here leads to another section: those are in the menu (FR-004).
  */
 function StandingView({ standing }: StandingViewProps): ReactNode {
   const router = useRouter()
@@ -89,7 +91,6 @@ function StandingView({ standing }: StandingViewProps): ReactNode {
     <>
       <MilestoneBanner />
       <StandingCard progress={standing.progress} />
-      <RecoveryCard recovery={standing.recovery} />
       <Button
         label={strings.home.contributeAction}
         onPress={() => {
@@ -105,6 +106,7 @@ function StandingView({ standing }: StandingViewProps): ReactNode {
         }}
         testID="withdraw"
       />
+      <RecoveryCard recovery={standing.recovery} />
       <GoalCard goal={standing.goal} monthsCovered={standing.monthsCovered} />
     </>
   )
